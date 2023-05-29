@@ -32,12 +32,14 @@ const config = ref({
   ldapEnable: false,
 });
 const getLoginConfig = () => {
-  axios.get('/controller/users/loginConfig').then((resp) => {
+    axios.get('/controller/users/loginConfig').then((resp) => {
     if (resp.code === 2000) {
       configLoading.value = false;
       config.value = resp.data;
     }
-  });
+  }).catch ((error)=> {
+    configLoading.value = false;
+  })
 };
 const loginPost = (u) => {
   loading.value = true;
