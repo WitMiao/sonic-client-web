@@ -1450,7 +1450,8 @@ const checkAlive = () => {
               </el-popover>
             </div>
           </template>
-          <div style="margin-right: 40px; text-align: center">
+          <div style="display:flex;">
+            <div style="flex:1; text-align: center">
             <div>
               <input
                 ref="inputBox"
@@ -1464,7 +1465,7 @@ const checkAlive = () => {
               <canvas
                 id="iosCap"
                 :style="canvasRectInfo"
-                style="display: inline-block"
+                style="display: inline-block;min-height: 100%;max-height: calc(100vh - 200px);"
                 @mouseup="mouseup"
                 @mousedown="mousedown"
                 @mouseleave="mouseleave"
@@ -1483,7 +1484,7 @@ const checkAlive = () => {
               </el-button>
             </el-button-group>
           </div>
-          <div style="position: absolute; right: 5px; top: 10px">
+          <div style="width:50px; text-align: right">
             <el-tooltip
               :enterable="false"
               effect="dark"
@@ -1696,6 +1697,7 @@ const checkAlive = () => {
                 </el-button>
               </div>
             </el-tooltip>
+          </div>
           </div>
         </el-card>
       </el-col>
