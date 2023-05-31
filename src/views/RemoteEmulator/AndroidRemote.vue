@@ -1923,7 +1923,7 @@ const checkAlive = () => {
               <video
                 v-show="screenMode == 'Scrcpy'"
                 id="scrcpy-video"
-                style="display: inline-block; min-height: 100%;max-height: calc(100vh - 145px);"
+                style="display: inline-block; min-height: 100%;max-height: calc(100vh - 200px);"
                 :style="canvasRectInfo"
                 autoplay
                 muted

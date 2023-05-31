@@ -45,7 +45,7 @@ const layoutSplitInfo = ref(
 // 画布默认值
 const canvasRectInfo = ref(
   tabPosition.value == 'left'
-    ? { width: '100%', height: 'auto' }
+    ? {  height: 'auto' }
     : {
         width: 'auto',
         height: `${layoutSplitInfo.value.top}px`,
