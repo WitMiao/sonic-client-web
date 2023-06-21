@@ -88,7 +88,7 @@ const jump = (id, platform) => {
       path: `/IOSRemote/${id}`,
     });
   }
-  window.open(routeData.href, '_blank');
+  window.open(routeData.href, '_self');
 };
 const reboot = (id) => {
   axios.get('/transport/exchange/reboot', { params: { id } }).then((resp) => {

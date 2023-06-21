@@ -349,7 +349,7 @@ const selectPackage = (val) => {
   ElMessage.success({
     message: $t('androidRemoteTS.startInstall'),
   });
-  install(val)
+  install(val);
 };
 // 三种安装包方式tab选中态
 const activeIntallTab = ref('pushInstallPane');
@@ -1611,7 +1611,7 @@ const close = () => {
   if (audioPlayer !== null) {
     destroyAudio();
   }
-  window.close();
+  router.push('/Index/Devices');
 };
 onBeforeUnmount(() => {
   close();
@@ -1907,290 +1907,303 @@ const checkAlive = () => {
               </el-popover>
             </div>
           </template>
-          <div style="display:flex;">
-            <div style="flex:1; text-align: center">
-            <div>
-              <input
-                ref="inputBox"
-                v-model="inputValue"
-                class="input-box"
-                type="text"
-                :style="inputBoxStyle"
-                @input="changeInputHandle"
-                @keyup.delete="deleteInputHandle"
-                @keyup.enter="enterInputHandle"
-              />
-              <video
-                v-show="screenMode == 'Scrcpy'"
-                id="scrcpy-video"
-                style="display: inline-block; min-height: 100%;max-height: calc(100vh - 200px);"
-                :style="canvasRectInfo"
-                autoplay
-                muted
-                @mouseup="mouseup"
-                @mousemove="mousemove"
-                @mousedown="mousedown"
-                @mouseleave="mouseleave"
-              />
-              <canvas
-                v-show="screenMode != 'Scrcpy'"
-                id="canvas"
-                style="display: inline-block"
-                :style="canvasRectInfo"
-                @mouseup="mouseup"
-                @mousemove="mousemove"
-                @mousedown="mousedown"
-                @mouseleave="mouseleave"
-              />
-              <audio id="audio-player" hidden></audio>
+          <div style="display: flex">
+            <div style="flex: 1; text-align: center">
+              <div>
+                <input
+                  ref="inputBox"
+                  v-model="inputValue"
+                  class="input-box"
+                  type="text"
+                  :style="inputBoxStyle"
+                  @input="changeInputHandle"
+                  @keyup.delete="deleteInputHandle"
+                  @keyup.enter="enterInputHandle"
+                />
+                <video
+                  v-show="screenMode == 'Scrcpy'"
+                  id="scrcpy-video"
+                  style="
+                    display: inline-block;
+                    min-height: 100%;
+                    max-height: calc(100vh - 200px);
+                  "
+                  :style="canvasRectInfo"
+                  autoplay
+                  muted
+                  @mouseup="mouseup"
+                  @mousemove="mousemove"
+                  @mousedown="mousedown"
+                  @mouseleave="mouseleave"
+                />
+                <canvas
+                  v-show="screenMode != 'Scrcpy'"
+                  id="canvas"
+                  style="display: inline-block"
+                  :style="canvasRectInfo"
+                  @mouseup="mouseup"
+                  @mousemove="mousemove"
+                  @mousedown="mousedown"
+                  @mouseleave="mouseleave"
+                />
+                <audio id="audio-player" hidden></audio>
+              </div>
+              <el-button-group id="pressKey">
+                <el-button
+                  size="small"
+                  style="width: 25%"
+                  type="info"
+                  @click="pressKey(82)"
+                >
+                  <el-icon :size="13" style="vertical-align: middle">
+                    <Menu />
+                  </el-icon>
+                </el-button>
+                <el-button
+                  size="small"
+                  style="width: 25%"
+                  type="info"
+                  @click="pressKey(187)"
+                >
+                  <el-icon :size="13" style="vertical-align: middle">
+                    <CopyDocument />
+                  </el-icon>
+                </el-button>
+                <el-button
+                  size="small"
+                  style="width: 25%"
+                  type="info"
+                  @click="pressKey(3)"
+                >
+                  <el-icon :size="13" style="vertical-align: middle">
+                    <House />
+                  </el-icon>
+                </el-button>
+                <el-button
+                  size="small"
+                  style="width: 25%"
+                  type="info"
+                  @click="pressKey(4)"
+                >
+                  <el-icon :size="13" style="vertical-align: middle">
+                    <Back />
+                  </el-icon>
+                </el-button>
+              </el-button-group>
             </div>
-            <el-button-group id="pressKey">
-              <el-button
-                size="small"
-                style="width: 25%"
-                type="info"
-                @click="pressKey(82)"
+            <div style="width: 50px; text-align: right">
+              <el-tooltip
+                :enterable="false"
+                effect="dark"
+                :content="$t('androidRemoteTS.code.projectionMode')"
+                :placement="tabPosition == 'left' ? 'right' : 'left'"
+                :offset="15"
               >
-                <el-icon :size="13" style="vertical-align: middle">
-                  <Menu />
-                </el-icon>
-              </el-button>
-              <el-button
-                size="small"
-                style="width: 25%"
-                type="info"
-                @click="pressKey(187)"
+                <div>
+                  <el-dropdown
+                    :hide-on-click="false"
+                    trigger="click"
+                    placement="right"
+                    style="margin-top: 4px"
+                  >
+                    <el-button size="small" type="info" circle>
+                      <el-icon :size="12" style="vertical-align: middle">
+                        <VideoCamera />
+                      </el-icon>
+                    </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu class="divider">
+                        <el-radio-group
+                          v-model="screenMode"
+                          v-loading="loading"
+                          size="mini"
+                          @change="changeScreenMode"
+                        >
+                          <el-radio-button label="Scrcpy"></el-radio-button>
+                          <el-radio-button label="Minicap"></el-radio-button>
+                        </el-radio-group>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
+              </el-tooltip>
+              <el-tooltip
+                :enterable="false"
+                effect="dark"
+                :content="$t('androidRemoteTS.code.frameNumber')"
+                :placement="tabPosition == 'left' ? 'right' : 'left'"
+                :offset="15"
               >
-                <el-icon :size="13" style="vertical-align: middle">
-                  <CopyDocument />
-                </el-icon>
-              </el-button>
-              <el-button
-                size="small"
-                style="width: 25%"
-                type="info"
-                @click="pressKey(3)"
+                <div>
+                  <el-dropdown
+                    :hide-on-click="false"
+                    trigger="click"
+                    placement="right"
+                    style="margin-top: 4px"
+                  >
+                    <el-button size="small" type="info" circle>
+                      <el-icon :size="12" style="vertical-align: middle">
+                        <View />
+                      </el-icon>
+                    </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu class="divider">
+                        <el-radio-group
+                          v-model="pic"
+                          v-loading="loading"
+                          size="mini"
+                          @change="changePic"
+                        >
+                          <el-radio-button
+                            :label="$t('androidRemoteTS.low')"
+                          ></el-radio-button>
+                          <el-radio-button
+                            :label="$t('androidRemoteTS.middle')"
+                          ></el-radio-button>
+                          <el-radio-button
+                            :label="$t('androidRemoteTS.high')"
+                          ></el-radio-button>
+                        </el-radio-group>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
+              </el-tooltip>
+              <el-tooltip
+                :enterable="false"
+                effect="dark"
+                :content="$t('androidRemoteTS.code.manualRepair')"
+                :placement="tabPosition == 'left' ? 'right' : 'left'"
+                :offset="15"
               >
-                <el-icon :size="13" style="vertical-align: middle">
-                  <House />
-                </el-icon>
-              </el-button>
-              <el-button
-                size="small"
-                style="width: 25%"
-                type="info"
-                @click="pressKey(4)"
-              >
-                <el-icon :size="13" style="vertical-align: middle">
-                  <Back />
-                </el-icon>
-              </el-button>
-            </el-button-group>
-          </div>
-          <div style="width:50px; text-align: right">
-            <el-tooltip
-              :enterable="false"
-              effect="dark"
-              :content="$t('androidRemoteTS.code.projectionMode')"
-              :placement="tabPosition == 'left' ? 'right' : 'left'"
-              :offset="15"
-            >
-              <div>
-                <el-dropdown
-                  :hide-on-click="false"
-                  trigger="click"
-                  placement="right"
-                  style="margin-top: 4px"
-                >
-                  <el-button size="small" type="info" circle>
-                    <el-icon :size="12" style="vertical-align: middle">
-                      <VideoCamera />
-                    </el-icon>
-                  </el-button>
-                  <template #dropdown>
-                    <el-dropdown-menu class="divider">
-                      <el-radio-group
-                        v-model="screenMode"
+                <div>
+                  <el-dropdown
+                    :hide-on-click="false"
+                    trigger="click"
+                    placement="right"
+                    style="margin-top: 4px"
+                  >
+                    <el-button size="small" type="info" circle>
+                      <el-icon :size="12" style="vertical-align: middle">
+                        <Place />
+                      </el-icon>
+                    </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu
                         v-loading="loading"
-                        size="mini"
-                        @change="changeScreenMode"
+                        class="divider"
+                        element-loading-background="rgba(255, 255, 255, 1)"
                       >
-                        <el-radio-button label="Scrcpy"></el-radio-button>
-                        <el-radio-button label="Minicap"></el-radio-button>
-                      </el-radio-group>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
-              </div>
-            </el-tooltip>
-            <el-tooltip
-              :enterable="false"
-              effect="dark"
-              :content="$t('androidRemoteTS.code.frameNumber')"
-              :placement="tabPosition == 'left' ? 'right' : 'left'"
-              :offset="15"
-            >
-              <div>
-                <el-dropdown
-                  :hide-on-click="false"
-                  trigger="click"
-                  placement="right"
-                  style="margin-top: 4px"
-                >
-                  <el-button size="small" type="info" circle>
-                    <el-icon :size="12" style="vertical-align: middle">
-                      <View />
-                    </el-icon>
-                  </el-button>
-                  <template #dropdown>
-                    <el-dropdown-menu class="divider">
-                      <el-radio-group
-                        v-model="pic"
-                        v-loading="loading"
-                        size="mini"
-                        @change="changePic"
-                      >
-                        <el-radio-button
-                          :label="$t('androidRemoteTS.low')"
-                        ></el-radio-button>
-                        <el-radio-button
-                          :label="$t('androidRemoteTS.middle')"
-                        ></el-radio-button>
-                        <el-radio-button
-                          :label="$t('androidRemoteTS.high')"
-                        ></el-radio-button>
-                      </el-radio-group>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
-              </div>
-            </el-tooltip>
-            <el-tooltip
-              :enterable="false"
-              effect="dark"
-              :content="$t('androidRemoteTS.code.manualRepair')"
-              :placement="tabPosition == 'left' ? 'right' : 'left'"
-              :offset="15"
-            >
-              <div>
-                <el-dropdown
-                  :hide-on-click="false"
-                  trigger="click"
-                  placement="right"
-                  style="margin-top: 4px"
-                >
-                  <el-button size="small" type="info" circle>
-                    <el-icon :size="12" style="vertical-align: middle">
-                      <Place />
-                    </el-icon>
-                  </el-button>
-                  <template #dropdown>
-                    <el-dropdown-menu
-                      v-loading="loading"
-                      class="divider"
-                      element-loading-background="rgba(255, 255, 255, 1)"
-                    >
-                      <el-button-group>
-                        <el-tooltip
-                          effect="dark"
-                          :content="$t('androidRemoteTS.code.fixBlackScreen')"
-                          placement="top"
-                        >
+                        <el-button-group>
+                          <el-tooltip
+                            effect="dark"
+                            :content="$t('androidRemoteTS.code.fixBlackScreen')"
+                            placement="top"
+                          >
+                            <el-button
+                              size="small"
+                              type="info"
+                              circle
+                              :disabled="screenMode !== 'Minicap'"
+                              @click="changePic('fixed')"
+                            >
+                              <el-icon
+                                :size="14"
+                                style="vertical-align: middle"
+                              >
+                                <Cellphone />
+                              </el-icon>
+                            </el-button>
+                          </el-tooltip>
+                          <el-tooltip
+                            effect="dark"
+                            :content="$t('androidRemoteTS.code.fixTouch')"
+                            placement="top"
+                          >
+                            <el-button
+                              size="small"
+                              type="info"
+                              circle
+                              @click="fixTouch"
+                            >
+                              <el-icon
+                                :size="14"
+                                style="vertical-align: middle"
+                              >
+                                <Pointer />
+                              </el-icon>
+                            </el-button>
+                          </el-tooltip>
+                          <el-tooltip
+                            effect="dark"
+                            :content="$t('androidRemoteTS.code.fixScreen')"
+                            placement="top"
+                          >
+                            <el-button
+                              size="small"
+                              type="info"
+                              circle
+                              @click="fixOri"
+                            >
+                              <el-icon
+                                :size="14"
+                                style="vertical-align: middle"
+                              >
+                                <Postcard />
+                              </el-icon>
+                            </el-button>
+                          </el-tooltip>
+                        </el-button-group>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
+              </el-tooltip>
+              <el-tooltip
+                :enterable="false"
+                effect="dark"
+                :content="$t('androidRemoteTS.code.remoteAudioTran')"
+                :placement="tabPosition == 'left' ? 'right' : 'left'"
+                :offset="15"
+              >
+                <div>
+                  <el-dropdown
+                    :hide-on-click="false"
+                    trigger="click"
+                    placement="right"
+                    style="margin-top: 4px"
+                  >
+                    <el-button size="small" type="info" circle>
+                      <el-icon :size="12" style="vertical-align: middle">
+                        <Service />
+                      </el-icon>
+                    </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu class="divider">
+                        <el-button-group>
                           <el-button
                             size="small"
-                            type="info"
+                            type="success"
                             circle
-                            :disabled="screenMode !== 'Minicap'"
-                            @click="changePic('fixed')"
+                            :disabled="isConnectAudio"
+                            @click="playAudio"
                           >
                             <el-icon :size="14" style="vertical-align: middle">
-                              <Cellphone />
+                              <Bell />
                             </el-icon>
                           </el-button>
-                        </el-tooltip>
-                        <el-tooltip
-                          effect="dark"
-                          :content="$t('androidRemoteTS.code.fixTouch')"
-                          placement="top"
-                        >
                           <el-button
                             size="small"
-                            type="info"
+                            type="danger"
                             circle
-                            @click="fixTouch"
+                            :disabled="!isConnectAudio"
+                            @click="destroyAudio"
                           >
                             <el-icon :size="14" style="vertical-align: middle">
-                              <Pointer />
+                              <MuteNotification />
                             </el-icon>
                           </el-button>
-                        </el-tooltip>
-                        <el-tooltip
-                          effect="dark"
-                          :content="$t('androidRemoteTS.code.fixScreen')"
-                          placement="top"
-                        >
-                          <el-button
-                            size="small"
-                            type="info"
-                            circle
-                            @click="fixOri"
-                          >
-                            <el-icon :size="14" style="vertical-align: middle">
-                              <Postcard />
-                            </el-icon>
-                          </el-button>
-                        </el-tooltip>
-                      </el-button-group>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
-              </div>
-            </el-tooltip>
-            <el-tooltip
-              :enterable="false"
-              effect="dark"
-              :content="$t('androidRemoteTS.code.remoteAudioTran')"
-              :placement="tabPosition == 'left' ? 'right' : 'left'"
-              :offset="15"
-            >
-              <div>
-                <el-dropdown
-                  :hide-on-click="false"
-                  trigger="click"
-                  placement="right"
-                  style="margin-top: 4px"
-                >
-                  <el-button size="small" type="info" circle>
-                    <el-icon :size="12" style="vertical-align: middle">
-                      <Service />
-                    </el-icon>
-                  </el-button>
-                  <template #dropdown>
-                    <el-dropdown-menu class="divider">
-                      <el-button-group>
-                        <el-button
-                          size="small"
-                          type="success"
-                          circle
-                          :disabled="isConnectAudio"
-                          @click="playAudio"
-                        >
-                          <el-icon :size="14" style="vertical-align: middle">
-                            <Bell />
-                          </el-icon>
-                        </el-button>
-                        <el-button
-                          size="small"
-                          type="danger"
-                          circle
-                          :disabled="!isConnectAudio"
-                          @click="destroyAudio"
-                        >
-                          <el-icon :size="14" style="vertical-align: middle">
-                            <MuteNotification />
-                          </el-icon>
-                        </el-button>
-                        <!-- <el-button
+                          <!-- <el-button
                             size="small"
                             type="info"
                             @click="resetAudioPlayer"
@@ -2199,119 +2212,162 @@ const checkAlive = () => {
                             <Refresh/>
                           </el-icon>
                         </el-button> -->
-                      </el-button-group>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
-              </div>
-            </el-tooltip>
-            <el-tooltip
-              :enterable="false"
-              effect="dark"
-              :content="$t('androidRemoteTS.code.batterySimulation')"
-              :placement="tabPosition == 'left' ? 'right' : 'left'"
-              :offset="15"
-            >
-              <div>
-                <el-dropdown
-                  :hide-on-click="false"
-                  trigger="click"
-                  placement="right"
-                  style="margin-top: 4px"
-                >
-                  <el-button size="small" type="info" circle>
+                        </el-button-group>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
+              </el-tooltip>
+              <el-tooltip
+                :enterable="false"
+                effect="dark"
+                :content="$t('androidRemoteTS.code.batterySimulation')"
+                :placement="tabPosition == 'left' ? 'right' : 'left'"
+                :offset="15"
+              >
+                <div>
+                  <el-dropdown
+                    :hide-on-click="false"
+                    trigger="click"
+                    placement="right"
+                    style="margin-top: 4px"
+                  >
+                    <el-button size="small" type="info" circle>
+                      <el-icon :size="12" style="vertical-align: middle">
+                        <Connection />
+                      </el-icon>
+                    </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu class="divider">
+                        <el-button-group>
+                          <el-tooltip
+                            effect="dark"
+                            :content="
+                              $t('androidRemoteTS.code.simulatePowerOutage')
+                            "
+                            placement="top"
+                          >
+                            <el-button
+                              size="small"
+                              type="info"
+                              circle
+                              @click="batteryDisconnect"
+                            >
+                              <el-icon
+                                :size="14"
+                                style="vertical-align: middle"
+                              >
+                                <VideoPause />
+                              </el-icon>
+                            </el-button>
+                          </el-tooltip>
+                          <el-tooltip
+                            effect="dark"
+                            :content="$t('androidRemoteTS.code.reset')"
+                            placement="top"
+                          >
+                            <el-button
+                              size="small"
+                              type="info"
+                              circle
+                              @click="batteryReset"
+                            >
+                              <el-icon
+                                :size="14"
+                                style="vertical-align: middle"
+                              >
+                                <Refresh />
+                              </el-icon>
+                            </el-button>
+                          </el-tooltip>
+                        </el-button-group>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
+              </el-tooltip>
+              <el-tooltip
+                effect="dark"
+                :content="$t('androidRemoteTS.code.physicalLookup')"
+                :placement="tabPosition == 'left' ? 'right' : 'left'"
+              >
+                <div style="margin-top: 4px">
+                  <el-button
+                    size="small"
+                    type="info"
+                    circle
+                    @click="searchDevice"
+                  >
                     <el-icon :size="12" style="vertical-align: middle">
-                      <Connection />
+                      <Search />
                     </el-icon>
                   </el-button>
-                  <template #dropdown>
-                    <el-dropdown-menu class="divider">
-                      <el-button-group>
-                        <el-tooltip
-                          effect="dark"
-                          :content="
-                            $t('androidRemoteTS.code.simulatePowerOutage')
-                          "
-                          placement="top"
-                        >
-                          <el-button
-                            size="small"
-                            type="info"
-                            circle
-                            @click="batteryDisconnect"
+                </div>
+              </el-tooltip>
+              <el-tooltip
+                :enterable="false"
+                effect="dark"
+                :content="$t('androidRemoteTS.code.BV')"
+                :placement="tabPosition == 'left' ? 'right' : 'left'"
+                :offset="15"
+              >
+                <div>
+                  <el-dropdown
+                    :hide-on-click="false"
+                    trigger="click"
+                    placement="right"
+                    style="margin-top: 4px"
+                  >
+                    <el-button size="small" type="primary" circle>
+                      <el-icon :size="12" style="vertical-align: middle">
+                        <Operation />
+                      </el-icon>
+                    </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu class="divider">
+                        <div style="text-align: center">
+                          <el-icon
+                            :size="14"
+                            style="color: #909399; vertical-align: middle"
                           >
-                            <el-icon :size="14" style="vertical-align: middle">
-                              <VideoPause />
-                            </el-icon>
-                          </el-button>
-                        </el-tooltip>
-                        <el-tooltip
-                          effect="dark"
-                          :content="$t('androidRemoteTS.code.reset')"
-                          placement="top"
-                        >
-                          <el-button
-                            size="small"
-                            type="info"
-                            circle
-                            @click="batteryReset"
-                          >
-                            <el-icon :size="14" style="vertical-align: middle">
-                              <Refresh />
-                            </el-icon>
-                          </el-button>
-                        </el-tooltip>
-                      </el-button-group>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
-              </div>
-            </el-tooltip>
-            <el-tooltip
-              effect="dark"
-              :content="$t('androidRemoteTS.code.physicalLookup')"
-              :placement="tabPosition == 'left' ? 'right' : 'left'"
-            >
-              <div style="margin-top: 4px">
-                <el-button
-                  size="small"
-                  type="info"
-                  circle
-                  @click="searchDevice"
-                >
-                  <el-icon :size="12" style="vertical-align: middle">
-                    <Search />
-                  </el-icon>
-                </el-button>
-              </div>
-            </el-tooltip>
-            <el-tooltip
-              :enterable="false"
-              effect="dark"
-              :content="$t('androidRemoteTS.code.BV')"
-              :placement="tabPosition == 'left' ? 'right' : 'left'"
-              :offset="15"
-            >
-              <div>
-                <el-dropdown
-                  :hide-on-click="false"
-                  trigger="click"
-                  placement="right"
-                  style="margin-top: 4px"
-                >
-                  <el-button size="small" type="primary" circle>
-                    <el-icon :size="12" style="vertical-align: middle">
-                      <Operation />
-                    </el-icon>
-                  </el-button>
-                  <template #dropdown>
-                    <el-dropdown-menu class="divider">
-                      <div style="text-align: center">
+                            <Sunny />
+                          </el-icon>
+                          <el-divider direction="vertical"></el-divider>
+                          <el-button-group>
+                            <el-button
+                              size="small"
+                              type="info"
+                              circle
+                              @click="pressKey(220)"
+                            >
+                              <el-icon
+                                :size="12"
+                                style="vertical-align: middle"
+                              >
+                                <CaretLeft />
+                              </el-icon>
+                            </el-button>
+                            <el-button
+                              size="small"
+                              type="info"
+                              circle
+                              @click="pressKey(221)"
+                            >
+                              <el-icon
+                                :size="12"
+                                style="vertical-align: middle"
+                              >
+                                <CaretRight />
+                              </el-icon>
+                            </el-button>
+                          </el-button-group>
+                        </div>
+                        <el-divider></el-divider>
                         <el-icon
                           :size="14"
                           style="color: #909399; vertical-align: middle"
                         >
-                          <Sunny />
+                          <Phone />
                         </el-icon>
                         <el-divider direction="vertical"></el-divider>
                         <el-button-group>
@@ -2319,144 +2375,112 @@ const checkAlive = () => {
                             size="small"
                             type="info"
                             circle
-                            @click="pressKey(220)"
+                            @click="pressKey(24)"
                           >
                             <el-icon :size="12" style="vertical-align: middle">
-                              <CaretLeft />
+                              <Plus />
                             </el-icon>
                           </el-button>
                           <el-button
                             size="small"
                             type="info"
                             circle
-                            @click="pressKey(221)"
+                            @click="pressKey(164)"
                           >
                             <el-icon :size="12" style="vertical-align: middle">
-                              <CaretRight />
+                              <MuteNotification />
+                            </el-icon>
+                          </el-button>
+                          <el-button
+                            size="small"
+                            type="info"
+                            circle
+                            @click="pressKey(25)"
+                          >
+                            <el-icon :size="12" style="vertical-align: middle">
+                              <Minus />
                             </el-icon>
                           </el-button>
                         </el-button-group>
-                      </div>
-                      <el-divider></el-divider>
-                      <el-icon
-                        :size="14"
-                        style="color: #909399; vertical-align: middle"
-                      >
-                        <Phone />
-                      </el-icon>
-                      <el-divider direction="vertical"></el-divider>
-                      <el-button-group>
-                        <el-button
-                          size="small"
-                          type="info"
-                          circle
-                          @click="pressKey(24)"
-                        >
-                          <el-icon :size="12" style="vertical-align: middle">
-                            <Plus />
-                          </el-icon>
-                        </el-button>
-                        <el-button
-                          size="small"
-                          type="info"
-                          circle
-                          @click="pressKey(164)"
-                        >
-                          <el-icon :size="12" style="vertical-align: middle">
-                            <MuteNotification />
-                          </el-icon>
-                        </el-button>
-                        <el-button
-                          size="small"
-                          type="info"
-                          circle
-                          @click="pressKey(25)"
-                        >
-                          <el-icon :size="12" style="vertical-align: middle">
-                            <Minus />
-                          </el-icon>
-                        </el-button>
-                      </el-button-group>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
-              </div>
-            </el-tooltip>
-            <el-tooltip
-              effect="dark"
-              :content="$t('androidRemoteTS.code.dial')"
-              :placement="tabPosition == 'left' ? 'right' : 'left'"
-            >
-              <div style="margin-top: 4px">
-                <el-button
-                  size="small"
-                  type="primary"
-                  circle
-                  @click="pressKey(5)"
-                >
-                  <el-icon :size="12" style="vertical-align: middle">
-                    <PhoneFilled />
-                  </el-icon>
-                </el-button>
-              </div>
-            </el-tooltip>
-            <el-tooltip
-              effect="dark"
-              :content="$t('androidRemoteTS.code.photograph')"
-              :placement="tabPosition == 'left' ? 'right' : 'left'"
-            >
-              <div style="margin-top: 4px">
-                <el-button
-                  size="small"
-                  type="primary"
-                  circle
-                  @click="pressKey(27)"
-                >
-                  <el-icon :size="12" style="vertical-align: middle">
-                    <Camera />
-                  </el-icon>
-                </el-button>
-              </div>
-            </el-tooltip>
-            <el-tooltip
-              effect="dark"
-              :content="$t('androidRemoteTS.code.browser')"
-              :placement="tabPosition == 'left' ? 'right' : 'left'"
-            >
-              <div style="margin-top: 4px">
-                <el-button
-                  size="small"
-                  type="primary"
-                  circle
-                  @click="pressKey(64)"
-                >
-                  <el-icon :size="12" style="vertical-align: middle">
-                    <Position />
-                  </el-icon>
-                </el-button>
-              </div>
-            </el-tooltip>
-            <el-tooltip
-              effect="dark"
-              :content="$t('androidRemoteTS.code.LUS')"
-              :placement="tabPosition == 'left' ? 'right' : 'left'"
-            >
-              <div style="margin-top: 4px">
-                <el-button
-                  size="small"
-                  type="primary"
-                  circle
-                  @click="pressKey(26)"
-                >
-                  <el-icon :size="12" style="vertical-align: middle">
-                    <SwitchButton />
-                  </el-icon>
-                </el-button>
-              </div>
-            </el-tooltip>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
+              </el-tooltip>
+              <el-tooltip
+                effect="dark"
+                :content="$t('androidRemoteTS.code.dial')"
+                :placement="tabPosition == 'left' ? 'right' : 'left'"
+              >
+                <div style="margin-top: 4px">
+                  <el-button
+                    size="small"
+                    type="primary"
+                    circle
+                    @click="pressKey(5)"
+                  >
+                    <el-icon :size="12" style="vertical-align: middle">
+                      <PhoneFilled />
+                    </el-icon>
+                  </el-button>
+                </div>
+              </el-tooltip>
+              <el-tooltip
+                effect="dark"
+                :content="$t('androidRemoteTS.code.photograph')"
+                :placement="tabPosition == 'left' ? 'right' : 'left'"
+              >
+                <div style="margin-top: 4px">
+                  <el-button
+                    size="small"
+                    type="primary"
+                    circle
+                    @click="pressKey(27)"
+                  >
+                    <el-icon :size="12" style="vertical-align: middle">
+                      <Camera />
+                    </el-icon>
+                  </el-button>
+                </div>
+              </el-tooltip>
+              <el-tooltip
+                effect="dark"
+                :content="$t('androidRemoteTS.code.browser')"
+                :placement="tabPosition == 'left' ? 'right' : 'left'"
+              >
+                <div style="margin-top: 4px">
+                  <el-button
+                    size="small"
+                    type="primary"
+                    circle
+                    @click="pressKey(64)"
+                  >
+                    <el-icon :size="12" style="vertical-align: middle">
+                      <Position />
+                    </el-icon>
+                  </el-button>
+                </div>
+              </el-tooltip>
+              <el-tooltip
+                effect="dark"
+                :content="$t('androidRemoteTS.code.LUS')"
+                :placement="tabPosition == 'left' ? 'right' : 'left'"
+              >
+                <div style="margin-top: 4px">
+                  <el-button
+                    size="small"
+                    type="primary"
+                    circle
+                    @click="pressKey(26)"
+                  >
+                    <el-icon :size="12" style="vertical-align: middle">
+                      <SwitchButton />
+                    </el-icon>
+                  </el-button>
+                </div>
+              </el-tooltip>
+            </div>
           </div>
-          </div>
-          
         </el-card>
       </el-col>
 
@@ -2736,63 +2760,57 @@ const checkAlive = () => {
             <el-tabs type="border-card" stretch v-model="activeIntallTab">
               <el-tab-pane name="pushInstallPane">
                 <template #label>
-                    <strong>{{
-                      $t('androidRemoteTS.code.pushInstall')
-                    }}</strong>
+                  <strong>{{ $t('androidRemoteTS.code.pushInstall') }}</strong>
                 </template>
                 <div style="text-align: center">
-                    <el-upload
-                      v-loading="uploadLoading"
-                      drag
-                      action=""
-                      :with-credentials="true"
-                      :limit="1"
-                      :before-upload="beforeAvatarUpload2"
-                      :on-exceed="limitOut"
-                      :http-request="uploadPackage"
-                    >
-                      <i class="el-icon-upload"></i>
-                      <div class="el-upload__text">
-                        {{ $t('androidRemoteTS.code.apkFile') }}
-                        <em>{{ $t('devices.detail.uploadImg') }}</em>
+                  <el-upload
+                    v-loading="uploadLoading"
+                    drag
+                    action=""
+                    :with-credentials="true"
+                    :limit="1"
+                    :before-upload="beforeAvatarUpload2"
+                    :on-exceed="limitOut"
+                    :http-request="uploadPackage"
+                  >
+                    <i class="el-icon-upload"></i>
+                    <div class="el-upload__text">
+                      {{ $t('androidRemoteTS.code.apkFile') }}
+                      <em>{{ $t('devices.detail.uploadImg') }}</em>
+                    </div>
+                    <template #tip>
+                      <div class="el-upload__tip">
+                        {{ $t('androidRemoteTS.code.onlyAPKFile') }}
                       </div>
-                      <template #tip>
-                        <div class="el-upload__tip">
-                          {{ $t('androidRemoteTS.code.onlyAPKFile') }}
-                        </div>
-                      </template>
-                    </el-upload>
+                    </template>
+                  </el-upload>
                 </div>
               </el-tab-pane>
               <el-tab-pane name="urlInstallPane">
                 <template #label>
-                    <strong>{{
-                      $t('androidRemoteTS.code.URLInstall')
-                    }}</strong>
+                  <strong>{{ $t('androidRemoteTS.code.URLInstall') }}</strong>
                 </template>
                 <el-input
-                    v-model="uploadUrl"
-                    clearable
-                    size="small"
-                    :placeholder="$t('androidRemoteTS.code.hint')"
-                  ></el-input>
-                  <div style="text-align: center; margin-top: 20px">
-                    <el-button
-                      size="mini"
-                      type="primary"
-                      :disabled="uploadUrl.length === 0"
-                      @click="install(uploadUrl)"
-                      >{{ $t('androidRemoteTS.code.send') }}
-                    </el-button>
-                  </div>
+                  v-model="uploadUrl"
+                  clearable
+                  size="small"
+                  :placeholder="$t('androidRemoteTS.code.hint')"
+                ></el-input>
+                <div style="text-align: center; margin-top: 20px">
+                  <el-button
+                    size="mini"
+                    type="primary"
+                    :disabled="uploadUrl.length === 0"
+                    @click="install(uploadUrl)"
+                    >{{ $t('androidRemoteTS.code.send') }}
+                  </el-button>
+                </div>
               </el-tab-pane>
               <el-tab-pane name="linkInstallPane">
                 <template #label>
-                    <strong>{{
-                      $t('androidRemoteTS.code.linkInstall')
-                    }}</strong>
+                  <strong>{{ $t('androidRemoteTS.code.linkInstall') }}</strong>
                 </template>
-                  <span style="color: #909399; margin-right: 10px">{{
+                <span style="color: #909399; margin-right: 10px">{{
                   $t('androidRemoteTS.code.associatedProject')
                 }}</span>
                 <el-select
@@ -2834,9 +2852,12 @@ const checkAlive = () => {
                 <div v-else>
                   <el-card style="height: 100%; margin-top: 20px">
                     <el-result
-                    icon="info"
-                    :title="$t('androidRemoteTS.code.hintText')"
-                    :sub-title="$t('androidRemoteTS.code.hintAssociatedProject')">
+                      icon="info"
+                      :title="$t('androidRemoteTS.code.hintText')"
+                      :sub-title="
+                        $t('androidRemoteTS.code.hintAssociatedProject')
+                      "
+                    >
                     </el-result>
                   </el-card>
                 </div>
@@ -3765,7 +3786,10 @@ const checkAlive = () => {
                                 label="content-desc"
                                 style="cursor: pointer"
                               >
-                                <span @click="copy(elementDetail['content-desc'])">{{ elementDetail['content-desc'] }}</span>
+                                <span
+                                  @click="copy(elementDetail['content-desc'])"
+                                  >{{ elementDetail['content-desc'] }}</span
+                                >
                                 <el-icon
                                   v-if="project && project['id']"
                                   color="green"
@@ -3782,7 +3806,7 @@ const checkAlive = () => {
                                     )
                                   "
                                 >
-                                <Pointer />
+                                  <Pointer />
                                 </el-icon>
                               </el-form-item>
                               <el-form-item
