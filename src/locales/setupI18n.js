@@ -16,16 +16,16 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 // locales/i18n.ts
-import { createI18n } from 'vue-i18n';
-import { getLocal } from '@/utils/cache/localStorage';
 import { LOCALE_KEY } from '@/config/cache';
 import { LOCALE, localeSetting } from '@/config/locale';
+import { getLocal } from '@/utils/cache/localStorage';
+import { createI18n } from 'vue-i18n';
 // 按需引入组件库语言包
-import zhCn from 'element-plus/es/locale/lang/zh-cn';
-import zhTW from 'element-plus/es/locale/lang/zh-tw';
 import en from 'element-plus/es/locale/lang/en';
 import ja from 'element-plus/es/locale/lang/ja';
-import { setHtmlPageLang, getSystemLanguage, supportLanguage } from './helper';
+import zhCn from 'element-plus/es/locale/lang/zh-cn';
+import zhTW from 'element-plus/es/locale/lang/zh-tw';
+import { getSystemLanguage, setHtmlPageLang } from './helper';
 // ...更多语言
 
 const langDefault = localeSetting.locale;
@@ -33,9 +33,9 @@ let localeData = null;
 
 function defaultLanguage() {
   const systemLocale = getSystemLanguage();
-  // 查找顺序：浏览器缓存、浏览器系统、默认
+  // 查找顺序：浏览器缓存、默认
   return (
-    getLocal(LOCALE_KEY)?.locale || supportLanguage(systemLocale) || langDefault
+    getLocal(LOCALE_KEY)?.locale || langDefault
   );
 }
 
