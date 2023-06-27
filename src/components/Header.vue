@@ -286,7 +286,7 @@ const changeLocaleHandler = function (val) {
             <el-menu-item index="1-4" @click="dialogToken = true"
               >Access Token</el-menu-item
             >
-            <el-sub-menu index="2">
+            <!-- <el-sub-menu index="2">
               <template #title
                 ><span class="flex-center font title"
                   ><img style="margin-right: 5px" width="20" :src="logo" />{{
@@ -323,7 +323,7 @@ const changeLocaleHandler = function (val) {
               >
                 REST API
               </el-menu-item>
-            </el-sub-menu>
+            </el-sub-menu> -->
             <el-menu-item index="1-3" @click="logout">{{
               $t('layout.signOut')
             }}</el-menu-item>
