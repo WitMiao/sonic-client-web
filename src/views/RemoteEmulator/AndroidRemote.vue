@@ -2757,7 +2757,7 @@ const checkAlive = () => {
             </el-row>
           </el-tab-pane>
           <el-tab-pane :label="$t('androidRemoteTS.code.app')" name="apps">
-            <el-tabs type="border-card" stretch v-model="activeIntallTab">
+            <el-tabs v-model="activeIntallTab" type="border-card" stretch>
               <el-tab-pane name="pushInstallPane">
                 <template #label>
                   <strong>{{ $t('androidRemoteTS.code.pushInstall') }}</strong>
@@ -2844,8 +2844,8 @@ const checkAlive = () => {
                 <div v-if="project !== null">
                   <package-list
                     v-if="project !== null"
-                    :projectId="project['id']"
-                    platformType="Android"
+                    :project-id="project['id']"
+                    platform-type="Android"
                     @select-package="selectPackage"
                   ></package-list>
                 </div>

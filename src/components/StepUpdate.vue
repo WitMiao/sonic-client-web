@@ -148,20 +148,20 @@ const monkey = ref({
       value: 5,
     },
     {
-      name: 'isOpenH5Listener',
-      value: true,
-    },
-    {
       name: 'isOpenPackageListener',
       value: true,
     },
     {
+      name: 'isOpenH5Listener',
+      value: false,
+    },
+    {
       name: 'isOpenActivityListener',
-      value: true,
+      value: false,
     },
     {
       name: 'isOpenNetworkListener',
-      value: true,
+      value: false,
     },
   ],
 });
@@ -188,23 +188,23 @@ const monkeyOptions = {
   },
   navEvent: {
     label: '系统导航事件权重',
-    des: '随机开关WIFI',
-  },
-  isOpenH5Listener: {
-    label: 'H5页面监听器',
-    des: '检测是否长时间停留在H5页面',
+    des: '安卓：随机开关WIFI；iOS：后台运行当前应用',
   },
   isOpenPackageListener: {
     label: '应用包名监听器',
-    des: '检测当前应用是否为被测应用',
+    des: '检测当前应用是否为被测应用，为否时将重新拉起被测应用',
+  },
+  isOpenH5Listener: {
+    label: 'H5页面监听器 (Android Only)',
+    des: '检测是否长时间停留在H5页面 (Android Only)',
   },
   isOpenActivityListener: {
-    label: '黑名单Activity监听器',
-    des: '检测当前Activity是否在黑名单内',
+    label: '黑名单Activity监听器 (Android Only)',
+    des: '检测当前Activity是否在黑名单内 (Android Only)',
   },
   isOpenNetworkListener: {
-    label: '网络状态监听器',
-    des: '检测设备是否处于飞行模式和WIFI网络',
+    label: '网络状态监听器 (Android Only)',
+    des: '检测设备是否处于飞行模式和WIFI网络 (Android Only)',
   },
 };
 const stepForm = ref(null);
@@ -292,6 +292,12 @@ const summitStep = () => {
     }
   });
 };
+// 当前步骤类型，是否需要展示ByActions的 alert 提示
+const shouldShowByActionsTip = (stepType) => {
+  return (
+    stepType === 'sendKeysByActions' || stepType === 'webViewSendKeysByActions'
+  );
+};
 const getPublicStepList = () => {
   axios
     .get('/controller/publicSteps/findNameByProjectId', {
@@ -323,7 +329,8 @@ const getStepInfo = (id) => {
         step.value.stepType === 'setDefaultFindWebViewElementInterval' ||
         step.value.stepType === 'longPress' ||
         step.value.stepType === 'checkImage' ||
-          step.value.stepType === 'setSnapshotMaxDepth'
+        step.value.stepType === 'setSnapshotMaxDepth' ||
+        step.value.stepType === 'scrollToEle'
       ) {
         step.value.content = parseInt(step.value.content);
       }
@@ -535,6 +542,10 @@ const androidOptions = ref([
             label: '拖拽控件元素',
           },
           {
+            value: 'scrollToEle',
+            label: '滚动到控件元素',
+          },
+          {
             value: 'longPress',
             label: '长按控件元素',
           },
@@ -617,6 +628,10 @@ const androidOptions = ref([
           {
             value: 'webViewSendKeys',
             label: '输入文本',
+          },
+          {
+            value: 'webViewSendKeysByActions',
+            label: '输入文本(Actions)',
           },
           {
             value: 'webViewClear',
@@ -925,8 +940,16 @@ const iOSOptions = ref([
             label: '输入文本',
           },
           {
+            value: 'sendKeysByActions',
+            label: '输入文本(Actions)',
+          },
+          {
             value: 'swipe2',
             label: '拖拽控件元素',
+          },
+          {
+            value: 'scrollToEle',
+            label: '滚动到控件元素',
           },
           {
             value: 'longPress',
@@ -1111,6 +1134,10 @@ const iOSOptions = ref([
         label: '自定义脚本',
       },
       {
+        value: 'monkey',
+        label: '随机事件',
+      },
+      {
         value: 'pause',
         label: '强制等待',
       },
@@ -1212,7 +1239,7 @@ onMounted(() => {
           prop="content"
         >
           <el-select
-            v-if="platform === 1"
+            v-if="step.platform === 1"
             v-model="step.content"
             placeholder="请选择系统按键"
           >
@@ -1237,7 +1264,7 @@ onMounted(() => {
             </el-option-group>
           </el-select>
           <el-select
-            v-if="platform === 2"
+            v-if="step.platform === 2"
             v-model="step.content"
             placeholder="请选择系统按键"
           >
@@ -1263,6 +1290,7 @@ onMounted(() => {
           <el-select v-model="step.content" placeholder="请选择触控模式">
             <el-option value="SONIC_APK"></el-option>
             <el-option value="ADB"></el-option>
+            <el-option value="APPIUM_UIAUTOMATOR2_SERVER"></el-option>
           </el-select>
         </el-form-item>
       </div>
@@ -1496,10 +1524,7 @@ onMounted(() => {
           :step="step"
         />
         <div>
-          <el-form-item
-            label="验证个数"
-            :model="step"
-          >
+          <el-form-item label="验证个数" :model="step">
             <el-select v-model="step.content" prop="content">
               <el-option label="大于" value=">"></el-option>
               <el-option label="小于" value="<"></el-option>
@@ -1509,12 +1534,12 @@ onMounted(() => {
             </el-select>
 
             <el-input-number
-                v-model="step.text"
-                placeholder="输入数量"
-                :min="0"
-                style="width: 150px; margin-left: 10px;"
-                prop="text"
-              ></el-input-number>
+              v-model="step.text"
+              placeholder="输入数量"
+              :min="0"
+              style="width: 150px; margin-left: 10px"
+              prop="text"
+            ></el-input-number>
           </el-form-item>
         </div>
       </div>
@@ -1780,10 +1805,7 @@ onMounted(() => {
           :step="step"
         />
         <div>
-          <el-form-item
-            label="验证个数"
-            :model="step"
-          >
+          <el-form-item label="验证个数" :model="step">
             <el-select v-model="step.content" prop="content">
               <el-option label="大于" value=">"></el-option>
               <el-option label="小于" value="<"></el-option>
@@ -1793,12 +1815,12 @@ onMounted(() => {
             </el-select>
 
             <el-input-number
-                v-model="step.text"
-                placeholder="输入数量"
-                :min="0"
-                style="width: 150px; margin-left: 10px;"
-                prop="text"
-              ></el-input-number>
+              v-model="step.text"
+              placeholder="输入数量"
+              :min="0"
+              style="width: 150px; margin-left: 10px"
+              prop="text"
+            ></el-input-number>
           </el-form-item>
         </div>
       </div>
@@ -1901,7 +1923,10 @@ onMounted(() => {
 
       <div
         v-if="
-          step.stepType === 'sendKeys' || step.stepType === 'webViewSendKeys'
+          step.stepType === 'sendKeys' ||
+          step.stepType === 'webViewSendKeys' ||
+          step.stepType === 'sendKeysByActions' ||
+          step.stepType === 'webViewSendKeysByActions'
         "
       >
         <el-alert
@@ -1909,8 +1934,17 @@ onMounted(() => {
           style="margin-bottom: 10px"
           close-text="Get!"
           type="info"
-          title="TIPS: 需要临时变量或全局变量时，可以添加{{变量名}}的形式"
-        />
+        >
+          <template #title>
+            <div v-if="shouldShowByActionsTip(step.stepType)">
+              TIPS: 在文本框需要先获取焦点，才能进行输入时，使用此方式。
+            </div>
+            <div>
+              需要临时变量或全局变量时，可以添加&#123;&#123; 变量名
+              &#125;&#125;的形式。
+            </div>
+          </template>
+        </el-alert>
         <element-select
           label="控件元素"
           place="请选择控件元素"
@@ -1942,33 +1976,6 @@ onMounted(() => {
         </el-form-item>
       </div>
 
-      <div v-if="step.stepType === 'sendKeysByActions'">
-        <el-alert
-          show-icon
-          style="margin-bottom: 10px"
-          close-text="Get!"
-          type="info"
-        >
-          <template #title>
-            <div>
-              TIPS: 使用Android Driver在Flutter页面输入文本时使用此方式。
-            </div>
-            <div>需要临时变量或全局变量时，可以添加{{ 变量名 }}的形式。</div>
-          </template>
-        </el-alert>
-        <element-select
-          label="控件元素"
-          place="请选择控件元素"
-          :index="0"
-          :project-id="projectId"
-          type="normal"
-          :step="step"
-        />
-        <el-form-item label="输入值">
-          <el-input v-model="step.content" placeholder="请输入值"></el-input>
-        </el-form-item>
-      </div>
-
       <div v-if="step.stepType === 'swipe2'">
         <element-select
           label="从控件"
@@ -1988,12 +1995,60 @@ onMounted(() => {
         />
       </div>
 
+      <div v-if="step.stepType === 'scrollToEle'">
+        <el-alert
+          show-icon
+          style="margin-bottom: 10px"
+          close-text="Get!"
+          type="info"
+          title="TIPS: 长列表的场景下，可通过该方法连续滚动，尝试让目标元素可见"
+        />
+        <element-select
+          label="目标控件"
+          place="请选择控件元素"
+          :index="0"
+          :project-id="projectId"
+          type="normal"
+          :step="step"
+        />
+        <el-form-item
+          label="滚动方向"
+          prop="content"
+          :rules="{
+            required: true,
+            message: '滚动方向不能为空',
+            trigger: 'change',
+          }"
+        >
+          <el-select v-model="step.text">
+            <el-option label="向下" value="down"></el-option>
+            <el-option label="向上" value="up"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item
+          label="最多滚动"
+          prop="text"
+          :rules="{
+            required: true,
+            message: '滚动次数不能为空',
+            trigger: 'change',
+          }"
+        >
+          <el-input-number
+            v-model="step.content"
+            :min="1"
+            :step="1"
+          ></el-input-number>
+          <span style="margin-left: 10px">次</span>
+        </el-form-item>
+      </div>
+
       <div v-if="step.stepType === 'setSnapshotMaxDepth'">
         <el-form-item label="最大深度">
           <el-input-number
-              v-model="step.content"
-              :min="1"
-              :max="60"
+            v-model="step.content"
+            :min="1"
+            :max="60"
           ></el-input-number>
         </el-form-item>
       </div>
@@ -2124,7 +2179,11 @@ onMounted(() => {
 
       <!--这里UI上还需要保留，用于在老版本升级上来之后，可以编辑用-->
       <div
-        v-if="step.stepType === 'getText' || step.stepType === 'getWebViewText' || step.stepType === 'getPocoText'"
+        v-if="
+          step.stepType === 'getText' ||
+          step.stepType === 'getWebViewText' ||
+          step.stepType === 'getPocoText'
+        "
       >
         <element-select
           label="控件元素"
@@ -2144,7 +2203,11 @@ onMounted(() => {
 
       <!-- >2.5版本之后，增强类型的文本断言 -->
       <div
-        v-if="step.stepType === 'assertText' || step.stepType === 'assertWebViewText' || step.stepType === 'assertPocoText'"
+        v-if="
+          step.stepType === 'assertText' ||
+          step.stepType === 'assertWebViewText' ||
+          step.stepType === 'assertPocoText'
+        "
       >
         <element-select
           label="控件元素"
@@ -2157,7 +2220,11 @@ onMounted(() => {
         <el-form-item
           label="断言类型"
           prop="content"
-          :rules="{required: true, message: '断言类型不能为空', trigger: 'change'}"
+          :rules="{
+            required: true,
+            message: '断言类型不能为空',
+            trigger: 'change',
+          }"
         >
           <el-select v-model="step.content">
             <el-option label="等于" value="equal"></el-option>
@@ -2169,11 +2236,13 @@ onMounted(() => {
         <el-form-item
           label="期望值"
           prop="text"
-          :rules="{required: true, message: '期望值不能为空', trigger: 'change'}">
-          <el-input
-            v-model="step.text"
-            placeholder="请输入期望值"
-          ></el-input>
+          :rules="{
+            required: true,
+            message: '期望值不能为空',
+            trigger: 'change',
+          }"
+        >
+          <el-input v-model="step.text" placeholder="请输入期望值"></el-input>
         </el-form-item>
       </div>
       <div v-if="step.stepType === 'getTitle' || step.stepType === 'getUrl'">
@@ -2641,6 +2710,12 @@ onMounted(() => {
                   <el-table-column>
                     <template #default="scope">
                       <el-popover
+                        :disabled="
+                          step.platform === 2 &&
+                          (scope.row.name === 'isOpenH5Listener' ||
+                            scope.row.name === 'isOpenActivityListener' ||
+                            scope.row.name === 'isOpenNetworkListener')
+                        "
                         placement="top"
                         :width="200"
                         trigger="hover"
@@ -2665,6 +2740,12 @@ onMounted(() => {
                       <el-switch
                         v-else
                         v-model="scope.row.value"
+                        :disabled="
+                          step.platform === 2 &&
+                          (scope.row.name === 'isOpenH5Listener' ||
+                            scope.row.name === 'isOpenActivityListener' ||
+                            scope.row.name === 'isOpenNetworkListener')
+                        "
                         active-color="#13ce66"
                         inactive-color="#ff4949"
                       >
@@ -2673,7 +2754,7 @@ onMounted(() => {
                   </el-table-column>
                 </el-table>
               </el-tab-pane>
-              <el-tab-pane label="Activity黑名单">
+              <el-tab-pane v-if="step.platform === 1" label="Activity黑名单">
                 <el-table :data="activityList" border :show-header="false">
                   <el-table-column>
                     <template #default="scope">

@@ -54,6 +54,7 @@ import {
 } from 'vue';
 import useClipboard from 'vue-clipboard3';
 import { useI18n } from 'vue-i18n';
+import PackageList from '@/components/PackageList.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import IOSPerf from '../../components/IOSPerf.vue';
@@ -1899,7 +1900,7 @@ const checkAlive = () => {
             </el-row>
           </el-tab-pane>
           <el-tab-pane :label="$t('androidRemoteTS.code.app')" name="apps">
-            <el-tabs type="border-card" stretch v-model="activeIntallTab">
+            <el-tabs v-model="activeIntallTab" type="border-card" stretch>
               <el-tab-pane name="pushInstallPane">
                 <template #label>
                   <strong>{{ $t('IOSRemote.installIPA') }}</strong>
@@ -1987,8 +1988,8 @@ const checkAlive = () => {
                 <div v-if="project !== null">
                   <package-list
                     v-if="project !== null"
-                    :projectId="project['id']"
-                    platformType="iOS"
+                    :project-id="project['id']"
+                    platform-type="iOS"
                     @select-package="selectPackage"
                   ></package-list>
                 </div>
@@ -2579,8 +2580,8 @@ const checkAlive = () => {
                       size="mini"
                       :loading="elementLoading"
                       :disabled="isDriverFinish === false"
-                      @click="getElement"
                       style="margin-left: 10px"
+                      @click="getElement"
                     >
                       <el-icon :size="12" style="vertical-align: middle">
                         <Search />
