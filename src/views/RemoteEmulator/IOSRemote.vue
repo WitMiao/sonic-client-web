@@ -54,7 +54,6 @@ import {
 } from 'vue';
 import useClipboard from 'vue-clipboard3';
 import { useI18n } from 'vue-i18n';
-import PackageList from '@/components/PackageList.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import IOSPerf from '../../components/IOSPerf.vue';
