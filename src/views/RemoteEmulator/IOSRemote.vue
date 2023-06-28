@@ -1450,12 +1450,19 @@ const checkAlive = () => {
                 />
                 <canvas
                   id="iosCap"
-                  :style="canvasRectInfo"
                   style="
                     display: inline-block;
                     min-height: 100%;
                     max-height: calc(100vh - 200px);
                   "
+                  :style="{
+                    width:
+                      directionStatus.value === 0 ||
+                      directionStatus.value === 180
+                        ? 'auto'
+                        : canvasRectInfo.width || '100%',
+                    height: canvasRectInfo.height,
+                  }"
                   @mouseup="mouseup"
                   @mousedown="mousedown"
                   @mouseleave="mouseleave"

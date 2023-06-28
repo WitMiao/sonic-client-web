@@ -16,7 +16,49 @@
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import { useRoute, useRouter } from 'vue-router';
+import defaultLogo from '@/assets/logo.png';
+import ColorImg from '@/components/ColorImg.vue';
+import ElementUpdate from '@/components/ElementUpdate.vue';
+import PackageList from '@/components/PackageList.vue';
+import Pageable from '@/components/Pageable.vue';
+import StepList from '@/components/StepList.vue';
+import StepLog from '@/components/StepLog.vue';
+import TestCaseList from '@/components/TestCaseList.vue';
+import axios from '@/http/axios';
+import {
+  Back,
+  Bell,
+  Camera,
+  CaretLeft,
+  CaretRight,
+  Cellphone,
+  Connection,
+  CopyDocument,
+  Delete,
+  Download,
+  House,
+  InfoFilled,
+  Menu,
+  Minus,
+  MuteNotification,
+  Operation,
+  Phone,
+  PhoneFilled,
+  Place,
+  Plus,
+  Pointer,
+  Position,
+  Postcard,
+  Refresh,
+  Search,
+  Service,
+  Sunny,
+  SwitchButton,
+  VideoCamera,
+  VideoPause,
+  View,
+} from '@element-plus/icons';
+import { ElMessage } from 'element-plus';
 import {
   computed,
   nextTick,
@@ -25,61 +67,19 @@ import {
   ref,
   watch,
 } from 'vue';
-import { useStore } from 'vuex';
-import axios from '@/http/axios';
-import { ElMessage } from 'element-plus';
 import useClipboard from 'vue-clipboard3';
-import ColorImg from '@/components/ColorImg.vue';
-import StepList from '@/components/StepList.vue';
-import TestCaseList from '@/components/TestCaseList.vue';
-import StepLog from '@/components/StepLog.vue';
-import ElementUpdate from '@/components/ElementUpdate.vue';
-import Pageable from '@/components/Pageable.vue';
-import PackageList from '@/components/PackageList.vue';
-import defaultLogo from '@/assets/logo.png';
-import {
-  VideoPause,
-  Refresh,
-  Connection,
-  Delete,
-  Place,
-  Download,
-  Search,
-  SwitchButton,
-  Position,
-  Pointer,
-  Camera,
-  Sunny,
-  Phone,
-  PhoneFilled,
-  Minus,
-  MuteNotification,
-  Plus,
-  CaretRight,
-  CaretLeft,
-  Operation,
-  Cellphone,
-  Menu,
-  CopyDocument,
-  House,
-  Back,
-  View,
-  InfoFilled,
-  Bell,
-  Service,
-  VideoCamera,
-  Postcard,
-} from '@element-plus/icons';
+import { useRoute, useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 
 import { useI18n } from 'vue-i18n';
 
-import AudioProcessor from '@/lib/audio-processor';
 import wifiLogo from '@/assets/img/wifi.png';
+import AudioProcessor from '@/lib/audio-processor';
+import AndroidPerf from '../../components/AndroidPerf.vue';
+import PocoPane from '../../components/PocoPane.vue';
+import RemotePageHeader from '../../components/RemotePageHeader.vue';
 import RenderDeviceName from '../../components/RenderDeviceName.vue';
 import Scrcpy from './Scrcpy';
-import PocoPane from '../../components/PocoPane.vue';
-import AndroidPerf from '../../components/AndroidPerf.vue';
-import RemotePageHeader from '../../components/RemotePageHeader.vue';
 
 const pocoPaneRef = ref(null);
 const androidPerfRef = ref(null);
@@ -1928,7 +1928,14 @@ const checkAlive = () => {
                     min-height: 100%;
                     max-height: calc(100vh - 200px);
                   "
-                  :style="canvasRectInfo"
+                  :style="{
+                    width:
+                      directionStatus.value === 0 ||
+                      directionStatus.value === 180
+                        ? 'auto'
+                        : canvasRectInfo.width || '100%',
+                    height: canvasRectInfo.height,
+                  }"
                   autoplay
                   muted
                   @mouseup="mouseup"
@@ -1939,8 +1946,19 @@ const checkAlive = () => {
                 <canvas
                   v-show="screenMode != 'Scrcpy'"
                   id="canvas"
-                  style="display: inline-block"
-                  :style="canvasRectInfo"
+                  style="
+                    display: inline-block;
+                    min-height: 100%;
+                    max-height: calc(100vh - 200px);
+                  "
+                  :style="{
+                    width:
+                      directionStatus.value === 0 ||
+                      directionStatus.value === 180
+                        ? 'auto'
+                        : canvasRectInfo.width || '100%',
+                    height: canvasRectInfo.height,
+                  }"
                   @mouseup="mouseup"
                   @mousemove="mousemove"
                   @mousedown="mousedown"
