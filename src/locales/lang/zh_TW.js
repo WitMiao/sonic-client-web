@@ -190,7 +190,7 @@ const agent = {
   },
 };
 const devices = {
-  title: 'Sonic雲真機平台',
+  title: '鷹角雲真機平台',
   list: '設備清單',
   form: {
     model: '設備型號',
@@ -273,7 +273,7 @@ const layout = {
   signOut: '登出',
   aboutSonic: '關於Sonic',
   backHome: '回到首頁',
-  welcomeSpeech: '歡迎來到Sonic雲真機測試平台，請選擇項目進入',
+  welcomeSpeech: '歡迎來到鷹角雲真機測試平台，請選擇項目進入',
   addProject: '新增項目',
   officialWebSite: 'Sonic官方網站',
   document: '使用文档',

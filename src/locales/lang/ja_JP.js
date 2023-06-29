@@ -190,7 +190,7 @@ const agent = {
   },
 };
 const devices = {
-  title: 'Sonicクラウドデバイスプラットフォーム',
+  title: 'Hypergryphクラウドデバイスプラットフォーム',
   list: 'デバイスリスト',
   form: {
     model: 'モデル',
@@ -275,7 +275,7 @@ const layout = {
   aboutSonic: 'Sonicについて',
   backHome: 'ホームページに戻る',
   welcomeSpeech:
-    'Sonicクラウドデバイステストプラットフォームへようこそ、プロジェクトを選んでください',
+    'Hypergryphクラウドデバイステストプラットフォームへようこそ、プロジェクトを選んでください',
   addProject: 'プロジェクト追加',
   officialWebSite: 'Sonic公式サイト',
   document: '使用文档',

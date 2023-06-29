@@ -246,7 +246,7 @@ const agent = {
   },
 };
 const devices = {
-  title: 'Sonic Cloud',
+  title: 'Hypergryph Cloud',
   list: 'Device List',
   form: {
     model: 'Model',
@@ -330,7 +330,7 @@ const layout = {
   aboutSonic: 'About Sonic',
   backHome: 'Home',
   welcomeSpeech:
-    'Welcome to Sonic cloud real machine testing platform. Please select the project to enter.',
+    'Welcome to Hypergryph cloud real machine testing platform. Please select the project to enter.',
   addProject: 'New Project',
   officialWebSite: 'Sonic Official WebSite',
   document: 'Document',
