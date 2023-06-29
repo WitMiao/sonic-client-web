@@ -32,14 +32,17 @@ const config = ref({
   ldapEnable: false,
 });
 const getLoginConfig = () => {
-    axios.get('/controller/users/loginConfig').then((resp) => {
-    if (resp.code === 2000) {
+  axios
+    .get('/controller/users/loginConfig')
+    .then((resp) => {
+      if (resp.code === 2000) {
+        configLoading.value = false;
+        config.value = resp.data;
+      }
+    })
+    .catch((error) => {
       configLoading.value = false;
-      config.value = resp.data;
-    }
-  }).catch ((error)=> {
-    configLoading.value = false;
-  })
+    });
 };
 const loginPost = (u) => {
   loading.value = true;
@@ -94,7 +97,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <img
+  <!-- <img
     class="play1"
     style="position: absolute; right: 40px; top: 20px; z-index: 9999"
     :src="logoT"
@@ -117,7 +120,7 @@ onMounted(() => {
     style="position: absolute; right: 120px; top: 140px; z-index: 9999"
     :src="logoT"
     width="50"
-  />
+  /> -->
   <div
     class="login"
     :style="
@@ -130,7 +133,7 @@ onMounted(() => {
       style="width: 550px"
       body-style="background-color:#FFFFFF;text-align:center;position:relative"
     >
-      <img :src="logo" width="270" />
+      <!-- <img :src="logo" width="270" /> -->
       <el-divider class="device-card-divider">{{
         $t('loginTS.testPlatform')
       }}</el-divider>
