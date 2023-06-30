@@ -3,7 +3,7 @@
   "version": "2.6.2",
   "author": "SonicCloudOrg",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "vite build",
     "serve": "vite preview",
     "eslint": "eslint src/ --ext .js,.vue --fix",
