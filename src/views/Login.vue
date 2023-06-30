@@ -1,14 +1,12 @@
 <script setup>
-import { onMounted, ref } from 'vue';
 import { ElMessage } from 'element-plus';
+import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 
 import { useI18n } from 'vue-i18n';
-import axios from '../http/axios';
-import logoT from '../assets/logo.png';
-import logo from '../assets/img/logo2.png';
 import background from '../assets/img/background.svg';
+import axios from '../http/axios';
 
 const { t: $t } = useI18n();
 
@@ -31,6 +29,24 @@ const config = ref({
   normalEnable: false,
   ldapEnable: false,
 });
+
+// 跨平台登录
+const quickLogin = async () => {
+  if (route.query.token) {
+    await store.commit('clearAuth');
+    const res = await axios.post('/controller/users/loginTechCenter');
+    if (res.code === 2000) {
+      store.commit('changeLogin', resp.data);
+      if (route.query.redirect) {
+        const { redirect } = route.query;
+        router.replace(redirect);
+      } else {
+        router.replace({ path: '/' });
+      }
+    }
+  }
+};
+
 const getLoginConfig = () => {
   axios
     .get('/controller/users/loginConfig')
@@ -38,6 +54,7 @@ const getLoginConfig = () => {
       if (resp.code === 2000) {
         configLoading.value = false;
         config.value = resp.data;
+        quickLogin();
       }
     })
     .catch((error) => {
