@@ -32,11 +32,14 @@ const config = ref({
 
 // 跨平台登录
 const quickLogin = async () => {
-  if (route.query.token) {
+  const token = route.query.token;
+  if (token) {
     await store.commit('clearAuth');
-    const res = await axios.post('/controller/users/loginTechCenter');
+    const res = await axios.post('/controller/users/loginTechCenter', {
+      token,
+    });
     if (res.code === 2000) {
-      store.commit('changeLogin', resp.data);
+      store.commit('changeLogin', res.data);
       if (route.query.redirect) {
         const { redirect } = route.query;
         router.replace(redirect);
