@@ -491,7 +491,8 @@ const loginTS = {
   user: {
     inputUserName: '请输入账户名',
     inputPassword: '请输入密码',
-    longin: '登 入',
+    longin: '登 录',
+    larkLogin: '飞书登录',
     register: '注 册',
   },
 };

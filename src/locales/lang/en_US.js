@@ -555,6 +555,7 @@ const loginTS = {
     inputUserName: 'Please input the account',
     inputPassword: 'Please input the password',
     longin: 'Login',
+    larkLogin: 'Lark Login',
     register: 'Register',
   },
 };

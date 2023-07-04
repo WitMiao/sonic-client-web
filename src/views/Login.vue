@@ -1,6 +1,6 @@
 <script setup>
 import { ElMessage } from 'element-plus';
-import { onMounted, ref } from 'vue';
+import { ref, onBeforeMount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 
@@ -30,19 +30,24 @@ const config = ref({
   ldapEnable: false,
 });
 
-// 跨平台登录
+// 跨平台登录&飞书登录
 const quickLogin = async () => {
   const token = route.query.token;
-  if (token) {
+  const code = route.query.code;
+  if (token || code) {
     await store.commit('clearAuth');
-    const res = await axios.post('/controller/users/loginTechCenter', {
+    const apiUrl = token
+      ? '/controller/users/login'
+      : '/controller/users/loginLark';
+    const res = await axios.post(apiUrl, {
       token,
+      code,
     });
     if (res.code === 2000) {
       store.commit('changeLogin', res.data);
-      if (route.query.redirect) {
-        const { redirect } = route.query;
-        router.replace(redirect);
+      if (route.query.redirect || route.query.state) {
+        const { redirect, state } = route.query;
+        router.replace(redirect || state);
       } else {
         router.replace({ path: '/' });
       }
@@ -87,6 +92,20 @@ const login = () => {
     }
   });
 };
+
+const feishuLoginUrl = 'https://open.feishu.cn/open-apis/authen/v1/index';
+const appId = 'cli_a22053769fb8500d';
+// 给飞书的重定向地址
+const redirectUrl = encodeURIComponent(`${location.origin}/Login`);
+// 给飞书的state, 此处给的是用户登录完重定向的地址, 无则返回首页
+const feishuState = encodeURIComponent(route.query.redirect || '/');
+const larkLogin = () => {
+  window.open(
+    `${feishuLoginUrl}?app_id=${appId}&redirect_uri=${redirectUrl}&state=${feishuState}`,
+    '_self'
+  );
+};
+
 const registerForm = ref(null);
 const registerIn = () => {
   registerForm.value.validate(async (valid) => {
@@ -111,7 +130,7 @@ const registerIn = () => {
   });
 };
 const loading = ref(false);
-onMounted(() => {
+onBeforeMount(() => {
   getLoginConfig();
 });
 </script>
@@ -204,6 +223,14 @@ onMounted(() => {
               :loading="loading"
               @click="login"
               >{{ $t('loginTS.user.longin') }}
+            </el-button>
+            <el-button
+              size="small"
+              type="success"
+              style="width: 100%; margin-top: 8px; margin-left: 0"
+              :loading="loading"
+              @click="larkLogin"
+              >{{ $t('loginTS.user.larkLogin') }}
             </el-button>
           </el-form>
         </el-tab-pane>

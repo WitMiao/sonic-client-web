@@ -489,7 +489,8 @@ const loginTS = {
   user: {
     inputUserName: '請輸入帳戶名',
     inputPassword: '請輸入密碼',
-    longin: '登入',
+    longin: '登 錄',
+    larkLogin: '飛書登錄',
     register: '註冊',
   },
 };
