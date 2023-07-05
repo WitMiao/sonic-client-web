@@ -98,7 +98,9 @@ const appId = 'cli_a22053769fb8500d';
 // 给飞书的重定向地址
 const redirectUrl = encodeURIComponent(`${location.origin}/Login`);
 // 给飞书的state, 此处给的是用户登录完重定向的地址, 无则返回首页
-const feishuState = encodeURIComponent(route.query.redirect || '/');
+const feishuState = encodeURIComponent(
+  route.query.redirect || '/Index/Devices'
+);
 const larkLogin = () => {
   window.open(
     `${feishuLoginUrl}?app_id=${appId}&redirect_uri=${redirectUrl}&state=${feishuState}`,
