@@ -37,7 +37,7 @@ const quickLogin = async () => {
   if (token || code) {
     await store.commit('clearAuth');
     const apiUrl = token
-      ? '/controller/users/login'
+      ? '/controller/users/loginTechCenter'
       : '/controller/users/loginLark';
     const res = await axios.post(apiUrl, {
       token,
