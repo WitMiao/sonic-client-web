@@ -483,11 +483,14 @@ onMounted(() => {
   getFilterOption();
   refresh();
   getAlertRobots();
+  setTimeout(() => {
+    refresh();
+  }, 500);
   if (isFlush.value === '1') {
     if (currentTab.value === 'device') {
       laterTimer.value = setInterval(refresh, 1500);
     }
-    timer.value = setInterval(refresh, 15000);
+    timer.value = setInterval(refresh, 5000);
   }
 });
 onUnmounted(() => {
