@@ -396,10 +396,7 @@ const handleFindAll = (pageNum, pageSize) => {
   if (pageNum) {
     currDevicesPage.value = pageNum;
   }
-  useRequest(() => findAll(currDevicesPage.value, pageSize), {
-    refreshOnWindowFocus: true,
-    refocusTimespan: 2000,
-  });
+  findAll(currDevicesPage.value, pageSize);
 };
 const getAllAgents = () => {
   axios
@@ -504,7 +501,10 @@ onBeforeMount(() => {
 const laterTimer = ref(null);
 onMounted(() => {
   getFilterOption();
-  refresh();
+  useRequest(refresh, {
+    refreshOnWindowFocus: true,
+    refocusTimespan: 2000,
+  });
   getAlertRobots();
   if (isFlush.value === '1') {
     if (currentTab.value === 'device') {
