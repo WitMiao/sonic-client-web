@@ -373,11 +373,13 @@ const findAll = (pageNum, pSize) => {
           }
         });
         // 有debug设备时，每隔1s刷新一次, 最多刷新3次
-        if (hasDebugDevice && refreshCount.value < 3) {
-          setTimeout(() => {
-            findAll();
-            refreshCount.value++;
-          }, 1000);
+        if (hasDebugDevice) {
+          if (refreshCount.value < 3) {
+            setTimeout(() => {
+              findAll();
+              refreshCount.value++;
+            }, 1000);
+          }
         } else {
           refreshCount.value = 0;
         }
