@@ -16,18 +16,17 @@
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import { ref, onMounted, watch, onUnmounted, onBeforeMount } from 'vue';
-import { useRouter } from 'vue-router';
-import { useI18n } from 'vue-i18n';
-import { Operation } from '@element-plus/icons';
-import { useStore } from 'vuex';
-import { ElMessage } from 'element-plus';
-import useClipboard from 'vue-clipboard3';
 import ColorImg from '@/components/ColorImg.vue';
+import { ElMessage } from 'element-plus';
+import { onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue';
+import useClipboard from 'vue-clipboard3';
+import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 import DeviceDes from '../components/DeviceDes.vue';
+import HubSettings from '../components/HubSettings.vue';
 import Pageable from '../components/Pageable.vue';
 import axios from '../http/axios';
-import HubSettings from '../components/HubSettings.vue';
 
 const store = useStore();
 const { t: $t } = useI18n();
@@ -69,6 +68,7 @@ const agentIds = ref([]);
 const cpus = ref([]);
 const sizes = ref([]);
 const isFlush = ref('0');
+const refreshCount = ref(0);
 const androidSystemVersion = ref([5, 6, 7, 8, 9, 10, 11, 12, 13]);
 const iOSSystemVersion = ref([9, 10, 11, 12, 13, 14, 15, 16]);
 const harmonySystemVersion = ref([1, 2, 3]);
@@ -365,6 +365,22 @@ const findAll = (pageNum, pSize) => {
     .then((resp) => {
       if (resp.code === 2000) {
         pageData.value = resp.data;
+        const { content } = resp.data;
+        let hasDebugDevice = false;
+        content.forEach((item) => {
+          if (item.status === 'DEBUGGING') {
+            hasDebugDevice = true;
+          }
+        });
+        // 有debug设备时，每隔1s刷新一次, 最多刷新3次
+        if (hasDebugDevice && refreshCount.value < 3) {
+          setTimeout(() => {
+            findAll();
+            refreshCount.value++;
+          }, 1000);
+        } else {
+          refreshCount.value = 0;
+        }
       }
     })
     .catch(() => {
@@ -483,9 +499,6 @@ onMounted(() => {
   getFilterOption();
   refresh();
   getAlertRobots();
-  setTimeout(() => {
-    refresh();
-  }, 2000);
   if (isFlush.value === '1') {
     if (currentTab.value === 'device') {
       laterTimer.value = setInterval(refresh, 1500);
