@@ -485,7 +485,7 @@ onMounted(() => {
   getAlertRobots();
   setTimeout(() => {
     refresh();
-  }, 500);
+  }, 2000);
   if (isFlush.value === '1') {
     if (currentTab.value === 'device') {
       laterTimer.value = setInterval(refresh, 1500);
