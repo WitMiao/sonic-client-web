@@ -27,7 +27,7 @@ import DeviceDes from '../components/DeviceDes.vue';
 import HubSettings from '../components/HubSettings.vue';
 import Pageable from '../components/Pageable.vue';
 import axios from '../http/axios';
-
+import { useRequest } from 'vue-request';
 const store = useStore();
 const { t: $t } = useI18n();
 
@@ -69,6 +69,7 @@ const cpus = ref([]);
 const sizes = ref([]);
 const isFlush = ref('0');
 const refreshCount = ref(0);
+const hasDebugDevice = ref(false);
 const androidSystemVersion = ref([5, 6, 7, 8, 9, 10, 11, 12, 13]);
 const iOSSystemVersion = ref([9, 10, 11, 12, 13, 14, 15, 16]);
 const harmonySystemVersion = ref([1, 2, 3]);
@@ -366,14 +367,15 @@ const findAll = (pageNum, pSize) => {
       if (resp.code === 2000) {
         pageData.value = resp.data;
         const { content } = resp.data;
-        let hasDebugDevice = false;
+        let hasDebugDeviceNow = false;
         content.forEach((item) => {
           if (item.status === 'DEBUGGING') {
-            hasDebugDevice = true;
+            hasDebugDeviceNow = true;
           }
         });
+        hasDebugDevice.value = hasDebugDeviceNow;
         // 有debug设备时，每隔1s刷新一次, 最多刷新3次
-        if (hasDebugDevice) {
+        if (hasDebugDevice.value) {
           if (refreshCount.value < 3) {
             setTimeout(() => {
               findAll();
@@ -394,7 +396,10 @@ const handleFindAll = (pageNum, pageSize) => {
   if (pageNum) {
     currDevicesPage.value = pageNum;
   }
-  findAll(currDevicesPage.value, pageSize);
+  useRequest(() => findAll(currDevicesPage.value, pageSize), {
+    refreshOnWindowFocus: true,
+    refocusTimespan: 2000,
+  });
 };
 const getAllAgents = () => {
   axios
