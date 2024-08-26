@@ -274,6 +274,7 @@ const devices = {
       voltage: '充电电压',
     },
     agent: '所在位置',
+    project: '所属项目',
   },
   detail: {
     image: '设备图片',
