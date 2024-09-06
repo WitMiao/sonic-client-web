@@ -944,6 +944,7 @@ const settingIndexTS = {
     roleText: 'Role manage',
     userCon: 'User Configuration',
     systemCon: 'System Configuration',
+    operationRecord: 'Operation record',
     scheduled: 'System timed tasks',
     remoteSettings: 'Remote Settings',
     sysAlertRobots: 'Notice Robots',

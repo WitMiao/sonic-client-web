@@ -1,8 +1,6 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router';
 import { nextTick, onMounted, onUnmounted, ref, reactive } from 'vue';
-import 'vue3-video-play/dist/style.css';
-import { videoPlay } from 'vue3-video-play';
 import * as echarts from 'echarts/core';
 import {
   TitleComponent,
@@ -589,7 +587,7 @@ onUnmounted(() => {
                   :is-read-only="true"
                   :debug-loading="stepLoading"
                   :step-log="stepList"
-                  @loadMore="loadMore"
+                  @load-more="loadMore"
                 />
               </el-tab-pane>
               <el-tab-pane
