@@ -15,15 +15,25 @@
           clearable
         />
       </el-form-item>
-      <el-form-item label="触发时间">
+      <el-form-item label="触发时间范围">
         <el-date-picker
+          v-model="formInline.time"
+          type="datetimerange"
+          placeholder="输入开始时间"
+          start-placeholder="开始时间"
+          end-placeholder="结束时间"
+          format="YYYY-MM-DD HH:mm:ss"
+          value-format="x"
+          clearable
+        />
+        <!-- <el-date-picker
           v-model="formInline.createTime"
           type="datetime"
           placeholder="输入触发时间"
           format="YYYY-MM-DD HH:mm:ss"
           value-format="x"
           clearable
-        />
+        /> -->
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="onSubmit">搜索</el-button>
@@ -69,7 +79,7 @@ const total = ref(0);
 const formInline = ref({
   udid: '',
   userName: '',
-  createTime: '',
+  time: '',
 });
 
 const actionMap = {
@@ -80,13 +90,13 @@ const actionMap = {
   run: '启动应用',
   exit: '退出应用',
 };
-const getActionRecord = async ({ udid, userName, createTime }) => {
+const getActionRecord = async ({ udid, userName, time }) => {
   const { data, code } = await axios.get(
     `/controller/actionRecord/list?page=${currentPage.value}&pageSize=${
       pageSize.value
     }&recordNum=${route.query.recordNum}${udid ? `&udid=${udid}` : ''}${
       userName ? `&userName=${userName}` : ''
-    }${createTime ? `&startTime=${createTime}` : ''}`
+    }${time ? `&startTime=${time[0]}` : ''}${time ? `&endTime=${time[1]}` : ''}`
   );
 
   if (code === 2000) {
