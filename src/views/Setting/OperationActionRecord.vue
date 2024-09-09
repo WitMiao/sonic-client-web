@@ -1,47 +1,60 @@
 <template>
   <div>
-    <el-form :inline="true" :model="formInline" class="demo-form-inline">
-      <el-form-item label="设备ID">
-        <el-input
-          v-model="formInline.udid"
-          placeholder="输入设备ID"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="用户名">
-        <el-input
-          v-model="formInline.userName"
-          placeholder="输入用户名"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="触发时间范围">
-        <el-date-picker
-          v-model="formInline.time"
-          type="datetimerange"
-          placeholder="输入开始时间"
-          start-placeholder="开始时间"
-          end-placeholder="结束时间"
-          format="YYYY-MM-DD HH:mm:ss"
-          value-format="x"
-          clearable
-        />
-        <!-- <el-date-picker
-          v-model="formInline.createTime"
-          type="datetime"
-          placeholder="输入触发时间"
-          format="YYYY-MM-DD HH:mm:ss"
-          value-format="x"
-          clearable
-        /> -->
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="onSubmit">搜索</el-button>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="onReset">重置</el-button>
-      </el-form-item>
-    </el-form>
+    <div style="display: flex; align-items: center; gap: 20px">
+      <el-icon
+        style="margin-bottom: 22px; font-weight: 700; cursor: pointer"
+        :size="20"
+        @click="router.push({ name: 'OperationUseRecord' })"
+        ><Back
+      /></el-icon>
+
+      <el-form :inline="true" :model="formInline" class="demo-form-inline">
+        <!-- <el-form-item label="设备ID">
+          <el-input
+            v-model="formInline.udid"
+            placeholder="输入设备ID"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="用户名">
+          <el-input
+            v-model="formInline.userName"
+            placeholder="输入用户名"
+            clearable
+          />
+        </el-form-item> -->
+
+        <el-form-item label="触发操作">
+          <el-select v-model="formInline.action" placeholder="请选择触发操作">
+            <el-option
+              v-for="item in actionMapOption"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="触发时间范围">
+          <el-date-picker
+            v-model="formInline.time"
+            type="datetimerange"
+            placeholder="输入开始时间"
+            start-placeholder="开始时间"
+            end-placeholder="结束时间"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="x"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="onSubmit">搜索</el-button>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="onReset">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+
     <div>
       <el-table :data="tableData" style="width: 100%" border>
         <el-table-column prop="udid" label="设备ID" width="220" />
@@ -71,6 +84,7 @@
 
 <script setup>
 import axios from '@/http/axios';
+import { Back } from '@element-plus/icons';
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
@@ -83,6 +97,7 @@ const formInline = ref({
   udid: '',
   userName: '',
   time: '',
+  action: '',
 });
 
 const actionMap = {
@@ -93,13 +108,21 @@ const actionMap = {
   run: '启动应用',
   exit: '退出应用',
 };
-const getActionRecord = async ({ udid, userName, time }) => {
+
+const actionMapOption = Object.keys(actionMap).map((key) => ({
+  value: key,
+  label: actionMap[key],
+}));
+
+const getActionRecord = async ({ udid, userName, time, action }) => {
   const { data, code } = await axios.get(
     `/controller/actionRecord/list?page=${currentPage.value}&pageSize=${
       pageSize.value
     }&recordNum=${route.query.recordNum}${udid ? `&udid=${udid}` : ''}${
       userName ? `&userName=${userName}` : ''
-    }${time ? `&startTime=${time[0]}` : ''}${time ? `&endTime=${time[1]}` : ''}`
+    }${time ? `&startTime=${time[0]}` : ''}${
+      time ? `&endTime=${time[1]}` : ''
+    }${action ? `&action=${action}` : ''}`
   );
 
   if (code === 2000) {
@@ -120,6 +143,7 @@ const onReset = () => {
     udid: '',
     userName: '',
     time: '',
+    action: '',
   };
   currentPage.value = 1;
   pageSize.value = 10;

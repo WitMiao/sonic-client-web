@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-form :inline="true" :model="formInline" class="demo-form-inline">
-      <el-form-item label="设备ID">
+      <!-- <el-form-item label="设备ID">
         <el-input
           v-model="formInline.udid"
           placeholder="输入设备ID"
@@ -14,7 +14,8 @@
           placeholder="输入用户名"
           clearable
         />
-      </el-form-item>
+      </el-form-item> -->
+
       <el-form-item label="时间范围">
         <el-date-picker
           v-model="formInline.time"
@@ -48,7 +49,7 @@
         </el-table-column>
         <el-table-column prop="startMem" label="开始时内存(GB)">
           <template #default="{ row }">
-            {{ Math.floor(row.startMem * 10) / 10 }}s
+            {{ Math.floor(row.startMem * 10) / 10 }}
           </template>
         </el-table-column>
         <el-table-column prop="startBattery" label="开始时电量" />
