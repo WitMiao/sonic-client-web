@@ -58,8 +58,8 @@
 
 <script setup>
 import axios from '@/http/axios';
-import { useRoute, useRouter } from 'vue-router';
 import { onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
 const route = useRoute();
 const tableData = ref([[]]);
@@ -67,7 +67,7 @@ const currentPage = ref(1);
 const pageSize = ref(10);
 const total = ref(0);
 const formInline = ref({
-  udid: route.query.udid,
+  udid: '',
   userName: '',
   createTime: '',
 });
@@ -84,9 +84,9 @@ const getActionRecord = async ({ udid, userName, createTime }) => {
   const { data, code } = await axios.get(
     `/controller/actionRecord/list?page=${currentPage.value}&pageSize=${
       pageSize.value
-    }${udid ? `&udid=${udid}` : ''}${userName ? `&userName=${userName}` : ''}${
-      createTime ? `&startTime=${createTime}` : ''
-    }`
+    }&recordNum=${route.query.recordNum}${udid ? `&udid=${udid}` : ''}${
+      userName ? `&userName=${userName}` : ''
+    }${createTime ? `&startTime=${createTime}` : ''}`
   );
 
   if (code === 2000) {

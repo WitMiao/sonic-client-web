@@ -29,12 +29,17 @@
         <el-date-picker
           v-model="formInline.endTime"
           placeholder="输入结束时间"
+          format="YYYY-MM-DD HH:mm:ss"
+          value-format="YYYY-MM-DD HH:mm:ss"
           type="datetime"
           clearable
         />
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="onSubmit">搜索</el-button>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" @click="onReset">重置</el-button>
       </el-form-item>
     </el-form>
     <div>
@@ -68,7 +73,9 @@
         <el-table-column prop="endBattery" label="结束时电量" />
         <el-table-column width="90">
           <template #default="{ row }">
-            <div style="cursor: pointer" @click="click(row.udid)">查看详情</div>
+            <div style="cursor: pointer" @click="click(row.recordNum)">
+              查看详情
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -88,8 +95,8 @@
 
 <script setup>
 import axios from '@/http/axios';
+import { onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { onMounted, ref, reactive } from 'vue';
 
 const formInline = reactive({
   udid: '',
@@ -124,9 +131,22 @@ const onSubmit = () => {
   pageSize.value = 10;
   getUseRecord(formInline);
 };
-const click = (udid) => {
+const onReset = () => {
+  currentPage.value = 1;
+  pageSize.value = 10;
+  formInline.udid = '';
+  formInline.userName = '';
+  formInline.startTime = '';
+  formInline.endTime = '';
+
+  getUseRecord(formInline);
+};
+const click = (recordNum) => {
   // 跳转
-  router.push({ name: 'OperationActionRecord', query: { udid } });
+  if (!recordNum) {
+    return;
+  }
+  router.push({ name: 'OperationActionRecord', query: { recordNum } });
 };
 </script>
 
