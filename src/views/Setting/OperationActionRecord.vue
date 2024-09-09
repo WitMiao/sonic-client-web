@@ -21,7 +21,7 @@
           type="datetime"
           placeholder="输入触发时间"
           format="YYYY-MM-DD HH:mm:ss"
-          value-format="YYYY-MM-DD HH:mm:ss"
+          value-format="x"
           clearable
         />
       </el-form-item>

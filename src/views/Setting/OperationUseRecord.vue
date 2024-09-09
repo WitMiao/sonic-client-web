@@ -21,7 +21,7 @@
           type="datetime"
           placeholder="输入开始时间"
           format="YYYY-MM-DD HH:mm:ss"
-          value-format="YYYY-MM-DD HH:mm:ss"
+          value-format="x"
           clearable
         />
       </el-form-item>
@@ -30,7 +30,7 @@
           v-model="formInline.endTime"
           placeholder="输入结束时间"
           format="YYYY-MM-DD HH:mm:ss"
-          value-format="YYYY-MM-DD HH:mm:ss"
+          value-format="x"
           type="datetime"
           clearable
         />

@@ -1,23 +1,20 @@
 <script setup>
-import { useStore } from 'vuex';
-import { useRoute, useRouter } from 'vue-router';
-import { onBeforeMount, onMounted, ref, watch } from 'vue';
+import useLocale from '@/locales/useLocale';
 import {
-  Fold,
-  Expand,
   Cellphone,
-  HomeFilled,
-  Setting,
+  Expand,
+  Fold,
+  HomeFilled
 } from '@element-plus/icons';
 import { ElMessage } from 'element-plus';
-import { localeList } from '@/config/locale';
-import useLocale from '@/locales/useLocale';
-import { useI18n } from 'vue-i18n';
+import { onBeforeMount, onMounted, ref, watch } from 'vue';
 import useClipboard from 'vue-clipboard3';
+import { useI18n } from 'vue-i18n';
+import { useRoute, useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 import defaultLogo from '../assets/logo.png';
-import ProjectUpdate from './ProjectUpdate.vue';
-import logo from '../assets/logo.png';
 import axios from '../http/axios';
+import ProjectUpdate from './ProjectUpdate.vue';
 
 const { toClipboard } = useClipboard();
 
@@ -192,7 +189,7 @@ const changeLocaleHandler = function (val) {
             @change="toggleClass"
           ></el-switch>
         </el-tooltip>
-        <el-menu
+        <!-- <el-menu
           :ellipsis="false"
           :background-color="store.state.menuBack"
           :text-color="store.state.menuText"
@@ -216,7 +213,7 @@ const changeLocaleHandler = function (val) {
               ></el-badge>
             </el-menu-item>
           </el-sub-menu>
-        </el-menu>
+        </el-menu>-->
       </div>
       <div class="flex-center">
         <el-menu
