@@ -16,9 +16,9 @@
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import { View, VideoPause, Delete } from '@element-plus/icons';
-import { useI18n } from 'vue-i18n';
+import { Delete, VideoPause, View } from '@element-plus/icons';
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AndroidPerfChart from './AndroidPerfChart.vue';
 
 const androidPerfChart = ref(null);
@@ -93,42 +93,24 @@ defineExpose({ setData });
 
 <template>
   <div>
-    <el-select
-      v-model="perfBundleId"
-      style="margin-right: 10px; width: 280px"
-      filterable
-      clearable
-      size="mini"
-      :placeholder="$t('perf.select')"
-    >
+    <el-select v-model="perfBundleId" style="margin-right: 10px; width: 280px" filterable clearable size="mini"
+      :placeholder="$t('perf.select')">
       <el-option v-for="a in appList" :value="a.packageName">
         <div style="display: flex; align-items: center">
-          <el-avatar
-            style="margin-right: 10px"
-            :size="30"
-            :src="'data:image/png;base64,' + a.appIcon"
-            shape="square"
-          ></el-avatar>
+          <el-avatar style="margin-right: 10px" :size="30" :src="'data:image/png;base64,' + a.appIcon"
+            shape="square"></el-avatar>
           {{ a.appName }}
-          <span
-            style="
+          <span style="
               float: right;
               margin-left: 15px;
               color: #909399;
               font-size: 13px;
               font-style: italic;
-            "
-            >{{ a.packageName }}</span
-          >
+            ">{{ a.packageName }}</span>
         </div>
       </el-option>
     </el-select>
-    <el-button
-      type="primary"
-      size="mini"
-      :loading="isStart"
-      @click="startPerfmon"
-    >
+    <el-button type="primary" size="mini" :loading="isStart" @click="startPerfmon">
       <el-icon :size="12" style="vertical-align: middle">
         <View />
       </el-icon>
@@ -146,18 +128,7 @@ defineExpose({ setData });
       </el-icon>
       {{ $t('perf.clear') }}
     </el-button>
-    <android-perf-chart
-      ref="androidPerfChart"
-      :cid="0"
-      :rid="0"
-      :did="0"
-      :sys-cpu="sysCpu"
-      :sys-mem="sysMem"
-      :sys-network="sysNetwork"
-      :proc-cpu="procCpu"
-      :proc-mem="procMem"
-      :proc-fps="procFps"
-      :proc-thread="procThread"
-    />
+    <android-perf-chart ref="androidPerfChart" :cid="0" rid="0" :did="0" :sys-cpu="sysCpu" :sys-mem="sysMem"
+      :sys-network="sysNetwork" :proc-cpu="procCpu" :proc-mem="procMem" :proc-fps="procFps" :proc-thread="procThread" />
   </div>
 </template>
