@@ -15,26 +15,19 @@
           clearable
         />
       </el-form-item>
-      <el-form-item label="开始时间">
+      <el-form-item label="时间范围">
         <el-date-picker
-          v-model="formInline.startTime"
-          type="datetime"
+          v-model="formInline.time"
+          type="datetimerange"
           placeholder="输入开始时间"
+          start-placeholder="开始时间"
+          end-placeholder="结束时间"
           format="YYYY-MM-DD HH:mm:ss"
           value-format="x"
           clearable
         />
       </el-form-item>
-      <el-form-item label="结束时间">
-        <el-date-picker
-          v-model="formInline.endTime"
-          placeholder="输入结束时间"
-          format="YYYY-MM-DD HH:mm:ss"
-          value-format="x"
-          type="datetime"
-          clearable
-        />
-      </el-form-item>
+
       <el-form-item>
         <el-button type="primary" @click="onSubmit">搜索</el-button>
       </el-form-item>
@@ -55,7 +48,7 @@
         </el-table-column>
         <el-table-column prop="startMem" label="开始时内存(GB)">
           <template #default="{ row }">
-            {{ Math.floor(row.startMem * 10) / 10 }}
+            {{ Math.floor(row.startMem * 10) / 10 }}s
           </template>
         </el-table-column>
         <el-table-column prop="startBattery" label="开始时电量" />
@@ -101,21 +94,20 @@ import { useRouter } from 'vue-router';
 const formInline = reactive({
   udid: '',
   userName: '',
-  startTime: '',
-  endTime: '',
+  time: '',
 });
 const router = useRouter();
 const tableData = ref([[]]);
 const currentPage = ref(1);
 const pageSize = ref(10);
 const total = ref(0);
-const getUseRecord = async ({ udid, userName, startTime, endTime }) => {
+const getUseRecord = async ({ udid, userName, time }) => {
   const { data, code } = await axios.get(
     `/controller/useRecord/list?page=${currentPage.value}&pageSize=${
       pageSize.value
     }${udid ? `&udid=${udid}` : ''}${userName ? `&userName=${userName}` : ''}${
-      startTime ? `&startTime=${startTime}` : ''
-    }${endTime ? `&endTime=${endTime}` : ''}`
+      time ? `&startTime=${time[0]}` : ''
+    }${time ? `&endTime=${time[1]}` : ''}`
   );
 
   if (code === 2000) {
@@ -136,8 +128,7 @@ const onReset = () => {
   pageSize.value = 10;
   formInline.udid = '';
   formInline.userName = '';
-  formInline.startTime = '';
-  formInline.endTime = '';
+  formInline.time = '';
 
   getUseRecord(formInline);
 };
