@@ -37,6 +37,11 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isPublicSteps: {
+    type: Boolean,
+    default: false, // 公共步骤可能会引用多个不同case的步骤，不应该允许拖拽更改parentId
+  },
+  parentId: Number, // 用于分组拖拽时，更新step数据的parentId
 });
 const emit = defineEmits([
   'flush',
@@ -64,27 +69,51 @@ const switchStep = (id, e) => {
     });
 };
 const sortStep = (e) => {
-  if (props.isEdit && props.steps[e.moved.newIndex].parentId === 0) {
+  if (e.removed !== undefined) {
     return;
   }
   let startId = null;
   let endId = null;
   let direction = '';
-  if (e.moved.newIndex > e.moved.oldIndex) {
-    direction = 'down';
-    endId = props.steps[e.moved.newIndex].sort;
-    startId = props.steps[e.moved.newIndex - 1].sort;
+  let newIndex = null;
+  let stepsId = null;
+  let newParentId = null;
+  let caseId = null;
+  if (e.added !== undefined) {
+    // eslint-disable-next-line vue/no-mutating-props
+    props.steps[e.added.newIndex].parentId = props.parentId; // 更新parentId
+    caseId = props.steps[e.added.newIndex].caseId;
+    newParentId = props.parentId;
+    newIndex = e.added.newIndex;
+    stepsId = props.steps[e.added.newIndex].id;
+    // 此场景中下面3个参数不重要，为了兼容后端参数要求随便填的，它们会由后端进行处理
+    direction = 'added';
+    startId = 1;
+    endId = 2;
   } else {
-    direction = 'up';
-    startId = props.steps[e.moved.newIndex].sort;
-    endId = props.steps[e.moved.newIndex + 1].sort;
+    caseId = props.steps[e.moved.newIndex].caseId;
+    if (props.isEdit && props.steps[e.moved.newIndex].parentId === 0) {
+      return;
+    }
+    if (e.moved.newIndex > e.moved.oldIndex) {
+      direction = 'down';
+      endId = props.steps[e.moved.newIndex].sort;
+      startId = props.steps[e.moved.newIndex - 1].sort;
+    } else {
+      direction = 'up';
+      startId = props.steps[e.moved.newIndex].sort;
+      endId = props.steps[e.moved.newIndex + 1].sort;
+    }
   }
   axios
     .put('/controller/steps/stepSort', {
-      caseId: props.steps[e.moved.newIndex].caseId,
+      caseId,
       direction,
       startId,
       endId,
+      newParentId,
+      newIndex,
+      stepsId,
     })
     .then((resp) => {
       if (resp.code === 2000) {
@@ -113,17 +142,32 @@ const remove = (e) => {
   emit('remove', e);
 };
 
-const copyStep = (id) => {
-  emit('copyStep', id);
+/**
+ * 拷贝步骤的方法
+ * @param {*} id  步骤id
+ * @param {*} toLast 是否复制到最后一行
+ */
+const copyStep = (id, toLast) => {
+  emit('copyStep', id, toLast);
+};
+/**
+ * 添加步骤到特定位置的方法
+ * @param {*} id         点选的位置
+ * @param {*} toNext     true添加到下一行，false添加到上一行
+ */
+const addStepTotarget = (id, toNext) => {
+  emit('addStepTotarget', id, toNext);
 };
 </script>
 
 <template>
   <el-scrollbar style="height: 100%">
-    <el-timeline v-if="steps.length > 0" class="stepsTimeline">
+    <el-timeline class="stepsTimeline">
+      <!-- 设置group，这样同名的group之间就可以互相拖拽 -->
       <VueDraggableNext
         tag="div"
         :list="steps"
+        :group="isPublicSteps ? '' : 'case-step'"
         handle=".handle"
         animation="200"
         force-fallback="true"
@@ -228,12 +272,13 @@ const copyStep = (id) => {
             </template>
             <step-draggable
               :steps="s['childSteps']"
-              @setParent="setParent"
-              @addStep="addStep"
+              :parent-id="s['id']"
+              @set-parent="setParent"
+              @add-step="addStep"
               @flush="emit('flush')"
-              @editStep="editStep"
-              @deleteStep="deleteStep"
-              @copyStep="copyStep"
+              @edit-step="editStep"
+              @delete-step="deleteStep"
+              @copy-step="copyStep"
             />
           </el-card>
           <div v-else style="display: flex; justify-content: space-between">
@@ -241,7 +286,7 @@ const copyStep = (id) => {
             <div
               style="
                 float: right;
-                flex: 0 0 205px;
+                flex: 0 0 245px;
                 text-align: right;
                 margin-right: 12px;
               "
@@ -266,16 +311,50 @@ const copyStep = (id) => {
                   <Edit />
                 </el-icon>
               </el-button>
-              <el-button
-                circle
-                type="primary"
-                size="mini"
-                @click="copyStep(s.id)"
+              <!--添加操作的按钮-->
+              <el-popconfirm
+                v-if="s.parentId === 0 && !isEdit"
+                style="margin-left: 10px"
+                :confirm-button-text="$t('steps.addToNextLine')"
+                :cancel-button-text="$t('steps.addToBeforeLine')"
+                confirm-button-type="text"
+                icon="el-icon-warning"
+                icon-color="green"
+                :title="$t('steps.addStepTips')"
+                @confirm="addStepTotarget(s.id, true)"
+                @cancel="addStepTotarget(s.id, false)"
               >
-                <el-icon :size="13" style="vertical-align: middle">
-                  <CopyDocument />
-                </el-icon>
-              </el-button>
+                <template #reference>
+                  <el-button circle type="primary" size="mini">
+                    <el-icon :size="13" style="vertical-align: middle">
+                      <DocumentAdd />
+                    </el-icon>
+                  </el-button>
+                </template>
+              </el-popconfirm>
+
+              <!--复制操作的按钮-->
+              <el-popconfirm
+                v-if="!isEdit"
+                style="margin-left: 10px"
+                :confirm-button-text="$t('steps.copyToLastLine')"
+                :cancel-button-text="$t('steps.copyToNextLine')"
+                confirm-button-type="text"
+                icon="el-icon-warning"
+                icon-color="green"
+                :title="$t('steps.copyStepTips')"
+                @confirm="copyStep(s.id, true)"
+                @cancel="copyStep(s.id, false)"
+              >
+                <template #reference>
+                  <el-button circle type="primary" size="mini">
+                    <el-icon :size="13" style="vertical-align: middle">
+                      <CopyDocument />
+                    </el-icon>
+                  </el-button>
+                </template>
+              </el-popconfirm>
+
               <el-button class="handle" circle size="mini">
                 <el-icon :size="13" style="vertical-align: middle">
                   <Rank />
@@ -314,7 +393,10 @@ const copyStep = (id) => {
         </el-timeline-item>
       </VueDraggableNext>
     </el-timeline>
-    <el-empty v-else :description="$t('steps.empty')"></el-empty>
+    <el-empty
+      v-if="steps.length === 0"
+      :description="$t('steps.empty')"
+    ></el-empty>
   </el-scrollbar>
 </template>
 
