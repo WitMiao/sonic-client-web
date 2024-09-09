@@ -175,6 +175,10 @@ const summit = () => {
           } else {
             emit('flush', true);
           }
+        } else {
+          ElMessage.error({
+            message: resp.data,
+          });
         }
       });
     }
@@ -287,13 +291,14 @@ const jump = (id) => {
     <el-tab-pane :label="$t('pubSteps.selected')" name="select">
       <step-draggable
         :is-edit="true"
+        :is-public-steps="true"
         :steps="publicStep.steps"
-        @setParent="setParent"
-        @addStep="addStep"
+        @set-parent="setParent"
+        @add-step="addStep"
         @flush="flush"
-        @editStep="editStep"
+        @edit-step="editStep"
         @remove="removeFromPublic"
-        @deleteStep="deleteStep"
+        @delete-step="deleteStep"
       />
     </el-tab-pane>
     <el-tab-pane :label="$t('pubSteps.list')" name="list">

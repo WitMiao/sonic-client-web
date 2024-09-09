@@ -16,9 +16,9 @@
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import { View, VideoPause, Delete } from '@element-plus/icons';
-import { useI18n } from 'vue-i18n';
+import { Delete, VideoPause, View } from '@element-plus/icons';
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import IOSPerfChart from './IOSPerfChart.vue';
 
 const iosPerfChart = ref(null);
@@ -145,7 +145,7 @@ defineExpose({ setData });
     <i-o-s-perf-chart
       ref="iosPerfChart"
       :cid="0"
-      :rid="0"
+      rid="0"
       :did="0"
       :cpu="cpu"
       :mem="mem"
