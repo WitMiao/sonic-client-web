@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-form :inline="true" :model="formInline" class="demo-form-inline">
-      <!-- <el-form-item label="设备ID">
+      <el-form-item label="设备ID">
         <el-input
           v-model="formInline.udid"
           placeholder="输入设备ID"
@@ -14,7 +14,7 @@
           placeholder="输入用户名"
           clearable
         />
-      </el-form-item> -->
+      </el-form-item>
 
       <el-form-item label="时间范围">
         <el-date-picker

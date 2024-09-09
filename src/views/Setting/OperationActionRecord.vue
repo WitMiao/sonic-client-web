@@ -57,9 +57,10 @@
 
     <div>
       <el-table :data="tableData" style="width: 100%" border>
-        <el-table-column prop="udid" label="设备ID" width="220" />
+        <!-- <el-table-column prop="udid" label="设备ID" width="220" />
+      
+        <el-table-column prop="userName" label="用户名" width="120" /> -->
         <el-table-column prop="platform" label="平台" width="120" />
-        <el-table-column prop="userName" label="用户名" width="120" />
         <el-table-column prop="packName" label="包名" />
         <el-table-column prop="action" label="触发动作">
           <template #default="{ row }">
@@ -86,9 +87,10 @@
 import axios from '@/http/axios';
 import { Back } from '@element-plus/icons';
 import { onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
+const router = useRouter();
 const tableData = ref([[]]);
 const currentPage = ref(1);
 const pageSize = ref(10);
