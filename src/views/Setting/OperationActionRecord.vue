@@ -38,6 +38,9 @@
       <el-form-item>
         <el-button type="primary" @click="onSubmit">搜索</el-button>
       </el-form-item>
+      <el-form-item>
+        <el-button type="primary" @click="onReset">重置</el-button>
+      </el-form-item>
     </el-form>
     <div>
       <el-table :data="tableData" style="width: 100%" border>
@@ -108,6 +111,16 @@ onMounted(async () => {
   getActionRecord(formInline.value);
 });
 const onSubmit = () => {
+  currentPage.value = 1;
+  pageSize.value = 10;
+  getActionRecord(formInline.value);
+};
+const onReset = () => {
+  formInline.value = {
+    udid: '',
+    userName: '',
+    time: '',
+  };
   currentPage.value = 1;
   pageSize.value = 10;
   getActionRecord(formInline.value);
