@@ -107,7 +107,7 @@ const actionMap = {
   uninstall: '卸载',
   lock: '锁定屏幕',
   unlock: '解锁屏幕',
-  run: '启动应用',
+  start: '启动应用',
   exit: '退出应用',
 };
 
