@@ -38,34 +38,35 @@
     </el-form>
     <div>
       <el-table :data="tableData" style="width: 100%" border>
-        <el-table-column prop="udid" label="设备ID" width="220" />
+        <el-table-column prop="udid" fixed label="设备ID" width="220" />
+        <el-table-column prop="deviceName" fixed label="设备名称" width="220" />
         <el-table-column prop="platform" label="平台" width="90" />
         <el-table-column prop="userName" label="用户名" width="120" />
-        <el-table-column prop="startTime" label="开始时间" />
-        <el-table-column prop="startCpu" label="开始时CPU使用率(%)">
+        <el-table-column prop="startTime" label="开始时间" width="180" />
+        <el-table-column prop="startCpu" label="开始时CPU使用率(%)" width="160">
           <template #default="{ row }">
             {{ Math.floor(row.startCpu * 10) / 10 }}
           </template>
         </el-table-column>
-        <el-table-column prop="startMem" label="开始时内存(GB)">
+        <el-table-column prop="startMem" label="开始时内存(GB)" width="130">
           <template #default="{ row }">
             {{ Math.floor(row.startMem * 10) / 10 }}
           </template>
         </el-table-column>
-        <el-table-column prop="startBattery" label="开始时电量" />
-        <el-table-column prop="endTime" label="结束时间" />
-        <el-table-column prop="endCpu" label="结束时CPU使用率(%)">
+        <el-table-column prop="startBattery" label="开始时电量" width="100" />
+        <el-table-column prop="endTime" label="结束时间" width="180" />
+        <el-table-column prop="endCpu" label="结束时CPU使用率(%)" width="160">
           <template #default="{ row }">
             {{ Math.floor(row.endCpu * 10) / 10 }}
           </template>
         </el-table-column>
-        <el-table-column prop="endMem" label="结束时内存(GB)">
+        <el-table-column prop="endMem" label="结束时内存(GB)" width="130">
           <template #default="{ row }">
             {{ Math.floor(row.endMem * 10) / 10 }}
           </template>
         </el-table-column>
-        <el-table-column prop="endBattery" label="结束时电量" />
-        <el-table-column width="90">
+        <el-table-column prop="endBattery" label="结束时电量" width="100" />
+        <el-table-column width="90" fixed="right">
           <template #default="{ row }">
             <div style="cursor: pointer" @click="click(row.recordNum)">
               查看详情
