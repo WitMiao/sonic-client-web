@@ -9,21 +9,6 @@
       /></el-icon>
 
       <el-form :inline="true" :model="formInline" class="demo-form-inline">
-        <!-- <el-form-item label="设备ID">
-          <el-input
-            v-model="formInline.udid"
-            placeholder="输入设备ID"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item label="用户名">
-          <el-input
-            v-model="formInline.userName"
-            placeholder="输入用户名"
-            clearable
-          />
-        </el-form-item> -->
-
         <el-form-item label="触发操作">
           <el-select v-model="formInline.action" placeholder="请选择触发操作">
             <el-option
@@ -54,13 +39,22 @@
         </el-form-item>
       </el-form>
     </div>
-
+    <div style="display: flex; margin-bottom: 10px">
+      <div style="display: flex; align-items: center; margin-right: 10px">
+        <div style="font-weight: 700">设备ID：</div>
+        <div>{{ route.query.udid }}</div>
+      </div>
+      <div style="display: flex; align-items: center; margin-right: 10px">
+        <div style="font-weight: 700">设备名称：</div>
+        <div>{{ route.query.deviceName }}</div>
+      </div>
+      <div style="display: flex; align-items: center; margin-right: 10px">
+        <div style="font-weight: 700">平台：</div>
+        <div>{{ route.query.platform }}</div>
+      </div>
+    </div>
     <div>
       <el-table :data="tableData" style="width: 100%" border>
-        <!-- <el-table-column prop="udid" label="设备ID" width="220" />
-      
-        <el-table-column prop="userName" label="用户名" width="120" /> -->
-        <el-table-column prop="platform" label="平台" width="120" />
         <el-table-column prop="packName" label="包名" />
         <el-table-column prop="action" label="触发动作">
           <template #default="{ row }">

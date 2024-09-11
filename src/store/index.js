@@ -1,7 +1,7 @@
-import { createStore } from 'vuex';
-import { localeSetting } from '@/config/locale';
 import { LOCALE_KEY } from '@/config/cache';
-import { setLocal, getLocal } from '@/utils/cache/localStorage';
+import { localeSetting } from '@/config/locale';
+import { getLocal, setLocal } from '@/utils/cache/localStorage';
+import { createStore } from 'vuex';
 
 const debug = process.env.NODE_ENV !== 'production';
 
@@ -21,6 +21,7 @@ export default createStore({
       menuActiveText: '',
       currentTheme: 'light',
       localInfo: getLocal(LOCALE_KEY) || localeSetting,
+      lastSearchParam: {},
     };
   },
   mutations: {
@@ -65,10 +66,16 @@ export default createStore({
     setLocaleInfo(state, info) {
       state.localInfo = info;
     },
+    setLastSearchParam(state, info) {
+      state.lastSearchParam = info;
+    },
   },
   getters: {
     getLocale(state) {
       return state.localInfo?.locale ?? 'zh_CN';
+    },
+    getLastSearchParam(state) {
+      return state?.lastSearchParam ?? {};
     },
   },
   actions: {

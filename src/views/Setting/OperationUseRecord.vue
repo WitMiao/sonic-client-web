@@ -43,9 +43,28 @@
         <el-table-column prop="platform" label="平台" width="90" />
         <el-table-column prop="userName" label="用户名" width="120" />
         <el-table-column prop="startTime" label="开始时间" width="180" />
+        <el-table-column prop="endTime" label="结束时间" width="180" />
+        <el-table-column prop="useTime" label="使用时长" width="180" />
         <el-table-column prop="startCpu" label="开始时CPU使用率(%)" width="160">
           <template #default="{ row }">
             {{ Math.floor(row.startCpu * 10) / 10 }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="endCpu" label="结束时CPU使用率(%)" width="160">
+          <template #default="{ row }">
+            {{ Math.floor(row.endCpu * 10) / 10 }}
+          </template>
+        </el-table-column>
+        <el-table-column label="CPU使用率" width="200">
+          <template #default="{ row }">
+            <div style="display: flex">
+              <span style="margin-right: 6px">开始</span>
+              <el-progress :percentage="row.startCpu" style="flex: 1" />
+            </div>
+            <div style="display: flex">
+              <span style="margin-right: 6px">结束</span>
+              <el-progress :percentage="row.endCpu" style="flex: 1" />
+            </div>
           </template>
         </el-table-column>
         <el-table-column prop="startMem" label="开始时内存(GB)" width="130">
@@ -53,24 +72,56 @@
             {{ Math.floor(row.startMem * 10) / 10 }}
           </template>
         </el-table-column>
-        <el-table-column prop="startBattery" label="开始时电量" width="100" />
-        <el-table-column prop="endTime" label="结束时间" width="180" />
-        <el-table-column prop="endCpu" label="结束时CPU使用率(%)" width="160">
-          <template #default="{ row }">
-            {{ Math.floor(row.endCpu * 10) / 10 }}
-          </template>
-        </el-table-column>
+
         <el-table-column prop="endMem" label="结束时内存(GB)" width="130">
           <template #default="{ row }">
             {{ Math.floor(row.endMem * 10) / 10 }}
           </template>
         </el-table-column>
+        <el-table-column label="内存使用率" width="200">
+          <template #default="{ row }">
+            <div style="display: flex">
+              <span style="margin-right: 6px">开始</span>
+              <el-progress
+                :percentage="
+                  (100 * row.startCpu) /
+                  Math.ceil(Math.max(row.startCpu, row.endCpu))
+                "
+                style="flex: 1"
+              >
+                <div text>{{ row.startCpu }}</div>
+              </el-progress>
+            </div>
+            <div style="display: flex">
+              <span style="margin-right: 6px">结束</span>
+              <el-progress
+                :percentage="
+                  (100 * row.endCpu) /
+                  Math.ceil(Math.max(row.startCpu, row.endCpu))
+                "
+                style="flex: 1"
+                ><div text>{{ row.endCpu }}</div>
+              </el-progress>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="startBattery" label="开始时电量" width="100" />
         <el-table-column prop="endBattery" label="结束时电量" width="100" />
+        <el-table-column label="电量" width="200">
+          <template #default="{ row }">
+            <div style="display: flex">
+              <span style="margin-right: 6px">开始</span>
+              <el-progress :percentage="row.startBattery" style="flex: 1" />
+            </div>
+            <div style="display: flex">
+              <span style="margin-right: 6px">结束</span>
+              <el-progress :percentage="row.endBattery" style="flex: 1" />
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column width="90" fixed="right">
           <template #default="{ row }">
-            <div style="cursor: pointer" @click="click(row.recordNum)">
-              查看详情
-            </div>
+            <div style="cursor: pointer" @click="click(row)">查看详情</div>
           </template>
         </el-table-column>
       </el-table>
@@ -92,6 +143,7 @@
 import axios from '@/http/axios';
 import { onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 
 const formInline = reactive({
   udid: '',
@@ -99,6 +151,7 @@ const formInline = reactive({
   time: '',
 });
 const router = useRouter();
+const store = useStore();
 const tableData = ref([[]]);
 const currentPage = ref(1);
 const pageSize = ref(10);
@@ -118,6 +171,11 @@ const getUseRecord = async ({ udid, userName, time }) => {
   }
 };
 onMounted(async () => {
+  formInline.udid = store.state.lastSearchParam.udid ?? '';
+  formInline.userName = store.state.lastSearchParam.userName ?? '';
+  formInline.time = store.state.lastSearchParam.time ?? '';
+  currentPage.value = store.state.lastSearchParam.currentPage ?? 1;
+  pageSize.value = store.state.lastSearchParam.pageSize ?? 10;
   getUseRecord(formInline);
 });
 const onSubmit = () => {
@@ -134,12 +192,27 @@ const onReset = () => {
 
   getUseRecord(formInline);
 };
-const click = (recordNum) => {
+const click = (row) => {
   // 跳转
-  if (!recordNum) {
+  if (!row.recordNum) {
     return;
   }
-  router.push({ name: 'OperationActionRecord', query: { recordNum } });
+  // 保存设备ID,用户名，时间
+  store.commit('setLastSearchParam', {
+    ...formInline,
+    currentPage: currentPage.value,
+    pageSize: pageSize.value,
+  });
+
+  router.push({
+    name: 'OperationActionRecord',
+    query: {
+      recordNum: row.recordNum,
+      platform: row.platform,
+      udid: row.udid,
+      deviceName: row.deviceName,
+    },
+  });
 };
 </script>
 
