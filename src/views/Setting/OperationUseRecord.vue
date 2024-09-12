@@ -6,6 +6,7 @@
           v-model="formInline.udid"
           placeholder="输入设备ID"
           clearable
+          @input="onSearchChange"
         />
       </el-form-item>
       <el-form-item label="用户名">
@@ -13,6 +14,7 @@
           v-model="formInline.userName"
           placeholder="输入用户名"
           clearable
+          @input="onSearchChange"
         />
       </el-form-item>
 
@@ -26,12 +28,10 @@
           format="YYYY-MM-DD HH:mm:ss"
           value-format="x"
           clearable
+          @change="handleDateChange"
         />
       </el-form-item>
 
-      <el-form-item>
-        <el-button type="primary" @click="onSubmit">搜索</el-button>
-      </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="onReset">重置</el-button>
       </el-form-item>
@@ -141,6 +141,7 @@
 
 <script setup>
 import axios from '@/http/axios';
+import { debounce } from 'lodash-es';
 import { onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useStore } from 'vuex';
@@ -213,6 +214,16 @@ const click = (row) => {
       deviceName: row.deviceName,
     },
   });
+};
+// 时间修改事件
+const handleDateChange = () => {
+  onSubmit();
+};
+const debouncedSearch = debounce(async () => {
+ await onSubmit()
+}, 300);
+const onSearchChange = () => {
+  debouncedSearch();
 };
 </script>
 

@@ -10,7 +10,7 @@
 
       <el-form :inline="true" :model="formInline" class="demo-form-inline">
         <el-form-item label="触发操作">
-          <el-select v-model="formInline.action" placeholder="请选择触发操作">
+          <el-select v-model="formInline.action" placeholder="请选择触发操作"  clearable @change="onSubmit">
             <el-option
               v-for="item in actionMapOption"
               :key="item.value"
@@ -29,11 +29,10 @@
             format="YYYY-MM-DD HH:mm:ss"
             value-format="x"
             clearable
+            @change="onSubmit"
           />
         </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="onSubmit">搜索</el-button>
-        </el-form-item>
+    
         <el-form-item>
           <el-button type="primary" @click="onReset">重置</el-button>
         </el-form-item>
