@@ -44,7 +44,7 @@
         <el-table-column prop="userName" label="用户名" width="120" />
         <el-table-column prop="startTime" label="开始时间" width="180" />
         <el-table-column prop="endTime" label="结束时间" width="180" />
-        <el-table-column prop="useTime" label="使用时长" width="180" />
+        <el-table-column prop="useTime" label="使用时长(分钟)" width="180" />
         <el-table-column prop="startCpu" label="开始时CPU使用率(%)" width="160">
           <template #default="{ row }">
             {{ Math.floor(row.startCpu * 10) / 10 }}
@@ -63,7 +63,7 @@
             </div>
             <div style="display: flex">
               <span style="margin-right: 6px">结束</span>
-              <el-progress :percentage="row.endCpu" style="flex: 1" />
+              <el-progress :percentage="row.endCpu || 0" style="flex: 1" />
             </div>
           </template>
         </el-table-column>
@@ -84,23 +84,23 @@
               <span style="margin-right: 6px">开始</span>
               <el-progress
                 :percentage="
-                  (100 * row.startCpu) /
-                  Math.ceil(Math.max(row.startCpu, row.endCpu))
+                  (100 * row.startMem) /
+                  Math.ceil(Math.max(row.startMem, row.endMem))
                 "
                 style="flex: 1"
               >
-                <div text>{{ row.startCpu }}</div>
+                <div text>{{ Math.floor(row.startMem * 10) / 10 }}</div>
               </el-progress>
             </div>
             <div style="display: flex">
               <span style="margin-right: 6px">结束</span>
               <el-progress
                 :percentage="
-                  (100 * row.endCpu) /
-                  Math.ceil(Math.max(row.startCpu, row.endCpu))
+                  (100 * row.endMem || 0) /
+                  Math.ceil(Math.max(row.startMem, row.endMem))
                 "
                 style="flex: 1"
-                ><div text>{{ row.endCpu }}</div>
+                ><div text>{{ Math.floor(row.endMem * 10) / 10 }}</div>
               </el-progress>
             </div>
           </template>
@@ -115,7 +115,7 @@
             </div>
             <div style="display: flex">
               <span style="margin-right: 6px">结束</span>
-              <el-progress :percentage="row.endBattery" style="flex: 1" />
+              <el-progress :percentage="row.endBattery || 0" style="flex: 1" />
             </div>
           </template>
         </el-table-column>
