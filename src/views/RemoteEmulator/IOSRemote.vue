@@ -96,9 +96,9 @@ const pocoLoading = ref(false);
 const appList = ref([]);
 const filterAppText = ref('');
 // 旋转状态 // 0 90 180 270
-const directionStatus = {
+const directionStatus = ref({
   value: 0,
-};
+});
 let moveX = 0;
 let moveY = 0;
 const depth = ref(50);
@@ -738,13 +738,13 @@ const websocketOnmessage = (message) => {
     }
     case 'rotation': {
       const d = JSON.parse(message.data).value;
-      if (directionStatus.value !== d) {
+      if (directionStatus.value.value !== d) {
         if (d !== -1) {
           ElMessage.success({
             message: $t('androidRemoteTS.messageOne'),
           });
         }
-        directionStatus.value = JSON.parse(message.data).value;
+        directionStatus.value.value = JSON.parse(message.data).value;
         location.value = !location.value;
       }
       break;
@@ -1421,9 +1421,19 @@ const checkAlive = () => {
           <div style="display: flex">
             <div style="flex: 1; text-align: center">
               <div>
-                <input ref="inputBox" v-model="inputValue" class="input-box" type="text" :style="inputBoxStyle"
-                  @input="changeInputHandle" @keyup.delete="deleteInputHandle" />
-                <canvas id="iosCap" style="
+                <input
+                  ref="inputBox"
+                  v-model="inputValue"
+                  class="input-box"
+                  type="text"
+                  :style="inputBoxStyle"
+                  @input="changeInputHandle"
+                  @keyup.delete="deleteInputHandle"
+                />
+
+                <canvas
+                  id="iosCap"
+                  style="
                     display: inline-block;
                     min-height: 100%;
                     max-height: calc(100vh - 200px);
@@ -2020,13 +2030,27 @@ const checkAlive = () => {
               </el-collapse>
               <el-tabs v-model="activeTab2" type="border-card" stretch>
                 <el-tab-pane :label="$t('publicStepTS.list')" name="step">
-                  <step-list :is-show-run="true" :platform="2" :is-driver-finish="isDriverFinish"
-                    :case-id="testCase['id']" :project-id="project['id']" :debug-loading="debugLoading"
-                    @run-step="runStep" />
+                  <step-list
+                    :is-show-run="true"
+                    :platform="2"
+                    :is-driver-finish="isDriverFinish"
+                    :case-id="testCase['id']"
+                    :project-id="project['id']"
+                    :debug-loading="debugLoading"
+                    @run-step="runStep"
+                  />
                 </el-tab-pane>
-                <el-tab-pane :label="$t('resultDetailTS.page.runLog')" name="log">
-                  <step-log :is-read-only="false" :debug-loading="debugLoading" :step-log="stepLog"
-                    @clear-log="clearLog" @stop-step="stopStep" />
+                <el-tab-pane
+                  :label="$t('resultDetailTS.page.runLog')"
+                  name="log"
+                >
+                  <step-log
+                    :is-read-only="false"
+                    :debug-loading="debugLoading"
+                    :step-log="stepLog"
+                    @clear-log="clearLog"
+                    @stop-step="stopStep"
+                  />
                 </el-tab-pane>
               </el-tabs>
             </div>
@@ -2075,9 +2099,20 @@ const checkAlive = () => {
                         font-size: 14px;
                       ">{{ $t('IOSRemote.depth') }}:
                     </span>
-                    <el-input-number size="mini" v-model="depth" :min="1" :max="60" />
-                    <el-button type="primary" size="mini" :loading="elementLoading" :disabled="isDriverFinish === false"
-                      style="margin-left: 10px" @click="getElement">
+                    <el-input-number
+                      v-model="depth"
+                      size="mini"
+                      :min="1"
+                      :max="60"
+                    />
+                    <el-button
+                      type="primary"
+                      size="mini"
+                      :loading="elementLoading"
+                      :disabled="isDriverFinish === false"
+                      style="margin-left: 10px"
+                      @click="getElement"
+                    >
                       <el-icon :size="12" style="vertical-align: middle">
                         <Search />
                       </el-icon>
