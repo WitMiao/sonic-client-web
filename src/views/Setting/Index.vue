@@ -74,6 +74,16 @@ onMounted(() => {
             >{{ $t('settingIndexTS.center.sysAlertRobots') }}
           </el-menu-item>
         </el-sub-menu>
+        <el-sub-menu index="6">
+          <template #title>
+            <i class="el-icon-setting"></i>
+            <span>{{ $t('settingIndexTS.center.operationRecord') }}</span>
+          </template>
+          <el-menu-item :index="'/Setting/operationRecord'">
+            <i class="el-icon-time"></i
+            >{{ $t('settingIndexTS.center.operationRecord') }}
+          </el-menu-item>
+        </el-sub-menu>
       </el-menu>
     </el-aside>
     <Header></Header>

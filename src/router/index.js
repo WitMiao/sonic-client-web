@@ -1,5 +1,5 @@
-import { createRouter, createWebHistory } from 'vue-router';
 import { $tc } from '@/locales/setupI18n';
+import { createRouter, createWebHistory } from 'vue-router';
 
 const getRoutes = () => [
   {
@@ -207,6 +207,25 @@ const getRoutes = () => [
         name: 'SysAlertRobots',
         component: () => import('../views/Setting/SysAlertRobots.vue'),
         meta: { title: $tc('routes.sysAlertRobots') },
+      },
+      {
+        path: 'operationRecord',
+        name: 'OperationRecord',
+        component: () => import('../views/Setting/OperationRecord.vue'),
+        redirect: '/Setting/operationRecord/OperationUseRecord',
+        children: [
+          {
+            path: 'operationUseRecord',
+            name: 'OperationUseRecord',
+            component: () => import('../views/Setting/OperationUseRecord.vue'),
+          },
+          {
+            path: 'OperationActionRecord',
+            name: 'OperationActionRecord',
+            component: () =>
+              import('../views/Setting/OperationActionRecord.vue'),
+          },
+        ],
       },
     ],
   },

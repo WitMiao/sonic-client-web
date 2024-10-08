@@ -884,6 +884,7 @@ const settingIndexTS = {
     roleText: '角色管理',
     userCon: '使用者配置',
     systemCon: '系統組態',
+    operationRecord: '操作記錄',
     scheduled: '系統排程任務',
     remoteSettings: '远程控制配置',
   },

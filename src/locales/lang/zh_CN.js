@@ -945,6 +945,7 @@ const settingIndexTS = {
     roleText: '角色管理',
     userCon: '用户配置',
     systemCon: '系统配置',
+    operationRecord:'操作记录',
     scheduled: '系统定时任务',
     remoteSettings: '远程控制配置',
     sysAlertRobots: '通知机器人',

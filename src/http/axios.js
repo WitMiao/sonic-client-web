@@ -15,15 +15,14 @@
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+import { $tc, i18n } from '@/locales/setupI18n';
 import axios from 'axios';
-import qs from 'qs';
 import { ElMessage } from 'element-plus';
-import { i18n, $tc } from '@/locales/setupI18n';
+import qs from 'qs';
 import { router } from '../router/index.js';
 
 let baseURL = '';
 if (process.env.NODE_ENV === 'development') {
-  // baseURL = 'http://localhost:3000/server/api';
   baseURL = 'http://10.165.0.37:3000/server/api';
 }
 if (process.env.NODE_ENV === 'production') {

@@ -1,23 +1,22 @@
 <script setup>
+import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { nextTick, onMounted, onUnmounted, ref, reactive } from 'vue';
-//import 'vue3-video-play/dist/style.css';
-//import { videoPlay } from 'vue3-video-play';
-import * as echarts from 'echarts/core';
+// import 'vue3-video-play/dist/style.css';
+// import { videoPlay } from 'vue3-video-play';
+import { LineChart, PieChart } from 'echarts/charts';
 import {
+  GridComponent,
+  LegendComponent,
   TitleComponent,
   ToolboxComponent,
   TooltipComponent,
-  GridComponent,
-  LegendComponent,
 } from 'echarts/components';
-import { LineChart, PieChart } from 'echarts/charts';
+import * as echarts from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
-import { ElMessage } from 'element-plus';
 import { useI18n } from 'vue-i18n';
+import IOSPerfChart from '../components/IOSPerfChart.vue';
 import StepLog from '../components/StepLog.vue';
 import axios from '../http/axios';
-import IOSPerfChart from '../components/IOSPerfChart.vue';
 
 import AndroidPerfChart from '../components/AndroidPerfChart.vue';
 
@@ -672,6 +671,6 @@ onUnmounted(() => {
 <style scoped lang="less">
 // 勿删，用于video-play组件样式穿透
 // .d-player-wrap {
-  // border-radius: 1.5rem;
+// border-radius: 1.5rem;
 // }
 </style>
