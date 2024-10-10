@@ -24,12 +24,18 @@ const getRoutes = () => [
   {
     path: '/Index',
     component: () => import('../views/Index.vue'),
+    redirect: '/Index/Devices',
     meta: { title: $tc('routes.home') },
     children: [
       {
         path: 'Devices',
         component: () => import('../views/Devices.vue'),
         meta: { title: $tc('routes.deviceCenter') },
+      },
+      {
+        path: 'ProjectManagement',
+        component: () => import('../views/ProjectManagement.vue'),
+        meta: { title: '项目管理' },
       },
       {
         path: 'AndroidRemote/:deviceId(\\d+)',

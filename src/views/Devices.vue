@@ -21,13 +21,14 @@ import { ElMessage } from 'element-plus';
 import { onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue';
 import useClipboard from 'vue-clipboard3';
 import { useI18n } from 'vue-i18n';
+import { useRequest } from 'vue-request';
 import { useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import DeviceDes from '../components/DeviceDes.vue';
 import HubSettings from '../components/HubSettings.vue';
 import Pageable from '../components/Pageable.vue';
 import axios from '../http/axios';
-import { useRequest } from 'vue-request';
+
 const store = useStore();
 const { t: $t } = useI18n();
 
@@ -295,8 +296,8 @@ const handleCheckedSize = (value) => {
 const handleAgent = (val) => {
   agentIds.value = val
     ? agentList.value.map((item) => {
-      return item.id;
-    })
+        return item.id;
+      })
     : [];
   isAllAgent.value = false;
   findAll();
@@ -310,8 +311,8 @@ const handleCheckedAgent = (value) => {
 const handleStatus = (val) => {
   status.value = val
     ? statusList.value.map((item) => {
-      return item.value;
-    })
+        return item.value;
+      })
     : [];
   isAllStatus.value = false;
   findAll();
@@ -339,7 +340,7 @@ const findAll = (pageNum, pSize) => {
           harmonySystem.value.length === 0 ? undefined : harmonySystem.value,
         manufacturer:
           checkMan.value.length === 0 ||
-            checkMan.value.length === manufacturer.value.length
+          checkMan.value.length === manufacturer.value.length
             ? undefined
             : checkMan.value,
         cpu:
@@ -352,12 +353,12 @@ const findAll = (pageNum, pSize) => {
             : size.value,
         agentId:
           agentIds.value.length === 0 ||
-            agentIds.value.length === agentList.value.length
+          agentIds.value.length === agentList.value.length
             ? undefined
             : agentIds.value,
         status:
           status.value.length === 0 ||
-            status.value.length === statusList.value.length
+          status.value.length === statusList.value.length
             ? undefined
             : status.value,
         deviceInfo: name.value.length > 0 ? name.value : undefined,
@@ -520,56 +521,104 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <el-switch v-model="isFlush" class="refresh" active-value="1" inactive-value="0"
-    style="float: right; margin-top: -10px" :active-text="$t('devices.refresh')" active-color="#13ce66"
-    @change="refreshNow" />
-  <el-tabs v-model="currentTab" style="margin-top: 20px" type="border-card" stretch @tab-click="switchTabs">
+  <el-switch
+    v-model="isFlush"
+    class="refresh"
+    active-value="1"
+    inactive-value="0"
+    style="float: right; margin-top: -10px"
+    :active-text="$t('devices.refresh')"
+    active-color="#13ce66"
+    @change="refreshNow"
+  />
+  <el-tabs
+    v-model="currentTab"
+    style="margin-top: 20px"
+    type="border-card"
+    stretch
+    @tab-click="switchTabs"
+  >
     <el-tab-pane name="device" :label="$t('devices.deviceCenter')">
       <el-card>
         <el-collapse>
           <el-collapse-item name="1">
             <template #title>
-              <el-input v-model="name" style="width: 440px" type="text" size="small"
-                :placeholder="$t('devices.filter.placeholder')" maxlength="40" clearable @input="handleInput">
+              <el-input
+                v-model="name"
+                style="width: 440px"
+                type="text"
+                size="small"
+                :placeholder="$t('devices.filter.placeholder')"
+                maxlength="40"
+                clearable
+                @input="handleInput"
+              >
               </el-input>
 
-              <strong v-if="avgTem !== 0" style="
+              <strong
+                v-if="avgTem !== 0"
+                style="
                   margin-left: 20px;
                   display: flex;
                   align-items: center;
                   font-size: 16px;
                   white-space: nowrap;
                   color: #909399;
-                ">{{ $t('devices.avgTem') }}
-                <div :style="{
-                  position: 'realtive',
-                  display: 'flex',
-                  'align-items': 'center',
-                  color:
-                    avgTem < 300
-                      ? '#67C23A'
-                      : avgTem < 350
+                "
+                >{{ $t('devices.avgTem') }}
+                <div
+                  :style="{
+                    position: 'realtive',
+                    display: 'flex',
+                    'align-items': 'center',
+                    color:
+                      avgTem < 300
+                        ? '#67C23A'
+                        : avgTem < 350
                         ? '#E6A23C'
                         : '#F56C6C',
-                }">
-                  <ColorImg :src="img['./../assets/img/tem.png'].default" :width="20" :height="20" :color="avgTem < 300
-                      ? '#67C23A'
-                      : avgTem < 350
+                  }"
+                >
+                  <ColorImg
+                    :src="img['./../assets/img/tem.png'].default"
+                    :width="20"
+                    :height="20"
+                    :color="
+                      avgTem < 300
+                        ? '#67C23A'
+                        : avgTem < 350
                         ? '#E6A23C'
                         : '#F56C6C'
-                    " />
+                    "
+                  />
                   {{ (avgTem / 10).toFixed(1) + ' ℃' }}
                 </div>
               </strong>
             </template>
 
-            <el-form label-position="left" class="filter-table-expand" label-width="90px">
+            <el-form
+              label-position="left"
+              class="filter-table-expand"
+              label-width="90px"
+            >
               <el-form-item :label="$t('devices.filter.platform.ANDROID')">
                 <div style="display: flex">
-                  <el-checkbox v-model="checkAllAndroid" :label="$t('devices.filter.all')" :indeterminate="isAllAndroid"
-                    @change="handleAndroid"></el-checkbox>
-                  <el-checkbox-group v-model="androidSystem" class="device-radio-p" @change="handleCheckedAndroid">
-                    <el-checkbox v-for="version in androidSystemVersion" :key="version" :label="version">
+                  <el-checkbox
+                    v-model="checkAllAndroid"
+                    :label="$t('devices.filter.all')"
+                    :indeterminate="isAllAndroid"
+                    @change="handleAndroid"
+                  ></el-checkbox>
+                  <el-checkbox-group
+                    v-model="androidSystem"
+                    class="device-radio-p"
+                    @change="handleCheckedAndroid"
+                  >
+                    <el-checkbox
+                      v-for="version in androidSystemVersion"
+                      :key="version"
+                      :label="version"
+                    >
                       {{ version }}
                     </el-checkbox>
                   </el-checkbox-group>
@@ -577,10 +626,22 @@ onUnmounted(() => {
               </el-form-item>
               <el-form-item :label="$t('devices.filter.platform.IOS')">
                 <div style="display: flex">
-                  <el-checkbox v-model="checkAlliOS" :label="$t('devices.filter.all')" :indeterminate="isAlliOS"
-                    @change="handleIOS"></el-checkbox>
-                  <el-checkbox-group v-model="iOSSystem" class="device-radio-p" @change="handleCheckedIOS">
-                    <el-checkbox v-for="version in iOSSystemVersion" :key="version" :label="version">
+                  <el-checkbox
+                    v-model="checkAlliOS"
+                    :label="$t('devices.filter.all')"
+                    :indeterminate="isAlliOS"
+                    @change="handleIOS"
+                  ></el-checkbox>
+                  <el-checkbox-group
+                    v-model="iOSSystem"
+                    class="device-radio-p"
+                    @change="handleCheckedIOS"
+                  >
+                    <el-checkbox
+                      v-for="version in iOSSystemVersion"
+                      :key="version"
+                      :label="version"
+                    >
                       {{ version }}
                     </el-checkbox>
                   </el-checkbox-group>
@@ -588,10 +649,22 @@ onUnmounted(() => {
               </el-form-item>
               <el-form-item :label="$t('devices.filter.platform.HARMONY')">
                 <div style="display: flex">
-                  <el-checkbox v-model="checkAllHarmony" :label="$t('devices.filter.all')" :indeterminate="isAllHarmony"
-                    @change="handleHarmony"></el-checkbox>
-                  <el-checkbox-group v-model="harmonySystem" class="device-radio-p" @change="handleCheckedHarmony">
-                    <el-checkbox v-for="version in harmonySystemVersion" :key="version" :label="version">
+                  <el-checkbox
+                    v-model="checkAllHarmony"
+                    :label="$t('devices.filter.all')"
+                    :indeterminate="isAllHarmony"
+                    @change="handleHarmony"
+                  ></el-checkbox>
+                  <el-checkbox-group
+                    v-model="harmonySystem"
+                    class="device-radio-p"
+                    @change="handleCheckedHarmony"
+                  >
+                    <el-checkbox
+                      v-for="version in harmonySystemVersion"
+                      :key="version"
+                      :label="version"
+                    >
                       {{ version }}
                     </el-checkbox>
                   </el-checkbox-group>
@@ -599,10 +672,22 @@ onUnmounted(() => {
               </el-form-item>
               <el-form-item :label="$t('devices.filter.manufacturer')">
                 <div style="display: flex">
-                  <el-checkbox v-model="checkAllMan" :label="$t('devices.filter.all')" :indeterminate="isAllMan"
-                    @change="handleMan"></el-checkbox>
-                  <el-checkbox-group v-model="checkMan" class="device-radio-p" @change="handleCheckedMan">
-                    <el-checkbox v-for="man in manufacturer" :key="man" :label="man">
+                  <el-checkbox
+                    v-model="checkAllMan"
+                    :label="$t('devices.filter.all')"
+                    :indeterminate="isAllMan"
+                    @change="handleMan"
+                  ></el-checkbox>
+                  <el-checkbox-group
+                    v-model="checkMan"
+                    class="device-radio-p"
+                    @change="handleCheckedMan"
+                  >
+                    <el-checkbox
+                      v-for="man in manufacturer"
+                      :key="man"
+                      :label="man"
+                    >
                       {{ man }}
                     </el-checkbox>
                   </el-checkbox-group>
@@ -610,39 +695,86 @@ onUnmounted(() => {
               </el-form-item>
               <el-form-item :label="$t('devices.filter.cpu')">
                 <div style="display: flex">
-                  <el-checkbox v-model="checkAllCpu" :label="$t('devices.filter.all')" :indeterminate="isAllCpu"
-                    @change="handleCpu"></el-checkbox>
-                  <el-checkbox-group v-model="cpu" class="device-radio-p" @change="handleCheckedCpu">
-                    <el-checkbox v-for="c in cpus" :key="c" :label="c"></el-checkbox>
+                  <el-checkbox
+                    v-model="checkAllCpu"
+                    :label="$t('devices.filter.all')"
+                    :indeterminate="isAllCpu"
+                    @change="handleCpu"
+                  ></el-checkbox>
+                  <el-checkbox-group
+                    v-model="cpu"
+                    class="device-radio-p"
+                    @change="handleCheckedCpu"
+                  >
+                    <el-checkbox
+                      v-for="c in cpus"
+                      :key="c"
+                      :label="c"
+                    ></el-checkbox>
                   </el-checkbox-group>
                 </div>
               </el-form-item>
               <el-form-item :label="$t('devices.filter.size')">
                 <div style="display: flex">
-                  <el-checkbox v-model="checkAllSize" :label="$t('devices.filter.all')" :indeterminate="isAllSize"
-                    @change="handleSize"></el-checkbox>
-                  <el-checkbox-group v-model="size" class="device-radio-p" @change="handleCheckedSize">
-                    <el-checkbox v-for="s in sizes" :key="s" :label="s"></el-checkbox>
+                  <el-checkbox
+                    v-model="checkAllSize"
+                    :label="$t('devices.filter.all')"
+                    :indeterminate="isAllSize"
+                    @change="handleSize"
+                  ></el-checkbox>
+                  <el-checkbox-group
+                    v-model="size"
+                    class="device-radio-p"
+                    @change="handleCheckedSize"
+                  >
+                    <el-checkbox
+                      v-for="s in sizes"
+                      :key="s"
+                      :label="s"
+                    ></el-checkbox>
                   </el-checkbox-group>
                 </div>
               </el-form-item>
               <el-form-item :label="$t('devices.filter.agent')">
                 <div style="display: flex">
-                  <el-checkbox v-model="checkAllAgent" :label="$t('devices.filter.all')" :indeterminate="isAllAgent"
-                    @change="handleAgent"></el-checkbox>
-                  <el-checkbox-group v-model="agentIds" class="device-radio-p" @change="handleCheckedAgent">
-                    <el-checkbox v-for="agent in agentList" :key="agent" :label="agent.id">{{ agent.name }}
+                  <el-checkbox
+                    v-model="checkAllAgent"
+                    :label="$t('devices.filter.all')"
+                    :indeterminate="isAllAgent"
+                    @change="handleAgent"
+                  ></el-checkbox>
+                  <el-checkbox-group
+                    v-model="agentIds"
+                    class="device-radio-p"
+                    @change="handleCheckedAgent"
+                  >
+                    <el-checkbox
+                      v-for="agent in agentList"
+                      :key="agent"
+                      :label="agent.id"
+                      >{{ agent.name }}
                     </el-checkbox>
                   </el-checkbox-group>
                 </div>
               </el-form-item>
               <el-form-item :label="$t('devices.filter.status')">
                 <div style="display: flex">
-                  <el-checkbox v-model="checkAllStatus" :label="$t('devices.filter.all')" :indeterminate="isAllStatus"
-                    @change="handleStatus"></el-checkbox>
-                  <el-checkbox-group v-model="status" class="device-radio-p" @change="handleCheckedStatus">
-                    <el-checkbox v-for="statusDevice in statusList" :key="statusDevice" :label="statusDevice.value">{{
-                      $t('devices.status.' + statusDevice.value) }}
+                  <el-checkbox
+                    v-model="checkAllStatus"
+                    :label="$t('devices.filter.all')"
+                    :indeterminate="isAllStatus"
+                    @change="handleStatus"
+                  ></el-checkbox>
+                  <el-checkbox-group
+                    v-model="status"
+                    class="device-radio-p"
+                    @change="handleCheckedStatus"
+                  >
+                    <el-checkbox
+                      v-for="statusDevice in statusList"
+                      :key="statusDevice"
+                      :label="statusDevice.value"
+                      >{{ $t('devices.status.' + statusDevice.value) }}
                     </el-checkbox>
                   </el-checkbox-group>
                 </div>
@@ -652,85 +784,171 @@ onUnmounted(() => {
         </el-collapse>
 
         <el-row :gutter="20">
-          <el-col v-for="device in pageData.content" :key="device" :xs="12" :sm="12" :md="12" :lg="6" :xl="6"
-            style="margin-top: 20px">
-            <DeviceDes :device="device" :agent-list="agentList" @flush="findAll" />
+          <el-col
+            v-for="device in pageData.content"
+            :key="device"
+            :xs="12"
+            :sm="12"
+            :md="12"
+            :lg="6"
+            :xl="6"
+            style="margin-top: 20px"
+          >
+            <DeviceDes
+              :device="device"
+              :agent-list="agentList"
+              @flush="findAll"
+            />
           </el-col>
         </el-row>
-        <pageable :is-page-set="false" :total="pageData['totalElements']" :current-page="pageData['number'] + 1"
-          :page-size="pageData['size']" @change="handleFindAll"></pageable>
+        <pageable
+          :is-page-set="false"
+          :total="pageData['totalElements']"
+          :current-page="pageData['number'] + 1"
+          :page-size="pageData['size']"
+          @change="handleFindAll"
+        ></pageable>
       </el-card>
     </el-tab-pane>
     <el-tab-pane name="agent" :label="$t('devices.agentCenter')">
-      <el-button type="primary" size="mini" @click="openAgent">{{ $t('agent.newAgent') }}
+      <el-button type="primary" size="mini" @click="openAgent"
+        >{{ $t('agent.newAgent') }}
       </el-button>
       <el-table :data="agentList" border style="margin-top: 10px">
-        <el-table-column prop="id" label="Agent ID" align="center" width="90"></el-table-column>
-        <el-table-column prop="name" label="Agent Name" header-align="center" show-overflow-tooltip></el-table-column>
-        <el-table-column prop="host" label="Host" align="center" show-overflow-tooltip width="150"></el-table-column>
-        <el-table-column prop="port" label="Port" align="center" width="90"></el-table-column>
-        <el-table-column prop="systemType" :label="$t('agent.system')" align="center" width="150">
+        <el-table-column
+          prop="id"
+          label="Agent ID"
+          align="center"
+          width="90"
+        ></el-table-column>
+        <el-table-column
+          prop="name"
+          label="Agent Name"
+          header-align="center"
+          show-overflow-tooltip
+        ></el-table-column>
+        <el-table-column
+          prop="host"
+          label="Host"
+          align="center"
+          show-overflow-tooltip
+          width="150"
+        ></el-table-column>
+        <el-table-column
+          prop="port"
+          label="Port"
+          align="center"
+          width="90"
+        ></el-table-column>
+        <el-table-column
+          prop="systemType"
+          :label="$t('agent.system')"
+          align="center"
+          width="150"
+        >
           <template #default="scope">
-            <div style="
+            <div
+              style="
                 display: flex;
                 align-items: center;
                 justify-content: center;
-              ">
+              "
+            >
               {{ scope.row.systemType }}
-              <img v-if="
-                scope.row.systemType !== 'unknown' &&
-                (scope.row.systemType.indexOf('Mac') !== -1 ||
-                  scope.row.systemType.indexOf('Windows') !== -1 ||
-                  scope.row.systemType.indexOf('Linux') !== -1)
-              " style="margin-left: 10px" height="20" :src="getImg(
-                  scope.row.systemType.indexOf('Mac') !== -1
-                    ? 'Mac'
-                    : scope.row.systemType.indexOf('Linux') !== -1
+              <img
+                v-if="
+                  scope.row.systemType !== 'unknown' &&
+                  (scope.row.systemType.indexOf('Mac') !== -1 ||
+                    scope.row.systemType.indexOf('Windows') !== -1 ||
+                    scope.row.systemType.indexOf('Linux') !== -1)
+                "
+                style="margin-left: 10px"
+                height="20"
+                :src="
+                  getImg(
+                    scope.row.systemType.indexOf('Mac') !== -1
+                      ? 'Mac'
+                      : scope.row.systemType.indexOf('Linux') !== -1
                       ? 'Linux'
                       : 'Windows'
-                )
-                  " />
+                  )
+                "
+              />
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="version" :label="$t('agent.version')" align="center" width="150"></el-table-column>
-        <el-table-column prop="secretKey" label="Agent Key" align="center" width="150">
+        <el-table-column
+          prop="version"
+          :label="$t('agent.version')"
+          align="center"
+          width="150"
+        ></el-table-column>
+        <el-table-column
+          prop="secretKey"
+          label="Agent Key"
+          align="center"
+          width="150"
+        >
           <template #default="scope">
-            <el-button size="mini" @click="copy(scope.row.secretKey)">{{ $t('agent.clickToCopy') }}
+            <el-button size="mini" @click="copy(scope.row.secretKey)"
+              >{{ $t('agent.clickToCopy') }}
             </el-button>
           </template>
         </el-table-column>
-        <el-table-column prop="status" :label="$t('agent.status.name')" align="center" width="90">
+        <el-table-column
+          prop="status"
+          :label="$t('agent.status.name')"
+          align="center"
+          width="90"
+        >
           <template #default="scope">
-            <el-tag v-if="scope.row.status === 1" size="small" type="success">{{ $t('agent.status.online') }}
+            <el-tag v-if="scope.row.status === 1" size="small" type="success"
+              >{{ $t('agent.status.online') }}
             </el-tag>
-            <el-tag v-if="scope.row.status === 2" size="small" type="info">{{ $t('agent.status.offline') }}
+            <el-tag v-if="scope.row.status === 2" size="small" type="info"
+              >{{ $t('agent.status.offline') }}
             </el-tag>
-            <el-tag v-if="scope.row.status === 3" size="small" type="warning">{{ $t('agent.status.s2ae') }}
+            <el-tag v-if="scope.row.status === 3" size="small" type="warning"
+              >{{ $t('agent.status.s2ae') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('agent.operation')" align="center" width="280">
+        <el-table-column
+          :label="$t('agent.operation')"
+          align="center"
+          width="280"
+        >
           <template #default="scope">
-            <el-button size="mini" :disabled="scope.row.status !== 1 || scope.row.hasHub === 0"
-              @click="hubSetting(scope.row.id)">{{ $t('agent.hub.config') }}
+            <el-button
+              size="mini"
+              :disabled="scope.row.status !== 1 || scope.row.hasHub === 0"
+              @click="hubSetting(scope.row.id)"
+              >{{ $t('agent.hub.config') }}
             </el-button>
-            <el-button size="mini" type="primary" @click="
-              editAgent(
-                scope.row.id,
-                scope.row.name,
-                scope.row.highTemp,
-                scope.row.highTempTime,
-                scope.row.robotType,
-                scope.row.robotToken,
-                scope.row.robotSecret,
-                scope.row.alertRobotIds
-              )
-              ">
+            <el-button
+              size="mini"
+              type="primary"
+              @click="
+                editAgent(
+                  scope.row.id,
+                  scope.row.name,
+                  scope.row.highTemp,
+                  scope.row.highTempTime,
+                  scope.row.robotType,
+                  scope.row.robotToken,
+                  scope.row.robotSecret,
+                  scope.row.alertRobotIds
+                )
+              "
+            >
               {{ $t('common.edit') }}
             </el-button>
-            <el-button size="mini" type="danger" :disabled="scope.row.status !== 1"
-              @click="shutdownAgent(scope.row.id)">
+            <el-button
+              size="mini"
+              type="danger"
+              :disabled="scope.row.status !== 1"
+              @click="shutdownAgent(scope.row.id)"
+            >
               {{ $t('agent.shutdown') }}
             </el-button>
           </template>
@@ -738,62 +956,117 @@ onUnmounted(() => {
       </el-table>
     </el-tab-pane>
   </el-tabs>
-  <el-dialog v-model="dialogAgent" :title="$t('dialog.agentInfo')" width="600px">
-    <el-form v-if="dialogAgent" ref="updateAgentForm" :model="agent" size="small" class="demo-table-expand"
-      label-width="90px" label-position="left">
-      <el-form-item prop="name" :label="$t('agent.edit.name')" :rules="{
-        required: true,
-        message: $t('agent.edit.rule'),
-        trigger: 'blur',
-      }">
-        <el-input v-model="agent.name" :placeholder="$t('agent.edit.namePlaceholder')"></el-input>
+  <el-dialog
+    v-model="dialogAgent"
+    :title="$t('dialog.agentInfo')"
+    width="600px"
+  >
+    <el-form
+      v-if="dialogAgent"
+      ref="updateAgentForm"
+      :model="agent"
+      size="small"
+      class="demo-table-expand"
+      label-width="90px"
+      label-position="left"
+    >
+      <el-form-item
+        prop="name"
+        :label="$t('agent.edit.name')"
+        :rules="{
+          required: true,
+          message: $t('agent.edit.rule'),
+          trigger: 'blur',
+        }"
+      >
+        <el-input
+          v-model="agent.name"
+          :placeholder="$t('agent.edit.namePlaceholder')"
+        ></el-input>
       </el-form-item>
       <el-divider></el-divider>
-      <el-alert style="margin-bottom: 10px" :title="$t('devices.hint')" type="info" show-icon :closable="false">
+      <el-alert
+        style="margin-bottom: 10px"
+        :title="$t('devices.hint')"
+        type="info"
+        show-icon
+        :closable="false"
+      >
         <template #default>
           <div>
             {{ $t('devices.adTemperature.temperature') }}
             <span style="color: #409eff">
-              {{ $t('devices.adTemperature.height') }}</span>
+              {{ $t('devices.adTemperature.height') }}</span
+            >
             {{ $t('devices.adTemperature.onlyAd') }}
           </div>
           <div>
             {{ $t('devices.adTemperature.then') }}
             <span style="color: #e6a23c">
-              {{ $t('devices.adTemperature.timeout') }}</span>
+              {{ $t('devices.adTemperature.timeout') }}</span
+            >
             {{ $t('devices.adTemperature.continuedTime') }}
             <span style="color: #409eff">
-              {{ $t('devices.adTemperature.height') }}</span>
+              {{ $t('devices.adTemperature.height') }}</span
+            >
             {{ $t('devices.adTemperature.onlyAdNotice')
             }}<span style="color: #f56c6c">{{
               $t('devices.adTemperature.shutdown')
-              }}</span>。
+            }}</span
+            >。
           </div>
         </template>
       </el-alert>
       <el-form-item prop="name" :label="$t('agent.edit.highTemp')">
-        <el-slider v-model="agent.highTemp" :format-tooltip="formatHighTemp" show-input :max="80" :min="1" />
+        <el-slider
+          v-model="agent.highTemp"
+          :format-tooltip="formatHighTemp"
+          show-input
+          :max="80"
+          :min="1"
+        />
       </el-form-item>
       <el-form-item prop="name" :label="$t('agent.edit.highTempTime')">
-        <el-input-number v-model="agent.highTempTime" show-input :max="120" :min="1" />
+        <el-input-number
+          v-model="agent.highTempTime"
+          show-input
+          :max="120"
+          :min="1"
+        />
         <span style="margin-left: 10px">min</span>
       </el-form-item>
       <el-form-item prop="alertRobotIds" :label="$t('agent.ui.alertRobotIds')">
-        <el-checkbox :label="$t('agent.ui.defaultAlertRobotIds')" :checked="agent.alertRobotIds == null" class="mb-2"
-          @change="(auto) => {
+        <el-checkbox
+          :label="$t('agent.ui.defaultAlertRobotIds')"
+          :checked="agent.alertRobotIds == null"
+          class="mb-2"
+          @change="
+            (auto) => {
               agent.alertRobotIds = auto ? null : [];
             }
-            " />
+          "
+        />
         <template v-if="agent.alertRobotIds != null">
-          <el-select v-model="agent.alertRobotIds" multiple clearable style="width: 100%"
-            :placeholder="$t('robot.ui.botPlaceholder')">
-            <el-option v-for="item in robotData" :key="item.id" :label="item.name"
-              :value="item.id"></el-option></el-select>
+          <el-select
+            v-model="agent.alertRobotIds"
+            multiple
+            clearable
+            style="width: 100%"
+            :placeholder="$t('robot.ui.botPlaceholder')"
+          >
+            <el-option
+              v-for="item in robotData"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            ></el-option
+          ></el-select>
         </template>
       </el-form-item>
     </el-form>
     <div style="text-align: center">
-      <el-button size="small" type="primary" @click="updateAgent">{{ $t('form.confirm') }}
+      <el-button size="small" type="primary" @click="updateAgent"
+        >{{ $t('form.confirm') }}
       </el-button>
     </div>
   </el-dialog>

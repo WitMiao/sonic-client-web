@@ -1,8 +1,8 @@
 <script setup>
-import './assets/light.css';
-import './assets/dark.css';
-import { ref, watch, computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useStore } from 'vuex';
+import './assets/dark.css';
+import './assets/light.css';
 import { getElementPlusLocale } from './locales/setupI18n';
 
 const store = useStore();
