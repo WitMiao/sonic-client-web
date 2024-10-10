@@ -1,9 +1,9 @@
 <script setup>
-import { onMounted, ref } from 'vue';
 import { ElMessage } from 'element-plus';
+import { onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
-import { useI18n } from 'vue-i18n';
 import axios from '../http/axios';
 
 const { t: $t } = useI18n();

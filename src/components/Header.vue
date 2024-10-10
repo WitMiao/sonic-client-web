@@ -1,20 +1,12 @@
 <script setup>
-import useLocale from '@/locales/useLocale';
-import {
-  Cellphone,
-  Expand,
-  Fold,
-  HomeFilled
-} from '@element-plus/icons';
+import { Cellphone, Expand, Fold, Tickets } from '@element-plus/icons';
 import { ElMessage } from 'element-plus';
 import { onBeforeMount, onMounted, ref, watch } from 'vue';
 import useClipboard from 'vue-clipboard3';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
-import defaultLogo from '../assets/logo.png';
 import axios from '../http/axios';
-import ProjectUpdate from './ProjectUpdate.vue';
 
 const { toClipboard } = useClipboard();
 
@@ -109,12 +101,6 @@ const getProjectList = () => {
     store.commit('saveProjectList', projectData.value);
   });
 };
-const jump = (project) => {
-  store.commit('saveProject', project);
-  router.push({
-    path: `/Home/${project.id}/ProjectIndex`,
-  });
-};
 const pushIndex = (path) => {
   router.push({
     path,
@@ -123,9 +109,6 @@ const pushIndex = (path) => {
 const logout = () => {
   store.commit('clearAuth');
   router.replace({ path: '/Login' });
-};
-const goToUrl = (url) => {
-  window.open(url, '_blank');
 };
 const toggleClass = (t) => {
   localStorage.setItem('SonicTheme', t);
@@ -144,10 +127,6 @@ onMounted(() => {
 
 // 国际化设置
 const { t: $t } = useI18n();
-const changeLocaleHandler = function (val) {
-  const { changeLocale } = useLocale(store);
-  changeLocale(val.index);
-};
 </script>
 
 <template>
@@ -226,6 +205,11 @@ const changeLocaleHandler = function (val) {
           :default-active="route.path"
         >
           <el-menu-item
+            v-if="
+              route.params.projectId ||
+              route.fullPath === '/Index/ProjectManagement' ||
+              route.fullPath.indexOf('/Setting') != -1
+            "
             index="/Index/Devices"
             @click="pushIndex('/Index/Devices')"
           >
@@ -243,16 +227,16 @@ const changeLocaleHandler = function (val) {
               route.fullPath === '/Index/Devices' ||
               route.fullPath.indexOf('/Setting') != -1
             "
-            index="/Index"
-            @click="pushIndex('/Index')"
+            index="/Index/ProjectManagement"
+            @click="pushIndex('/Index/ProjectManagement')"
           >
             <el-icon
               :size="18"
               style="vertical-align: middle; margin-right: 5px"
             >
-              <HomeFilled />
+              <Tickets />
             </el-icon>
-            {{ $t('layout.backHome') }}
+            项目管理
           </el-menu-item>
           <el-sub-menu index="1">
             <template #title>
@@ -475,91 +459,11 @@ const changeLocaleHandler = function (val) {
           route.params.projectId ||
           route.params.deviceId ||
           route.fullPath === '/Index/Devices' ||
+          route.fullPath === '/Index/ProjectManagement' ||
           route.fullPath.indexOf('/Setting') != -1
         "
       >
         <router-view />
-      </el-main>
-      <el-main v-else>
-        <el-alert
-          :title="$t('layout.welcomeSpeech')"
-          type="info"
-          center
-          :closable="false"
-        >
-        </el-alert>
-        <div style="text-align: center">
-          <el-button
-            type="primary"
-            size="small"
-            style="margin-top: 15px"
-            @click="dialogVisible = true"
-          >
-            {{ $t('layout.addProject') }}
-          </el-button>
-        </div>
-        <el-row
-          v-if="projectData && projectData.length > 0"
-          style="margin-top: 10px"
-          justify="center"
-          type="flex"
-        >
-          <el-col
-            v-for="project in projectData"
-            :key="project"
-            :xs="12"
-            :sm="8"
-            :md="8"
-            :lg="4"
-            :xl="3"
-          >
-            <div @click="jump(project)">
-              <el-card
-                style="margin: 10px 10px; cursor: pointer"
-                shadow="hover"
-              >
-                <div style="text-align: center">
-                  <el-avatar
-                    :src="
-                      project['projectImg'].length > 0
-                        ? project['projectImg']
-                        : defaultLogo
-                    "
-                    :size="150"
-                    shape="square"
-                  ></el-avatar>
-                </div>
-                <el-form
-                  label-position="left"
-                  class="demo-table-expand"
-                  style="margin-top: 10px"
-                >
-                  <el-form-item style="text-align: center">
-                    <strong style="font-size: 17px">{{
-                      project['projectName']
-                    }}</strong>
-                  </el-form-item>
-                  <el-form-item>
-                    <p
-                      style="
-                        text-indent: 2em;
-                        line-height: 30px;
-                        margin-top: 0px;
-                      "
-                    >
-                      {{
-                        project['projectDes'].length > 30
-                          ? project['projectDes'].substring(0, 30) + '...'
-                          : project['projectDes']
-                      }}
-                    </p>
-                  </el-form-item>
-                </el-form>
-              </el-card>
-            </div>
-          </el-col>
-        </el-row>
-        <el-empty v-else :image-size="200"></el-empty>
       </el-main>
     </el-scrollbar>
   </el-container>
