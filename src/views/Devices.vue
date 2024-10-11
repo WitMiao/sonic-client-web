@@ -31,8 +31,8 @@ import axios from '../http/axios';
 
 const store = useStore();
 const { t: $t } = useI18n();
-
 const { toClipboard } = useClipboard();
+
 const img = import.meta.globEager('./../assets/img/*');
 const router = useRouter();
 const currentTab = ref('device');
@@ -71,6 +71,7 @@ const sizes = ref([]);
 const isFlush = ref('0');
 const refreshCount = ref(0);
 const hasDebugDevice = ref(false);
+const projectMap = ref({});
 const androidSystemVersion = ref([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
 const iOSSystemVersion = ref([9, 10, 11, 12, 13, 14, 15, 16, 17, 18]);
 const harmonySystemVersion = ref([1, 2, 3, 4]);
@@ -187,6 +188,14 @@ const editAgent = async (
 };
 const openAgent = () => {
   dialogAgent.value = true;
+};
+const getProjectList = () => {
+  axios.get('/controller/projects/list').then((resp) => {
+    projectMap.value = resp.data.reduce((map, val) => {
+      map[val.id] = val;
+      return map;
+    }, {});
+  });
 };
 const shutdownAgent = (id) => {
   axios.get('/transport/exchange/stop', { params: { id } }).then((resp) => {
@@ -502,6 +511,7 @@ onBeforeMount(() => {
 const laterTimer = ref(null);
 onMounted(() => {
   getFilterOption();
+  getProjectList();
   useRequest(refresh, {
     refreshOnWindowFocus: true,
     refocusTimespan: 2000,
@@ -782,7 +792,6 @@ onUnmounted(() => {
             </el-form>
           </el-collapse-item>
         </el-collapse>
-
         <el-row :gutter="20">
           <el-col
             v-for="device in pageData.content"
@@ -796,6 +805,7 @@ onUnmounted(() => {
           >
             <DeviceDes
               :device="device"
+              :project-list="projectMap"
               :agent-list="agentList"
               @flush="findAll"
             />

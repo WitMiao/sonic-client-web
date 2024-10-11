@@ -13,6 +13,7 @@ const img = import.meta.globEager('./../assets/img/*');
 const props = defineProps({
   device: Object,
   agentList: Array,
+  projectList:Array,
   detail: {
     type: Boolean,
     default: false,
@@ -90,6 +91,33 @@ const jump = (id, platform) => {
   }
   window.open(routeData.href, '_self');
 };
+
+const offline = (device) => {
+  axios.put('/controller/devices/updateStatus', {
+      id: device.id,
+      status: 'OFFLINE',
+  }).then((resp) => {
+    if (resp.code === 2000) {
+      ElMessage.success({
+        message: resp.message,
+      });
+      emit('flush');
+    }
+  });
+};
+const online = (device) => {
+  axios.put('/controller/devices/updateStatus', {
+    id: device.id,
+    status: 'ONLINE'
+  }).then((resp) => {
+    if (resp.code === 2000) {
+      ElMessage.success({
+        message: resp.message,
+      });
+      emit('flush');
+    }
+  });
+};
 const reboot = (id) => {
   axios.get('/transport/exchange/reboot', { params: { id } }).then((resp) => {
     if (resp.code === 2000) {
@@ -133,6 +161,19 @@ const findAgentById = (id) => {
   }
   return result;
 };
+
+const findProjectById = (id) => {
+  let result = $t('form.unknown');
+  for (const i in props.projectList){
+    if(i == id)
+    {
+      result = props.projectList[i].projectName;
+      break;
+    }
+  }
+  return result;
+};
+
 </script>
 
 <template>
@@ -345,6 +386,9 @@ const findAgentById = (id) => {
               }}
             </div>
           </el-form-item>
+          <el-form-item :label="$t('devices.form.project')">
+            <div>{{ findProjectById(device.projectId) }}</div>
+          </el-form-item>
           <el-form-item :label="$t('devices.form.agent')">
             <div>{{ findAgentById(device.agentId) }}</div>
           </el-form-item>
@@ -355,9 +399,23 @@ const findAgentById = (id) => {
       <el-button
         type="primary"
         size="mini"
-        :disabled="device.status !== 'ONLINE'"
+        v-show="device.status !== 'DISCONNECTED' && device.status !== 'OFFLINE'"
         @click="jump(device.id, device.platform)"
         >{{ $t('devices.useRightNow') }}
+      </el-button>
+      <el-button
+          size="mini"
+          :disabled="device.status !== 'ONLINE'"
+          v-show="device.status !== 'OFFLINE' && device.status !== 'DISCONNECTED'"
+          @click="offline(device)"
+      >下线
+      </el-button>
+      <el-button
+          size="mini"
+          :disabled="device.status !== 'OFFLINE'"
+          v-show="device.status !== 'ONLINE' && device.status !== 'DISCONNECTED'"
+          @click="online(device)"
+      >上线
       </el-button>
       <el-popover placement="top" width="340px" trigger="hover">
         <el-form
@@ -527,3 +585,16 @@ const findAgentById = (id) => {
     </div>
   </el-card>
 </template>
+
+<style scoped>
+/* 图标样式，当鼠标悬停时，显示为手形光标，并改变颜色 */
+.clickable-icon {
+  cursor: pointer; /* 鼠标悬停时显示手形光标 */
+  transition: color 0.3s; /* 添加颜色渐变效果 */
+  margin-left: 5px;
+}
+
+.clickable-icon:hover {
+  color: #409EFF; /* 鼠标悬停时改变图标颜色 */
+}
+</style>
