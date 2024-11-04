@@ -16,7 +16,50 @@
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import { useRoute, useRouter } from 'vue-router';
+import defaultLogo from '@/assets/logo.png';
+import ColorImg from '@/components/ColorImg.vue';
+import ElementUpdate from '@/components/ElementUpdate.vue';
+import PackageList from '@/components/PackageList.vue';
+import Pageable from '@/components/Pageable.vue';
+import StepList from '@/components/StepList.vue';
+import StepLog from '@/components/StepLog.vue';
+import TestCaseList from '@/components/TestCaseList.vue';
+import axios from '@/http/axios';
+import {
+  Back,
+  Bell,
+  Camera,
+  CaretLeft,
+  CaretRight,
+  Cellphone,
+  Connection,
+  CopyDocument,
+  Delete,
+  Download,
+  House,
+  InfoFilled,
+  Location,
+  Menu,
+  Minus,
+  MuteNotification,
+  Operation,
+  Phone,
+  PhoneFilled,
+  Place,
+  Plus,
+  Pointer,
+  Position,
+  Postcard,
+  Refresh,
+  Search,
+  Service,
+  Sunny,
+  SwitchButton,
+  VideoCamera,
+  VideoPause,
+  View,
+} from '@element-plus/icons';
+import { ElMessage } from 'element-plus';
 import {
   computed,
   nextTick,
@@ -25,62 +68,19 @@ import {
   ref,
   watch,
 } from 'vue';
-import { useStore } from 'vuex';
-import axios from '@/http/axios';
-import { ElMessage } from 'element-plus';
 import useClipboard from 'vue-clipboard3';
-import ColorImg from '@/components/ColorImg.vue';
-import StepList from '@/components/StepList.vue';
-import TestCaseList from '@/components/TestCaseList.vue';
-import StepLog from '@/components/StepLog.vue';
-import ElementUpdate from '@/components/ElementUpdate.vue';
-import Pageable from '@/components/Pageable.vue';
-import PackageList from '@/components/PackageList.vue';
-import defaultLogo from '@/assets/logo.png';
-import {
-  VideoPause,
-  Refresh,
-  Connection,
-  Delete,
-  Place,
-  Download,
-  Search,
-  SwitchButton,
-  Position,
-  Pointer,
-  Camera,
-  Sunny,
-  Phone,
-  PhoneFilled,
-  Minus,
-  MuteNotification,
-  Plus,
-  CaretRight,
-  CaretLeft,
-  Operation,
-  Cellphone,
-  Menu,
-  CopyDocument,
-  House,
-  Back,
-  View,
-  InfoFilled,
-  Bell,
-  Service,
-  VideoCamera,
-  Postcard,
-  Location,
-} from '@element-plus/icons';
+import { useRoute, useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 
 import { useI18n } from 'vue-i18n';
 
-import AudioProcessor from '@/lib/audio-processor';
 import wifiLogo from '@/assets/img/wifi.png';
+import AudioProcessor from '@/lib/audio-processor';
+import AndroidPerf from '../../components/AndroidPerf.vue';
+import PocoPane from '../../components/PocoPane.vue';
+import RemotePageHeader from '../../components/RemotePageHeader.vue';
 import RenderDeviceName from '../../components/RenderDeviceName.vue';
 import Scrcpy from './Scrcpy';
-import PocoPane from '../../components/PocoPane.vue';
-import AndroidPerf from '../../components/AndroidPerf.vue';
-import RemotePageHeader from '../../components/RemotePageHeader.vue';
 
 const pocoPaneRef = ref(null);
 const androidPerfRef = ref(null);
@@ -1679,6 +1679,16 @@ const getDeviceById = (id) => {
     }
   });
 };
+
+const addTime = () => {
+  websocket.send(
+    JSON.stringify({
+      type: 'addRemoteTime',
+      detail: 1,
+    })
+  );
+}
+
 /**
  * 实时音频
  */
@@ -1806,7 +1816,7 @@ const checkAlive = () => {
       @check-location="checkLocation" />
   </el-dialog>
   <remote-page-header :ticker="ticker" :idle-count="idleCount" :remote-timeout="remoteTimeout"
-    :idle-timeout="idleTimeout" @close="close" />
+    :idle-timeout="idleTimeout" @close="close" @addTime='addTime' />
   <div style="padding: 20px">
     <el-row :gutter="24" @mouseup="lineMouseup" @mouseleave="lineMouseleave" @mousemove="lineMousemove">
       <el-col :span="tabPosition == 'left' ? 12 : 24" :style="{
@@ -2227,7 +2237,7 @@ const checkAlive = () => {
                     </el-button>
                     <el-button size="mini" type="primary" @click="startKeyboard">{{
                       $t('androidRemoteTS.code.startKeyboard')
-                      }}
+                    }}
                     </el-button>
                     <el-button size="mini" type="primary" @click="stopKeyboard">{{
                       $t('androidRemoteTS.code.stopKeyboard') }}
@@ -2251,7 +2261,7 @@ const checkAlive = () => {
                         <el-card>
                           <strong>{{
                             $t('androidRemoteTS.code.noAgent')
-                            }}</strong>
+                          }}</strong>
                         </el-card>
                       </div>
                     </div>
@@ -2303,7 +2313,7 @@ const checkAlive = () => {
                   <template #header>
                     <strong>{{
                       $t('androidRemoteTS.code.fileTransfer')
-                      }}</strong>
+                    }}</strong>
                   </template>
                   <div style="text-align: center">
                     <el-tabs type="border-card" stretch>
@@ -2405,15 +2415,15 @@ const checkAlive = () => {
                 </template>
                 <span style="color: #909399; margin-right: 10px">{{
                   $t('androidRemoteTS.code.associatedProject')
-                  }}</span>
+                }}</span>
                 <el-select v-model="project" size="mini" value-key="id"
                   :placeholder="$t('androidRemoteTS.code.chooseProject')">
                   <el-option v-for="item in store.state.projectList" :key="item.id" :value="item"
                     :label="item['projectName']">
                     <div style="display: flex; align-items: center">
                       <el-avatar style="margin-right: 10px" :size="32" :src="item['projectImg'].length > 0
-                          ? item['projectImg']
-                          : defaultLogo
+                        ? item['projectImg']
+                        : defaultLogo
                         " shape="square"></el-avatar>
                       {{ item['projectName'] }}
                     </div>
@@ -2502,7 +2512,7 @@ const checkAlive = () => {
             <span style="float: right; display: flex; align-items: center">
               <el-button size="mini" style="margin-right: 6px" @click="getWifiList">{{
                 $t('androidRemoteTS.code.refresh')
-                }}</el-button>
+              }}</el-button>
               <ColorImg :src="wifiLogo" :width="18" :height="18" :color="isConnectWifi ? '#67C23A' : '#F56C6C'" />
               <span style="margin-left: 6px; color: #67c23a; font-size: 16px">{{
                 currentWifi.length > 0 && isConnectWifi
@@ -2660,8 +2670,8 @@ const checkAlive = () => {
                       ">
                       <div style="display: flex; align-items: center">
                         <el-avatar style="margin-right: 10px" :size="27" :src="project['projectImg'].length > 0
-                            ? project['projectImg']
-                            : defaultLogo
+                          ? project['projectImg']
+                          : defaultLogo
                           " shape="square"></el-avatar>
                         {{ project['projectName'] }}
                       </div>
@@ -2712,15 +2722,15 @@ const checkAlive = () => {
             <div v-else>
               <span style="color: #909399; margin-right: 10px">{{
                 $t('androidRemoteTS.code.associatedProject')
-                }}</span>
+              }}</span>
               <el-select v-model="project" size="mini" value-key="id"
                 :placeholder="$t('androidRemoteTS.code.chooseProject')">
                 <el-option v-for="item in store.state.projectList" :key="item.id" :value="item"
                   :label="item['projectName']">
                   <div style="display: flex; align-items: center">
                     <el-avatar style="margin-right: 10px" :size="32" :src="item['projectImg'].length > 0
-                        ? item['projectImg']
-                        : defaultLogo
+                      ? item['projectImg']
+                      : defaultLogo
                       " shape="square"></el-avatar>
                     {{ item['projectName'] }}
                   </div>
@@ -2827,7 +2837,7 @@ const checkAlive = () => {
                                 </span>
                                 <span v-else style="font-size: 14px">{{
                                   node.label
-                                  }}</span>
+                                }}</span>
                               </template>
                             </el-tree>
                           </el-scrollbar>
@@ -2859,8 +2869,8 @@ const checkAlive = () => {
                                 :label="item['projectName']">
                                 <div style="display: flex; align-items: center">
                                   <el-avatar style="margin-right: 10px" :size="32" :src="item['projectImg'].length > 0
-                                      ? item['projectImg']
-                                      : defaultLogo
+                                    ? item['projectImg']
+                                    : defaultLogo
                                     " shape="square"></el-avatar>
                                   {{ item['projectName'] }}
                                 </div>
@@ -2936,7 +2946,7 @@ const checkAlive = () => {
                               <el-form-item :label="$t('androidRemoteTS.code.absolutePath')" style="cursor: pointer">
                                 <span @click="copy(elementDetail['xpath'])">{{
                                   elementDetail['xpath']
-                                  }}</span>
+                                }}</span>
                                 <el-icon color="green" size="16" style="
                                     vertical-align: middle;
                                     margin-left: 10px;
@@ -3217,12 +3227,12 @@ const checkAlive = () => {
                   <template #title>
                     <span style="color: #606266">{{
                       $t('androidRemoteTS.code.webView.return')
-                      }}</span>
+                    }}</span>
                   </template>
                   <template #content>
                     {{ $t('androidRemoteTS.code.webView.nowWeb') }}：<strong>{{
                       title
-                      }}</strong>
+                    }}</strong>
                   </template>
                 </el-page-header>
               </div>

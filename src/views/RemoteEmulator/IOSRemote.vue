@@ -16,7 +16,35 @@
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import { useRoute, useRouter } from 'vue-router';
+import defaultLogo from '@/assets/logo.png';
+import ElementUpdate from '@/components/ElementUpdate.vue';
+import PackageList from '@/components/PackageList.vue';
+import Pageable from '@/components/Pageable.vue';
+import StepList from '@/components/StepList.vue';
+import StepLog from '@/components/StepLog.vue';
+import TestCaseList from '@/components/TestCaseList.vue';
+import axios from '@/http/axios';
+import {
+  Camera,
+  Cellphone,
+  Delete,
+  Download,
+  House,
+  InfoFilled,
+  Location,
+  Minus,
+  Operation,
+  Phone,
+  PhoneFilled,
+  Place,
+  Plus,
+  Pointer,
+  Position,
+  Search,
+  SwitchButton,
+  VideoCamera
+} from '@element-plus/icons';
+import { ElMessage } from 'element-plus';
 import {
   computed,
   nextTick,
@@ -25,55 +53,14 @@ import {
   ref,
   watch,
 } from 'vue';
-import { useStore } from 'vuex';
-import axios from '@/http/axios';
-import { ElMessage } from 'element-plus';
 import useClipboard from 'vue-clipboard3';
-import StepList from '@/components/StepList.vue';
-import TestCaseList from '@/components/TestCaseList.vue';
-import StepLog from '@/components/StepLog.vue';
-import ElementUpdate from '@/components/ElementUpdate.vue';
-import Pageable from '@/components/Pageable.vue';
-import defaultLogo from '@/assets/logo.png';
-import {
-  Location,
-  Place,
-  FullScreen,
-  Download,
-  Search,
-  SwitchButton,
-  Position,
-  Pointer,
-  Camera,
-  Sunny,
-  Phone,
-  PhoneFilled,
-  Minus,
-  MuteNotification,
-  Plus,
-  CaretRight,
-  CaretLeft,
-  Operation,
-  Cellphone,
-  VideoCamera,
-  Refresh,
-  RefreshRight,
-  RefreshLeft,
-  Wallet,
-  Menu,
-  CopyDocument,
-  Delete,
-  House,
-  Back,
-  View,
-  InfoFilled,
-} from '@element-plus/icons';
 import { useI18n } from 'vue-i18n';
-import PackageList from '@/components/PackageList.vue';
-import RenderDeviceName from '../../components/RenderDeviceName.vue';
-import PocoPane from '../../components/PocoPane.vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 import IOSPerf from '../../components/IOSPerf.vue';
+import PocoPane from '../../components/PocoPane.vue';
 import RemotePageHeader from '../../components/RemotePageHeader.vue';
+import RenderDeviceName from '../../components/RenderDeviceName.vue';
 
 const pocoPaneRef = ref(null);
 const iosPerfRef = ref(null);
@@ -1220,6 +1207,14 @@ const getElement = () => {
     })
   );
 };
+const addTime=()=>{
+  websocket.send(
+    JSON.stringify({
+      type: 'addRemoteTime',
+      detail: 1
+    })
+  );
+}
 const close = () => {
   if (websocket !== null) {
     websocket.close();
@@ -1348,7 +1343,7 @@ const checkAlive = () => {
       @check-location="checkLocation" />
   </el-dialog>
   <remote-page-header :ticker="ticker" :idle-count="idleCount" :remote-timeout="remoteTimeout"
-    :idle-timeout="idleTimeout" @close="close" />
+    :idle-timeout="idleTimeout" @close="close" @addTime="addTime"/>
   <div style="padding: 20px">
     <el-row :gutter="24" @mouseup="lineMouseup" @mouseleave="lineMouseleave" @mousemove="lineMousemove">
       <el-col :span="tabPosition == 'left' ? 12 : 24" :style="{

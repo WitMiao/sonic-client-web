@@ -26,7 +26,7 @@ const props = defineProps({
   remoteTimeout: Number,
   idleTimeout: Number,
 });
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'addTime']);
 const parseTimeout = (time) => {
   let h = parseInt((time / 60 / 60) % 24);
   h = h < 10 ? `0${h}` : h;
@@ -40,6 +40,10 @@ const parseTimeout = (time) => {
 };
 const close = () => {
   emit('close');
+};
+// 续期
+const addTime = () => {
+  emit('addTime');
 };
 </script>
 
@@ -79,6 +83,9 @@ const close = () => {
               </div>
             </template>
           </el-popover>
+          <el-button type="primary" style="margin-left: 10px" @click="addTime"
+            >续期</el-button
+          >
         </div>
       </template>
     </el-page-header>
