@@ -829,12 +829,25 @@ const websocketOnmessage = (message) => {
       close();
       break;
     }
+    case 'sendRemind': {
+      //展示续期按钮
+      if (JSON.parse(message.data).count === 2) {
+        isShowRenewButton.value = false;
+        ElMessage.warning({
+          message: '续期已超2次',
+        })
+      } else {
+        isShowRenewButton.value = true;
+      }
+      break;
+    }
   }
 };
 const inputValue = ref('');
 const inputBox = ref(null);
 const inputBoxStyle = ref({});
 const paste = ref('');
+const isShowRenewButton = ref(false);
 const changeInputHandle = () => {
   if (inputValue.value) {
     websocket.send(
@@ -1226,6 +1239,7 @@ const addTime = () => {
       detail: 1,
     })
   );
+  isShowRenewButton.value = false;
 };
 const close = () => {
   if (websocket !== null) {
@@ -1392,6 +1406,7 @@ const checkAlive = () => {
     :idle-count="idleCount"
     :remote-timeout="remoteTimeout"
     :idle-timeout="idleTimeout"
+    :is-show-renew-button="isShowRenewButton"
     @close="close"
     @add-time="addTime"
   />

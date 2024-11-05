@@ -25,6 +25,7 @@ const props = defineProps({
   idleCount: Number,
   remoteTimeout: Number,
   idleTimeout: Number,
+  isShowRenewButton: Boolean,
 });
 const emit = defineEmits(['close', 'addTime']);
 const parseTimeout = (time) => {
@@ -83,7 +84,11 @@ const addTime = () => {
               </div>
             </template>
           </el-popover>
-          <el-button type="primary" style="margin-left: 10px" @click="addTime"
+          <el-button
+            v-if="isShowRenewButton"
+            type="primary"
+            style="margin-left: 10px"
+            @click="addTime"
             >续期</el-button
           >
         </div>
