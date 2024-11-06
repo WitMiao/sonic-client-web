@@ -1225,6 +1225,7 @@ const addTime = () => {
     JSON.stringify({
       type: 'addRemoteTime',
       detail: 1,
+      utime: Math.ceil(ticker.value / 60)
     })
   );
   screenWebsocket.send(

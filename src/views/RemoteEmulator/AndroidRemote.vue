@@ -1698,6 +1698,7 @@ const addTime = () => {
     JSON.stringify({
       type: 'addRemoteTime',
       detail: 1,
+      utime: Math.ceil(ticker.value / 60)
     })
   );
   screenWebsocket.send(
@@ -2263,7 +2264,7 @@ const checkAlive = () => {
                     </el-button>
                     <el-button size="mini" type="primary" @click="startKeyboard">{{
                       $t('androidRemoteTS.code.startKeyboard')
-                      }}
+                    }}
                     </el-button>
                     <el-button size="mini" type="primary" @click="stopKeyboard">{{
                       $t('androidRemoteTS.code.stopKeyboard') }}
@@ -2287,7 +2288,7 @@ const checkAlive = () => {
                         <el-card>
                           <strong>{{
                             $t('androidRemoteTS.code.noAgent')
-                            }}</strong>
+                          }}</strong>
                         </el-card>
                       </div>
                     </div>
@@ -2339,7 +2340,7 @@ const checkAlive = () => {
                   <template #header>
                     <strong>{{
                       $t('androidRemoteTS.code.fileTransfer')
-                      }}</strong>
+                    }}</strong>
                   </template>
                   <div style="text-align: center">
                     <el-tabs type="border-card" stretch>
@@ -2441,15 +2442,15 @@ const checkAlive = () => {
                 </template>
                 <span style="color: #909399; margin-right: 10px">{{
                   $t('androidRemoteTS.code.associatedProject')
-                  }}</span>
+                }}</span>
                 <el-select v-model="project" size="mini" value-key="id"
                   :placeholder="$t('androidRemoteTS.code.chooseProject')">
                   <el-option v-for="item in store.state.projectList" :key="item.id" :value="item"
                     :label="item['projectName']">
                     <div style="display: flex; align-items: center">
                       <el-avatar style="margin-right: 10px" :size="32" :src="item['projectImg'].length > 0
-                          ? item['projectImg']
-                          : defaultLogo
+                        ? item['projectImg']
+                        : defaultLogo
                         " shape="square"></el-avatar>
                       {{ item['projectName'] }}
                     </div>
@@ -2538,7 +2539,7 @@ const checkAlive = () => {
             <span style="float: right; display: flex; align-items: center">
               <el-button size="mini" style="margin-right: 6px" @click="getWifiList">{{
                 $t('androidRemoteTS.code.refresh')
-                }}</el-button>
+              }}</el-button>
               <ColorImg :src="wifiLogo" :width="18" :height="18" :color="isConnectWifi ? '#67C23A' : '#F56C6C'" />
               <span style="margin-left: 6px; color: #67c23a; font-size: 16px">{{
                 currentWifi.length > 0 && isConnectWifi
@@ -2696,8 +2697,8 @@ const checkAlive = () => {
                       ">
                       <div style="display: flex; align-items: center">
                         <el-avatar style="margin-right: 10px" :size="27" :src="project['projectImg'].length > 0
-                            ? project['projectImg']
-                            : defaultLogo
+                          ? project['projectImg']
+                          : defaultLogo
                           " shape="square"></el-avatar>
                         {{ project['projectName'] }}
                       </div>
@@ -2748,15 +2749,15 @@ const checkAlive = () => {
             <div v-else>
               <span style="color: #909399; margin-right: 10px">{{
                 $t('androidRemoteTS.code.associatedProject')
-                }}</span>
+              }}</span>
               <el-select v-model="project" size="mini" value-key="id"
                 :placeholder="$t('androidRemoteTS.code.chooseProject')">
                 <el-option v-for="item in store.state.projectList" :key="item.id" :value="item"
                   :label="item['projectName']">
                   <div style="display: flex; align-items: center">
                     <el-avatar style="margin-right: 10px" :size="32" :src="item['projectImg'].length > 0
-                        ? item['projectImg']
-                        : defaultLogo
+                      ? item['projectImg']
+                      : defaultLogo
                       " shape="square"></el-avatar>
                     {{ item['projectName'] }}
                   </div>
@@ -2863,7 +2864,7 @@ const checkAlive = () => {
                                 </span>
                                 <span v-else style="font-size: 14px">{{
                                   node.label
-                                  }}</span>
+                                }}</span>
                               </template>
                             </el-tree>
                           </el-scrollbar>
@@ -2895,8 +2896,8 @@ const checkAlive = () => {
                                 :label="item['projectName']">
                                 <div style="display: flex; align-items: center">
                                   <el-avatar style="margin-right: 10px" :size="32" :src="item['projectImg'].length > 0
-                                      ? item['projectImg']
-                                      : defaultLogo
+                                    ? item['projectImg']
+                                    : defaultLogo
                                     " shape="square"></el-avatar>
                                   {{ item['projectName'] }}
                                 </div>
@@ -2972,7 +2973,7 @@ const checkAlive = () => {
                               <el-form-item :label="$t('androidRemoteTS.code.absolutePath')" style="cursor: pointer">
                                 <span @click="copy(elementDetail['xpath'])">{{
                                   elementDetail['xpath']
-                                  }}</span>
+                                }}</span>
                                 <el-icon color="green" size="16" style="
                                     vertical-align: middle;
                                     margin-left: 10px;
@@ -3253,12 +3254,12 @@ const checkAlive = () => {
                   <template #title>
                     <span style="color: #606266">{{
                       $t('androidRemoteTS.code.webView.return')
-                      }}</span>
+                    }}</span>
                   </template>
                   <template #content>
                     {{ $t('androidRemoteTS.code.webView.nowWeb') }}：<strong>{{
                       title
-                      }}</strong>
+                    }}</strong>
                   </template>
                 </el-page-header>
               </div>
