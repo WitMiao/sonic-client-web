@@ -508,10 +508,34 @@ const openSocket = (host, port, key, udId) => {
   }
   websocket.onmessage = websocketOnmessage;
   websocket.onclose = (e) => {};
+  websocket.onopen = () => {
+    websocket.send(
+      JSON.stringify({
+        type: 'useTime',
+        detail: route.query.useTime,
+      })
+    );
+  };
   terminalWebsocket.onmessage = terminalWebsocketOnmessage;
   terminalWebsocket.onclose = (e) => {};
+  terminalWebsocket.onopen = () => {
+    terminalWebsocket.send(
+      JSON.stringify({
+        type: 'useTime',
+        detail: route.query.useTime,
+      })
+    );
+  };
   screenWebsocket.onmessage = screenWebsocketOnmessage;
   screenWebsocket.onclose = (e) => {};
+  screenWebsocket.onopen = () => {
+    screenWebsocket.send(
+      JSON.stringify({
+        type: 'useTime',
+        detail: route.query.useTime,
+      })
+    );
+  };
 };
 const screenUrls = ref([]);
 const quickCap = () => {
@@ -830,12 +854,12 @@ const websocketOnmessage = (message) => {
       break;
     }
     case 'sendRemind': {
-      //展示续期按钮
+      // 展示续期按钮
       if (JSON.parse(message.data).count === 2) {
         isShowRenewButton.value = false;
         ElMessage.warning({
           message: '续期已超2次',
-        })
+        });
       } else {
         isShowRenewButton.value = true;
       }
@@ -1220,24 +1244,24 @@ const getElement = () => {
     })
   );
 };
-const addTime = () => {
+const addTime = (time) => {
   websocket.send(
     JSON.stringify({
       type: 'addRemoteTime',
-      detail: 1,
-      utime: Math.ceil(ticker.value / 60)
+      detail: time,
+      utime: Math.ceil(ticker.value / 60),
     })
   );
   screenWebsocket.send(
     JSON.stringify({
       type: 'addRemoteTime',
-      detail: 1,
+      detail: time,
     })
   );
   terminalWebsocket.send(
     JSON.stringify({
       type: 'addRemoteTime',
-      detail: 1,
+      detail: time,
     })
   );
   isShowRenewButton.value = false;
@@ -1336,10 +1360,10 @@ const getIdleTimeout = () => {
 const checkAlive = () => {
   setInterval(() => {
     idleCount.value++;
-    const nowTime = new Date().getTime();
-    if (nowTime - activeTime > idleTimeout.value * 60 * 1000) {
-      close();
-    }
+    // const nowTime = new Date().getTime();
+    // if (nowTime - activeTime > idleTimeout.value * 60 * 1000) {
+    //   close();
+    // }
   }, 1000);
 };
 </script>
