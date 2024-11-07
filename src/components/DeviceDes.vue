@@ -15,6 +15,10 @@ const props = defineProps({
   device: Object,
   agentList: Array,
   projectList: Array,
+  listLoading: {
+    type: Boolean,
+    default: false,
+  },
   detail: {
     type: Boolean,
     default: false,
@@ -413,11 +417,12 @@ const findProjectById = (id) => {
         </el-form>
       </el-col>
     </el-row>
-    <div style="text-align: center">
+    <div v-if="!listLoading" style="text-align: center">
       <el-button
         v-show="device.status !== 'DISCONNECTED' && device.status !== 'OFFLINE'"
         type="primary"
         size="mini"
+        :disabled="device.status === 'DEBUGGING'"
         @click="openDialogVisible"
         >{{ $t('devices.useRightNow') }}
       </el-button>
@@ -603,14 +608,25 @@ const findProjectById = (id) => {
     </div>
   </el-card>
   <el-dialog v-model="useTimeDialogVisible" title="使用时长" :width="400">
-    <el-input-number v-model="useTime" :min="0" :max="remoteTimeout" /><span
-      style="margin-left: 10px"
-      >分</span
-    >
+    <el-form label-width="auto" style="max-width: 600px">
+      <el-form-item label="使用时长">
+        <el-input-number v-model="useTime" :min="0" :max="remoteTimeout" /><span
+          style="margin-left: 10px"
+          >分</span
+        >
+      </el-form-item>
+    </el-form>
+
     <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="useTimeDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="jump(device.id, device.platform)">
+      <div style="text-align: center">
+        <el-button size="small" @click="useTimeDialogVisible = false"
+          >取消</el-button
+        >
+        <el-button
+          size="small"
+          type="primary"
+          @click="jump(device.id, device.platform)"
+        >
           确认
         </el-button>
       </div>

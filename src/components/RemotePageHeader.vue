@@ -108,15 +108,23 @@ const addTime = () => {
       </template>
     </el-page-header>
     <el-dialog v-model="useTimeDialogVisible" title="使用时长" :width="400">
-      <el-input-number
-        v-model="useAddTime"
-        :min="0"
-        :max="useAddTimeMax"
-      /><span style="margin-left: 10px">分</span>
+      <el-form label-width="auto" style="max-width: 600px">
+        <el-form-item label="使用时长">
+          <el-input-number
+            v-model="useAddTime"
+            :min="0"
+            :max="useAddTimeMax"
+          /><span style="margin-left: 10px">分</span>
+        </el-form-item>
+      </el-form>
       <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="useTimeDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="addTime"> 确认 </el-button>
+        <div style="text-align: center">
+          <el-button size="small" @click="useTimeDialogVisible = false"
+            >取消</el-button
+          >
+          <el-button size="small" type="primary" @click="addTime">
+            确认
+          </el-button>
         </div>
       </template>
     </el-dialog>

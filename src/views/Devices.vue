@@ -75,6 +75,7 @@ const projectMap = ref({});
 const androidSystemVersion = ref([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
 const iOSSystemVersion = ref([9, 10, 11, 12, 13, 14, 15, 16, 17, 18]);
 const harmonySystemVersion = ref([1, 2, 3, 4]);
+const ListLoading = ref(false);
 const manufacturer = ref([
   'APPLE',
   'HUAWEI',
@@ -386,11 +387,15 @@ const findAll = (pageNum, pSize) => {
         hasDebugDevice.value = hasDebugDeviceNow;
         // 有debug设备时，每隔1s刷新一次, 最多刷新3次
         if (hasDebugDevice.value) {
+          ListLoading.value = true;
           if (refreshCount.value < 3) {
             setTimeout(() => {
               findAll();
               refreshCount.value++;
             }, 1000);
+          }
+          if (refreshCount.value >= 3) {
+            ListLoading.value = false;
           }
         } else {
           refreshCount.value = 0;
@@ -807,6 +812,7 @@ onUnmounted(() => {
               :device="device"
               :project-list="projectMap"
               :agent-list="agentList"
+              :list-loading="ListLoading"
               @flush="findAll"
             />
           </el-col>
