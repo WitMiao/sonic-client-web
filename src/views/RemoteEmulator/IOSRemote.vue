@@ -855,7 +855,7 @@ const websocketOnmessage = (message) => {
     }
     case 'timeout': {
       ElMessage.success({
-        message: '设备已达到使用上线，超时退出',
+        message: '设备已达到使用上限，超时退出',
       });
       close();
       break;
