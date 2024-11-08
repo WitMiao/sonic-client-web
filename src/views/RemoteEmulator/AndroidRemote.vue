@@ -683,8 +683,8 @@ const terminalWebsocketOnmessage = (message) => {
       close();
       break;
     case 'timeout':
-      ElMessage.error({
-        message: '超时退出',
+      ElMessage.success({
+        message: '设备已达到使用上线，超时退出',
       });
       close();
       break;
@@ -748,8 +748,8 @@ const screenWebsocketOnmessage = (message) => {
         break;
       }
       case 'timeout': {
-        ElMessage.error({
-          message: '超时退出',
+        ElMessage.success({
+          message: '设备已达到使用上线，超时退出',
         });
         close();
         break;
@@ -936,8 +936,8 @@ const websocketOnmessage = (message) => {
       break;
     }
     case 'timeout': {
-      ElMessage.error({
-        message: '超时退出',
+      ElMessage.success({
+        message: '设备已达到使用上线，超时退出',
       });
       close();
       router.go(-1);
