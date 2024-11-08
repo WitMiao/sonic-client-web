@@ -682,6 +682,12 @@ const terminalWebsocketOnmessage = (message) => {
       });
       close();
       break;
+    case 'timeout':
+      ElMessage.error({
+        message: '超时退出',
+      });
+      close();
+      break;
   }
 };
 const screenWebsocketOnmessage = (message) => {
@@ -739,6 +745,13 @@ const screenWebsocketOnmessage = (message) => {
       }
       case 'picFinish': {
         loading.value = false;
+        break;
+      }
+      case 'timeout': {
+        ElMessage.error({
+          message: '超时退出',
+        });
+        close();
         break;
       }
       case 'error':
@@ -917,6 +930,14 @@ const websocketOnmessage = (message) => {
     case 'error': {
       ElMessage.error({
         message: $t('androidRemoteTS.systemException'),
+      });
+      close();
+      router.go(-1);
+      break;
+    }
+    case 'timeout': {
+      ElMessage.error({
+        message: '超时退出',
       });
       close();
       router.go(-1);
