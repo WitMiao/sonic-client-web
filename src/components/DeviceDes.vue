@@ -610,10 +610,12 @@ const findProjectById = (id) => {
   <el-dialog v-model="useTimeDialogVisible" title="使用时长" :width="400">
     <el-form label-width="auto" style="max-width: 600px">
       <el-form-item label="使用时长">
-        <el-input-number v-model="useTime" :min="0" :max="remoteTimeout" /><span
-          style="margin-left: 10px"
-          >分</span
-        >
+        <el-input-number
+          v-model="useTime"
+          :precision="0"
+          :min="0"
+          :max="remoteTimeout"
+        /><span style="margin-left: 10px">分</span>
       </el-form-item>
     </el-form>
 

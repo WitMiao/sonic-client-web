@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import axios from '@/http/axios';
-import { onMounted, ref } from 'vue';
 import { ElMessage } from 'element-plus';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();
@@ -85,7 +85,7 @@ onMounted(() => {
     />
 
     {{ $t('settingIndexTS.remote.text') }}
-    <el-input-number v-model="remoteTimeout" :min="1" :max="9600" /> min
+    <el-input-number v-model="remoteTimeout" :min="1" :max="4320" /> min
     <el-button type="primary" size="small" @click="setRemoteTimeout">{{
       $t('form.save')
     }}</el-button>
@@ -97,7 +97,7 @@ onMounted(() => {
         style="margin-bottom: 10px"
       />
       {{ $t('settingIndexTS.remote.idle_text') }}
-      <el-input-number v-model="idleTimeout" :min="1" :max="9600" /> min
+      <el-input-number v-model="idleTimeout" :min="1" :max="4320" /> min
       <el-button type="primary" size="small" @click="setIdleTimeout">{{
         $t('form.save')
       }}</el-button>

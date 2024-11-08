@@ -112,6 +112,7 @@ const addTime = () => {
         <el-form-item label="使用时长">
           <el-input-number
             v-model="useAddTime"
+            :precision="0"
             :min="0"
             :max="useAddTimeMax"
           /><span style="margin-left: 10px">分</span>
