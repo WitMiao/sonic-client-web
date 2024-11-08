@@ -853,6 +853,13 @@ const websocketOnmessage = (message) => {
       close();
       break;
     }
+    case 'timeout': {
+      ElMessage.error({
+        message: '超时退出',
+      });
+      close();
+      break;
+    }
     case 'sendRemind': {
       // 展示续期按钮
       if (JSON.parse(message.data).count === 2) {
