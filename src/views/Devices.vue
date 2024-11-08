@@ -386,7 +386,6 @@ const findAll = (pageNum, pSize) => {
         });
         hasDebugDevice.value = hasDebugDeviceNow;
         // 有debug设备时，每隔1s刷新一次, 最多刷新3次
-   
         if (hasDebugDevice.value) {
           ListLoading.value = true;
           if (refreshCount.value < 3) {
