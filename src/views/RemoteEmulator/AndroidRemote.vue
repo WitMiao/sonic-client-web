@@ -947,9 +947,9 @@ const websocketOnmessage = (message) => {
       // 展示续期按钮
       if (JSON.parse(message.data).count === 2) {
         isShowRenewButton.value = false;
-        ElMessage.warning({
-          message: '续期已超2次',
-        });
+        // ElMessage.warning({
+        //   message: '续期已超2次',
+        // });
       } else {
         isShowRenewButton.value = true;
       }
@@ -961,7 +961,6 @@ const websocketOnmessage = (message) => {
       }else {
         ElMessage.error('续期失败');
       }
-     
       break;
     }
   }
