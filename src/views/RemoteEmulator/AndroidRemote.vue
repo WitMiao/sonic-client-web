@@ -955,6 +955,15 @@ const websocketOnmessage = (message) => {
       }
       break;
     }
+    case 'addTimeResult': {
+      if (JSON.parse(message.data).status === 'success') {
+        ElMessage.success('续期成功');
+      }else {
+        ElMessage.error('续期失败');
+      }
+     
+      break;
+    }
   }
 };
 const inputValue = ref('');
@@ -1716,13 +1725,13 @@ const getDeviceById = async (id) => {
   const deviceResp = await axios.get('/controller/devices', { params: { id } });
   if (deviceResp.code === 2000) {
     device.value = deviceResp.data;
-    if (device.value.status !== 'ONLINE') {
-      ElMessage.error({
-        message: $t('androidRemoteTS.deviceFail'),
-      });
-      router.replace('/Index/Devices');
-      return;
-    }
+    // if (device.value.status !== 'ONLINE') {
+    //   ElMessage.error({
+    //     message: $t('androidRemoteTS.deviceFail'),
+    //   });
+    //   router.replace('/Index/Devices');
+    //   return;
+    // }
     const agentResp = await axios.get('/controller/agents', {
       params: { id: device.value.agentId },
     });

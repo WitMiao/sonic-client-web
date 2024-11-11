@@ -1295,13 +1295,13 @@ const getDeviceById = (id) => {
   axios.get('/controller/devices', { params: { id } }).then((resp) => {
     if (resp.code === 2000) {
       device.value = resp.data;
-      if (device.value.status !== 'ONLINE') {
-        ElMessage.error({
-          message: $t('androidRemoteTS.deviceFail'),
-        });
-        router.replace('/Index/Devices');
-        return;
-      }
+      // if (device.value.status !== 'ONLINE') {
+      // ElMessage.error({
+      //   message: $t('androidRemoteTS.deviceFail'),
+      // });
+      // router.replace('/Index/Devices');
+      // return;
+      // }
       axios
         .get('/controller/agents', { params: { id: device.value.agentId } })
         .then((resp) => {
