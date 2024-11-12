@@ -892,6 +892,7 @@ const websocketOnmessage = (message) => {
         type: JSON.parse(message.data).status,
         message: msg,
       });
+
       break;
     }
     case 'step': {
@@ -958,7 +959,7 @@ const websocketOnmessage = (message) => {
     case 'addTimeResult': {
       if (JSON.parse(message.data).status === 'success') {
         ElMessage.success('续期成功');
-      }else {
+      } else {
         ElMessage.error('续期失败');
       }
       break;
@@ -1714,6 +1715,7 @@ const close = () => {
   if (audioPlayer !== null) {
     destroyAudio();
   }
+  localStorage.removeItem('driverTime');
   router.push('/Index/Devices');
 };
 onBeforeUnmount(() => {
@@ -1843,8 +1845,15 @@ onMounted(async () => {
   checkAlive();
 });
 const remoteTimeout = ref(0);
-const ticker = ref(0);
+const ticker = ref();
 const getRemoteTimeout = () => {
+  if (!localStorage.getItem('driverTime')) {
+    localStorage.setItem('driverTime', Date.now());
+  }
+  ticker.value = Math.floor(
+    (Date.now() - Number(localStorage.getItem('driverTime'))) / 1000
+  );
+  console.log(ticker.value);
   axios.get('/controller/confList/getRemoteTimeout').then((resp) => {
     remoteTimeout.value = resp.data;
     setInterval(() => {
