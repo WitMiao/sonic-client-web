@@ -237,12 +237,11 @@ const getRoutes = () => [
   },
 ];
 
-export let router = null;
-
-export function setupRouter(app) {
-  router = createRouter({
+export default function setupRouter(app) {
+  const router = createRouter({
     history: createWebHistory(),
     routes: getRoutes(),
   });
   app.use(router);
+  return router;
 }

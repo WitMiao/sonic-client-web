@@ -71,11 +71,14 @@ const sizes = ref([]);
 const isFlush = ref('0');
 const refreshCount = ref(0);
 const hasDebugDevice = ref(false);
-const projectMap = ref({});
+const projectList = ref([]);
 const androidSystemVersion = ref([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
 const iOSSystemVersion = ref([9, 10, 11, 12, 13, 14, 15, 16, 17, 18]);
 const harmonySystemVersion = ref([1, 2, 3, 4]);
 const ListLoading = ref(false);
+const useTimeDialogVisible = ref(false);
+const useTime = ref(0);
+const remoteTimeout = ref(0);
 const manufacturer = ref([
   'APPLE',
   'HUAWEI',
@@ -135,14 +138,27 @@ const dialogAgent = ref(false);
 const dialogHub = ref(false);
 const updateAgentForm = ref(null);
 const settingId = ref(0);
+const controlsMode = ref(false);
+const multiplePlatform = ref(0);
+const openHub = () => {
+  dialogHub.value = true;
+};
 const hubSetting = async (id) => {
   settingId.value = id;
   await openHub();
 };
-const openHub = () => {
-  dialogHub.value = true;
-};
-watch(dialogAgent, (newValue, oldValue) => {
+const agent = ref({
+  id: 0,
+  name: '',
+  highTemp: 45,
+  highTempTime: 15,
+  robotSecret: '',
+  robotToken: '',
+  robotType: -1,
+  alertRobotIds: null,
+});
+
+watch(dialogAgent, (newValue) => {
   if (!newValue) {
     agent.value = {
       id: 0,
@@ -155,19 +171,14 @@ watch(dialogAgent, (newValue, oldValue) => {
     };
   }
 });
-const agent = ref({
-  id: 0,
-  name: '',
-  highTemp: 45,
-  highTempTime: 15,
-  robotSecret: '',
-  robotToken: '',
-  robotType: -1,
-  alertRobotIds: null,
-});
+
+const openAgent = () => {
+  dialogAgent.value = true;
+};
+
 const editAgent = async (
   id,
-  name,
+  agentName,
   highTemp,
   highTempTime,
   robotType,
@@ -177,7 +188,7 @@ const editAgent = async (
 ) => {
   agent.value = {
     id,
-    name,
+    name: agentName,
     highTemp,
     highTempTime,
     robotType,
@@ -187,15 +198,10 @@ const editAgent = async (
   };
   await openAgent();
 };
-const openAgent = () => {
-  dialogAgent.value = true;
-};
+
 const getProjectList = () => {
   axios.get('/controller/projects/list').then((resp) => {
-    projectMap.value = resp.data.reduce((map, val) => {
-      map[val.id] = val;
-      return map;
-    }, {});
+    projectList.value = resp?.data || [];
   });
 };
 const shutdownAgent = (id) => {
@@ -219,6 +225,18 @@ const copy = (value) => {
     });
   }
 };
+
+const getAllAgents = () => {
+  axios
+    .get('/controller/agents/list')
+    .then((resp) => {
+      agentList.value = resp.data;
+    })
+    .catch(() => {
+      clearInterval(timer.value);
+    });
+};
+
 const updateAgent = () => {
   updateAgentForm.value.validate((valid) => {
     if (valid) {
@@ -234,6 +252,85 @@ const updateAgent = () => {
     }
   });
 };
+
+const findAll = (pageNum, pSize) => {
+  axios
+    .get('/controller/devices/list', {
+      params: {
+        page: pageNum || 1,
+        pageSize: pSize || pageSize.value,
+        androidVersion:
+          androidSystem.value.length === 0 ? undefined : androidSystem.value,
+        iOSVersion: iOSSystem.value.length === 0 ? undefined : iOSSystem.value,
+        hmVersion:
+          harmonySystem.value.length === 0 ? undefined : harmonySystem.value,
+        manufacturer:
+          checkMan.value.length === 0 ||
+          checkMan.value.length === manufacturer.value.length
+            ? undefined
+            : checkMan.value,
+        cpu:
+          cpu.value.length === 0 || cpu.value.length === cpus.value.length
+            ? undefined
+            : cpu.value,
+        size:
+          size.value.length === 0 || size.value.length === sizes.value.length
+            ? undefined
+            : size.value,
+        agentId:
+          agentIds.value.length === 0 ||
+          agentIds.value.length === agentList.value.length
+            ? undefined
+            : agentIds.value,
+        status:
+          status.value.length === 0 ||
+          status.value.length === statusList.value.length
+            ? undefined
+            : status.value,
+        deviceInfo: name.value.length > 0 ? name.value : undefined,
+      },
+    })
+    .then((resp) => {
+      if (resp.code === 2000) {
+        pageData.value = resp.data;
+        const { content } = resp.data;
+        let hasDebugDeviceNow = false;
+        content.forEach((item) => {
+          if (item.status === 'DEBUGGING') {
+            hasDebugDeviceNow = true;
+          }
+        });
+        hasDebugDevice.value = hasDebugDeviceNow;
+        // 有debug设备时，每隔1s刷新一次, 最多刷新3次
+        if (hasDebugDevice.value) {
+          ListLoading.value = true;
+          if (refreshCount.value < 3) {
+            setTimeout(() => {
+              findAll();
+              refreshCount.value += 1;
+            }, 1000);
+          }
+          if (refreshCount.value >= 3) {
+            ListLoading.value = false;
+          }
+        } else {
+          refreshCount.value = 0;
+          ListLoading.value = false;
+        }
+      }
+    })
+    .catch(() => {
+      clearInterval(timer.value);
+    });
+};
+// 根据接口返回页数处理
+const handleFindAll = (pNum, pSize) => {
+  if (pNum) {
+    currDevicesPage.value = pNum;
+  }
+  findAll(currDevicesPage.value, pSize);
+};
+
 const handleAndroid = (val) => {
   androidSystem.value = val ? androidSystemVersion.value : [];
   isAllAndroid.value = false;
@@ -337,103 +434,17 @@ const handleCheckedStatus = (value) => {
 const handleInput = () => {
   findAll();
 };
-const findAll = (pageNum, pSize) => {
-  axios
-    .get('/controller/devices/list', {
-      params: {
-        page: pageNum || 1,
-        pageSize: pSize || pageSize.value,
-        androidVersion:
-          androidSystem.value.length === 0 ? undefined : androidSystem.value,
-        iOSVersion: iOSSystem.value.length === 0 ? undefined : iOSSystem.value,
-        hmVersion:
-          harmonySystem.value.length === 0 ? undefined : harmonySystem.value,
-        manufacturer:
-          checkMan.value.length === 0 ||
-          checkMan.value.length === manufacturer.value.length
-            ? undefined
-            : checkMan.value,
-        cpu:
-          cpu.value.length === 0 || cpu.value.length === cpus.value.length
-            ? undefined
-            : cpu.value,
-        size:
-          size.value.length === 0 || size.value.length === sizes.value.length
-            ? undefined
-            : size.value,
-        agentId:
-          agentIds.value.length === 0 ||
-          agentIds.value.length === agentList.value.length
-            ? undefined
-            : agentIds.value,
-        status:
-          status.value.length === 0 ||
-          status.value.length === statusList.value.length
-            ? undefined
-            : status.value,
-        deviceInfo: name.value.length > 0 ? name.value : undefined,
-      },
-    })
-    .then((resp) => {
-      if (resp.code === 2000) {
-        pageData.value = resp.data;
-        const { content } = resp.data;
-        let hasDebugDeviceNow = false;
-        content.forEach((item) => {
-          if (item.status === 'DEBUGGING') {
-            hasDebugDeviceNow = true;
-          }
-        });
-        hasDebugDevice.value = hasDebugDeviceNow;
-        // 有debug设备时，每隔1s刷新一次, 最多刷新3次
-        if (hasDebugDevice.value) {
-          ListLoading.value = true;
-          if (refreshCount.value < 3) {
-            setTimeout(() => {
-              findAll();
-              refreshCount.value++;
-            }, 1000);
-          }
-          if (refreshCount.value >= 3) {
-            ListLoading.value = false;
-          }
-        } else {
-          refreshCount.value = 0;
-          ListLoading.value = false;
-        }
-      }
-    })
-    .catch(() => {
-      clearInterval(timer.value);
-    });
-};
-// 根据接口返回页数处理
-const handleFindAll = (pageNum, pageSize) => {
-  if (pageNum) {
-    currDevicesPage.value = pageNum;
-  }
-  findAll(currDevicesPage.value, pageSize);
-};
-const getAllAgents = () => {
-  axios
-    .get('/controller/agents/list')
-    .then((resp) => {
-      agentList.value = resp.data;
-    })
-    .catch(() => {
-      clearInterval(timer.value);
-    });
-};
-const getImg = (name) => {
+
+const getImg = (brand) => {
   let result;
-  if (name === 'meizu') {
-    name = 'Meizu';
+  if (brand === 'meizu') {
+    brand = 'Meizu';
   }
-  if (name === 'LENOVO') {
-    name = 'Lenovo';
+  if (brand === 'LENOVO') {
+    brand = 'Lenovo';
   }
   try {
-    result = img[`./../assets/img/${name}.jpg`].default;
+    result = img[`./../assets/img/${brand}.jpg`].default;
   } catch {
     result = img['./../assets/img/unName.jpg'].default;
   }
@@ -480,9 +491,8 @@ const getAlertRobots = () => {
       }
     });
 };
-const switchTabs = (e) => {
-  refreshNow('switch');
-};
+const laterTimer = ref(null);
+
 const refresh = () => {
   switch (currentTab.value) {
     case 'device':
@@ -492,6 +502,8 @@ const refresh = () => {
       break;
     case 'agent':
       getAllAgents();
+      break;
+    default:
       break;
   }
   clearInterval(laterTimer.value);
@@ -509,12 +521,89 @@ const refreshNow = (t) => {
     clearInterval(timer.value);
   }
 };
+
+const switchTabs = () => {
+  refreshNow('switch');
+};
 onBeforeMount(() => {
   isFlush.value = localStorage.getItem('SonicIsRefresh')
     ? localStorage.getItem('SonicIsRefresh')
     : '0';
 });
-const laterTimer = ref(null);
+const controlsModeButtonClick = () => {
+  controlsMode.value = true;
+};
+const controlsModeCancel = () => {
+  controlsMode.value = false;
+  store.commit('setMasterControl', '');
+  store.commit('setControlsMachine', { type: 0 });
+};
+const openSelectMaster = async () => {
+  // 获取store.state.controlsMachine，判断是否是同一个设备
+  const { controlsMachine, masterControl } = store.state;
+  if (!masterControl) {
+    ElMessage.error('请先选择主控设备');
+    return;
+  }
+  // 根据controlsMachine的id数组，找到pageData.value.content中对应的设备platform是否一样，判断是否一样
+  const platform = [];
+  if (controlsMachine.length < 2) {
+    ElMessage.error('请至少选择两个设备');
+    return;
+  }
+
+  controlsMachine.forEach((item) => {
+    pageData.value.content.forEach((device) => {
+      if (device.id === item) {
+        platform.push(device.platform);
+      }
+    });
+  });
+  if ([...new Set(platform)].length !== 1) {
+    ElMessage.error('设备平台不一致');
+    return;
+  }
+  // 获取platform
+  const [multiplePlatformValue] = [...new Set(platform)];
+  multiplePlatform.value = multiplePlatformValue;
+  // 获取系统时间
+  const resp = await axios.get('/controller/confList/getRemoteTimeout');
+  if (resp.code !== 7) {
+    remoteTimeout.value = resp.data;
+    useTime.value = remoteTimeout.value;
+    useTimeDialogVisible.value = true;
+  } else {
+    ElMessage.error(resp.message);
+  }
+};
+const jump = async () => {
+  let routeData;
+
+  if (multiplePlatform.value === 1) {
+    routeData = router.resolve({
+      path: `/AndroidRemote/${store.state.masterControl}`,
+      query: {
+        useTime: useTime.value,
+        isMultiple: true,
+        controlsMachine: store.state.controlsMachine
+          .filter((item) => item !== store.state.masterControl)
+          .join(','),
+      },
+    });
+  } else {
+    routeData = router.resolve({
+      path: `/IOSRemote/${store.state.masterControl}`,
+      query: {
+        useTime: useTime.value,
+        isMultiple: true,
+        controlsMachine: store.state.controlsMachine
+          .filter((item) => item !== store.state.masterControl)
+          .join(','),
+      },
+    });
+  }
+  window.open(routeData.href, '_self');
+};
 onMounted(() => {
   getFilterOption();
   getProjectList();
@@ -537,16 +626,35 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <el-switch
-    v-model="isFlush"
-    class="refresh"
-    active-value="1"
-    inactive-value="0"
-    style="float: right; margin-top: -10px"
-    :active-text="$t('devices.refresh')"
-    active-color="#13ce66"
-    @change="refreshNow"
-  />
+  <div style="display: flex; justify-content: flex-end; align-items: center">
+    <div class="controlsMode">
+      <div class="controlsModeButton" @click="controlsModeButtonClick">
+        多控
+      </div>
+      <div v-if="controlsMode" class="controlsModeContent">
+        <div
+          style="margin-right: 0.5rem; cursor: pointer; color: #000"
+          @click="openSelectMaster"
+        >
+          确认
+        </div>
+        <div style="cursor: pointer; color: #000" @click="controlsModeCancel">
+          取消
+        </div>
+      </div>
+    </div>
+
+    <el-switch
+      v-model="isFlush"
+      class="refresh"
+      active-value="1"
+      inactive-value="0"
+      :active-text="$t('devices.refresh')"
+      active-color="#13ce66"
+      @change="refreshNow"
+    />
+  </div>
+
   <el-tabs
     v-model="currentTab"
     style="margin-top: 20px"
@@ -811,9 +919,10 @@ onUnmounted(() => {
           >
             <DeviceDes
               :device="device"
-              :project-list="projectMap"
+              :project-list="projectList"
               :agent-list="agentList"
               :list-loading="ListLoading"
+              :controls-mode="controlsMode"
               @flush="findAll"
             />
           </el-col>
@@ -1090,4 +1199,53 @@ onUnmounted(() => {
   <el-dialog v-model="dialogHub" title="Hub配置" width="1300px">
     <hub-settings v-if="dialogHub" :agent-id="settingId"></hub-settings>
   </el-dialog>
+  <el-dialog v-model="useTimeDialogVisible" title="使用时长" :width="400">
+    <el-form label-width="auto" style="max-width: 600px">
+      <el-form-item label="使用时长">
+        <el-input-number
+          v-model="useTime"
+          :precision="0"
+          :min="0"
+          :max="remoteTimeout"
+        /><span style="margin-left: 10px">分</span>
+      </el-form-item>
+    </el-form>
+
+    <template #footer>
+      <div style="text-align: center">
+        <el-button size="small" @click="useTimeDialogVisible = false"
+          >取消</el-button
+        >
+        <el-button size="small" type="primary" @click="jump"> 确认 </el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
+
+<style>
+.controlsMode {
+  display: inline-flex;
+  margin: 0 8px;
+  border-radius: 16px;
+  background: #d9d9d9;
+  align-items: center;
+}
+.controlsModeButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 10px;
+  border-radius: 16px;
+  border-color: #409eff;
+  background-color: #409eff;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+}
+.controlsModeContent {
+  margin: 0 8px;
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+}
+</style>

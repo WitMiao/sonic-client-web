@@ -34,15 +34,15 @@ class Scrcpy {
   }
 
   cmdFN(cmd) {
-    if (cmd.msg == 'size') {
-      console.log(`init size: ${cmd.width},${cmd.height}`);
+    if (cmd.msg === 'size') {
+      // console.log(`init size: ${cmd.width},${cmd.height}`);
       this.isInit = true;
     }
   }
 
   initial(props) {
     // 初始化播放器
-    if (!this.jmuxer && this.excuteMode == 'Scrcpy') {
+    if (!this.jmuxer && this.excuteMode === 'Scrcpy') {
       const {
         node, // video dom节点
       } = props;
@@ -65,25 +65,25 @@ class Scrcpy {
       this.websocket.addEventListener('message', (event) => {
         if (typeof event.data === 'string') {
           this.cmdFN(JSON.parse(event.data));
-          onmessage && onmessage(event);
+          onmessage?.(event);
         } else if (
           typeof event.data === 'object' &&
-          this.excuteMode == 'Scrcpy'
+          this.excuteMode === 'Scrcpy'
         ) {
           // console.log('feed!', this.excuteMode);
           this.jmuxer.feed({
             video: new Uint8Array(event.data),
           });
         } else {
-          onmessage && onmessage(event);
+          onmessage?.(event);
         }
       });
       this.websocket.addEventListener('error', (e) => {
         console.log('Socket Error');
         const { onclose } = props;
-        onclose && onclose(e);
+        onclose?.(e);
       });
-      this.websocket.addEventListener('open', (e) => {
+      this.websocket.addEventListener('open', () => {
         // console.log('open!!', e);
         this.websocket.send(
           JSON.stringify({
@@ -107,12 +107,12 @@ class Scrcpy {
     );
     if (mode !== 'Scrcpy') {
       // 重置播放器
-      this.jmuxer && this.jmuxer.reset();
+      this.jmuxer?.reset();
     }
   };
 
   destroy() {
-    this.jmuxer && this.jmuxer.destroy();
+    this.jmuxer?.destroy();
     // 释放内存
     this.jmuxer = null;
     window.onfocus = null;
@@ -120,9 +120,9 @@ class Scrcpy {
 
   onPageFocus() {
     const videoDom = document.getElementById(this.props?.node || 'player');
-    window.onfocus = function () {
+    window.onfocus = () => {
       // 将当前播放进度更新至当前最新缓冲时间
-      videoDom.currentTime = Math.ceil(videoDom.buffered.end(0));
+      videoDom.currentTime = Math.ceil(videoDom.buffered?.end(0));
     };
   }
 }

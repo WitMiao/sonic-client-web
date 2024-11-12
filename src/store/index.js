@@ -22,6 +22,8 @@ export default createStore({
       currentTheme: 'light',
       localInfo: getLocal(LOCALE_KEY) || localeSetting,
       lastSearchParam: {},
+      masterControl: '',
+      controlsMachine: [],
     };
   },
   mutations: {
@@ -39,6 +41,19 @@ export default createStore({
     },
     saveProjectList(state, payload) {
       state.projectList = payload;
+    },
+    setControlsMachine(state, payload) {
+      if (!payload.type) {
+        state.controlsMachine = [];
+        return;
+      }
+      if (payload.val) {
+        state.controlsMachine.push(payload.id);
+      } else {
+        state.controlsMachine = state.controlsMachine.filter(
+          (item) => item !== payload.id
+        );
+      }
     },
     saveProject(state, payload) {
       state.project = payload;
@@ -69,6 +84,9 @@ export default createStore({
     setLastSearchParam(state, info) {
       state.lastSearchParam = info;
     },
+    setMasterControl(state, payload) {
+      state.masterControl = payload;
+    },
   },
   getters: {
     getLocale(state) {
@@ -76,6 +94,12 @@ export default createStore({
     },
     getLastSearchParam(state) {
       return state?.lastSearchParam ?? {};
+    },
+    getMasterControl(state) {
+      return state?.masterControl ?? '';
+    },
+    getControlsMachine(state) {
+      return state?.controlsMachine ?? [];
     },
   },
   actions: {

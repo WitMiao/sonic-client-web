@@ -18,12 +18,13 @@
 import { createApp } from 'vue';
 import ElementPlus, { ElMessage } from 'element-plus';
 import App from './App.vue';
-import { setupRouter, router } from './router/index.js';
-import store from './store/index.js';
+import setupRouter from './router/index';
+import store from './store/index';
 import 'element-plus/dist/index.css';
 import axios from './http/axios';
 import { setupI18n, $tc } from './locales/setupI18n';
 
+let router = null;
 async function initApp() {
   const app = createApp(App);
 
@@ -34,7 +35,7 @@ async function initApp() {
   app.use(ElementPlus);
 
   // 初始化路由
-  setupRouter(app);
+  router = setupRouter(app);
 
   // 初始化vuex
   app.use(store);
