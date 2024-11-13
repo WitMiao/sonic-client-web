@@ -867,8 +867,10 @@ const websocketOnmessage = (message) => {
         // ElMessage.warning({
         //   message: '续期已超2次',
         // });
+        localStorage.setItem('iosSendRemind', '0');
       } else {
         isShowRenewButton.value = true;
+        localStorage.setItem('iosSendRemind', '1');
       }
       break;
     }
@@ -1285,6 +1287,8 @@ const close = () => {
     screenWebsocket.close();
     screenWebsocket = null;
   }
+  localStorage.removeItem('iosSendRemind');
+  localStorage.removeItem('driverTime');
   router.push('/Index/Devices');
 };
 onBeforeUnmount(() => {
@@ -1326,6 +1330,11 @@ const getProjectList = () => {
 let activeTime = 0;
 const idleCount = ref(0);
 onMounted(() => {
+  if (localStorage.getItem('iosSendRemind') === '1') {
+    isShowRenewButton.value = true;
+  } else {
+    isShowRenewButton.value = false;
+  }
   if (store.state.project.id) {
     project.value = store.state.project;
   } else {
@@ -1349,6 +1358,12 @@ onMounted(() => {
 const remoteTimeout = ref(0);
 const ticker = ref(0);
 const getRemoteTimeout = () => {
+  if (!localStorage.getItem('driverTime')) {
+    localStorage.setItem('driverTime', Date.now());
+  }
+  ticker.value = Math.floor(
+    (Date.now() - Number(localStorage.getItem('driverTime'))) / 1000
+  );
   axios.get('/controller/confList/getRemoteTimeout').then((resp) => {
     remoteTimeout.value = resp.data;
     setInterval(() => {
