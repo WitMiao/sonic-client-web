@@ -16,7 +16,9 @@
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+import axios from '@/http/axios';
 import { QuestionFilled } from '@element-plus/icons';
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();
@@ -25,8 +27,12 @@ const props = defineProps({
   idleCount: Number,
   remoteTimeout: Number,
   idleTimeout: Number,
+  isShowRenewButton: Boolean,
 });
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'addTime']);
+const useTimeDialogVisible = ref(false);
+const useAddTime = ref(0);
+const useAddTimeMax = ref(0);
 const parseTimeout = (time) => {
   let h = parseInt((time / 60 / 60) % 24);
   h = h < 10 ? `0${h}` : h;
@@ -40,6 +46,18 @@ const parseTimeout = (time) => {
 };
 const close = () => {
   emit('close');
+};
+// 续期
+const openTimeDialogVisible = async () => {
+  // 获取系统时间
+  const resp = await axios.get('/controller/confList/getRemoteTimeout');
+  useAddTimeMax.value = resp.data;
+  useAddTime.value = resp.data;
+  useTimeDialogVisible.value = true;
+};
+const addTime = () => {
+  emit('addTime', useAddTime.value);
+  useTimeDialogVisible.value = false;
 };
 </script>
 
@@ -79,8 +97,37 @@ const close = () => {
               </div>
             </template>
           </el-popover>
+          <el-button
+            v-if="isShowRenewButton"
+            type="primary"
+            style="margin-left: 10px"
+            @click="openTimeDialogVisible"
+            >续期</el-button
+          >
         </div>
       </template>
     </el-page-header>
+    <el-dialog v-model="useTimeDialogVisible" title="使用时长" :width="400">
+      <el-form label-width="auto" style="max-width: 600px">
+        <el-form-item label="使用时长">
+          <el-input-number
+            v-model="useAddTime"
+            :precision="0"
+            :min="0"
+            :max="useAddTimeMax"
+          /><span style="margin-left: 10px">分</span>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div style="text-align: center">
+          <el-button size="small" @click="useTimeDialogVisible = false"
+            >取消</el-button
+          >
+          <el-button size="small" type="primary" @click="addTime">
+            确认
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>

@@ -16,7 +16,35 @@
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import { useRoute, useRouter } from 'vue-router';
+import defaultLogo from '@/assets/logo.png';
+import ElementUpdate from '@/components/ElementUpdate.vue';
+import PackageList from '@/components/PackageList.vue';
+import Pageable from '@/components/Pageable.vue';
+import StepList from '@/components/StepList.vue';
+import StepLog from '@/components/StepLog.vue';
+import TestCaseList from '@/components/TestCaseList.vue';
+import axios from '@/http/axios';
+import {
+  Camera,
+  Cellphone,
+  Delete,
+  Download,
+  House,
+  InfoFilled,
+  Location,
+  Minus,
+  Operation,
+  Phone,
+  PhoneFilled,
+  Place,
+  Plus,
+  Pointer,
+  Position,
+  Search,
+  SwitchButton,
+  VideoCamera,
+} from '@element-plus/icons';
+import { ElMessage } from 'element-plus';
 import {
   computed,
   nextTick,
@@ -25,55 +53,14 @@ import {
   ref,
   watch,
 } from 'vue';
-import { useStore } from 'vuex';
-import axios from '@/http/axios';
-import { ElMessage } from 'element-plus';
 import useClipboard from 'vue-clipboard3';
-import StepList from '@/components/StepList.vue';
-import TestCaseList from '@/components/TestCaseList.vue';
-import StepLog from '@/components/StepLog.vue';
-import ElementUpdate from '@/components/ElementUpdate.vue';
-import Pageable from '@/components/Pageable.vue';
-import defaultLogo from '@/assets/logo.png';
-import {
-  Location,
-  Place,
-  FullScreen,
-  Download,
-  Search,
-  SwitchButton,
-  Position,
-  Pointer,
-  Camera,
-  Sunny,
-  Phone,
-  PhoneFilled,
-  Minus,
-  MuteNotification,
-  Plus,
-  CaretRight,
-  CaretLeft,
-  Operation,
-  Cellphone,
-  VideoCamera,
-  Refresh,
-  RefreshRight,
-  RefreshLeft,
-  Wallet,
-  Menu,
-  CopyDocument,
-  Delete,
-  House,
-  Back,
-  View,
-  InfoFilled,
-} from '@element-plus/icons';
 import { useI18n } from 'vue-i18n';
-import PackageList from '@/components/PackageList.vue';
-import RenderDeviceName from '../../components/RenderDeviceName.vue';
-import PocoPane from '../../components/PocoPane.vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 import IOSPerf from '../../components/IOSPerf.vue';
+import PocoPane from '../../components/PocoPane.vue';
 import RemotePageHeader from '../../components/RemotePageHeader.vue';
+import RenderDeviceName from '../../components/RenderDeviceName.vue';
 
 const pocoPaneRef = ref(null);
 const iosPerfRef = ref(null);
@@ -520,11 +507,35 @@ const openSocket = (host, port, key, udId) => {
     console.error($t('androidRemoteTS.noWebSocket'));
   }
   websocket.onmessage = websocketOnmessage;
-  websocket.onclose = (e) => { };
+  websocket.onclose = (e) => {};
+  websocket.onopen = () => {
+    websocket.send(
+      JSON.stringify({
+        type: 'useTime',
+        detail: route.query.useTime,
+      })
+    );
+  };
   terminalWebsocket.onmessage = terminalWebsocketOnmessage;
-  terminalWebsocket.onclose = (e) => { };
+  terminalWebsocket.onclose = (e) => {};
+  terminalWebsocket.onopen = () => {
+    terminalWebsocket.send(
+      JSON.stringify({
+        type: 'useTime',
+        detail: route.query.useTime,
+      })
+    );
+  };
   screenWebsocket.onmessage = screenWebsocketOnmessage;
-  screenWebsocket.onclose = (e) => { };
+  screenWebsocket.onclose = (e) => {};
+  screenWebsocket.onopen = () => {
+    screenWebsocket.send(
+      JSON.stringify({
+        type: 'useTime',
+        detail: route.query.useTime,
+      })
+    );
+  };
 };
 const screenUrls = ref([]);
 const quickCap = () => {
@@ -836,10 +847,31 @@ const websocketOnmessage = (message) => {
       break;
     }
     case 'error': {
-      ElMessage.error({
+      ElMessage.wa({
         message: $t('androidRemoteTS.systemException'),
       });
       close();
+      break;
+    }
+    case 'timeout': {
+      ElMessage.success({
+        message: '设备已达到使用上限，超时退出',
+      });
+      close();
+      break;
+    }
+    case 'sendRemind': {
+      // 展示续期按钮
+      if (JSON.parse(message.data).count === 2) {
+        isShowRenewButton.value = false;
+        // ElMessage.warning({
+        //   message: '续期已超2次',
+        // });
+        localStorage.setItem('iosSendRemind', '0');
+      } else {
+        isShowRenewButton.value = true;
+        localStorage.setItem('iosSendRemind', '1');
+      }
       break;
     }
   }
@@ -848,6 +880,7 @@ const inputValue = ref('');
 const inputBox = ref(null);
 const inputBoxStyle = ref({});
 const paste = ref('');
+const isShowRenewButton = ref(false);
 const changeInputHandle = () => {
   if (inputValue.value) {
     websocket.send(
@@ -1220,6 +1253,27 @@ const getElement = () => {
     })
   );
 };
+const addTime = (time) => {
+  websocket.send(
+    JSON.stringify({
+      type: 'addRemoteTime',
+      detail: time,
+    })
+  );
+  screenWebsocket.send(
+    JSON.stringify({
+      type: 'addRemoteTime',
+      detail: time,
+    })
+  );
+  terminalWebsocket.send(
+    JSON.stringify({
+      type: 'addRemoteTime',
+      detail: time,
+    })
+  );
+  isShowRenewButton.value = false;
+};
 const close = () => {
   if (websocket !== null) {
     websocket.close();
@@ -1233,6 +1287,8 @@ const close = () => {
     screenWebsocket.close();
     screenWebsocket = null;
   }
+  localStorage.removeItem('iosSendRemind');
+  localStorage.removeItem('driverTime');
   router.push('/Index/Devices');
 };
 onBeforeUnmount(() => {
@@ -1243,13 +1299,13 @@ const getDeviceById = (id) => {
   axios.get('/controller/devices', { params: { id } }).then((resp) => {
     if (resp.code === 2000) {
       device.value = resp.data;
-      if (device.value.status !== 'ONLINE') {
-        ElMessage.error({
-          message: $t('androidRemoteTS.deviceFail'),
-        });
-        router.replace('/Index/Devices');
-        return;
-      }
+      // if (device.value.status !== 'ONLINE') {
+      // ElMessage.error({
+      //   message: $t('androidRemoteTS.deviceFail'),
+      // });
+      // router.replace('/Index/Devices');
+      // return;
+      // }
       axios
         .get('/controller/agents', { params: { id: device.value.agentId } })
         .then((resp) => {
@@ -1274,6 +1330,11 @@ const getProjectList = () => {
 let activeTime = 0;
 const idleCount = ref(0);
 onMounted(() => {
+  if (localStorage.getItem('iosSendRemind') === '1') {
+    isShowRenewButton.value = true;
+  } else {
+    isShowRenewButton.value = false;
+  }
   if (store.state.project.id) {
     project.value = store.state.project;
   } else {
@@ -1297,6 +1358,12 @@ onMounted(() => {
 const remoteTimeout = ref(0);
 const ticker = ref(0);
 const getRemoteTimeout = () => {
+  if (!localStorage.getItem('driverTime')) {
+    localStorage.setItem('driverTime', Date.now());
+  }
+  ticker.value = Math.floor(
+    (Date.now() - Number(localStorage.getItem('driverTime'))) / 1000
+  );
   axios.get('/controller/confList/getRemoteTimeout').then((resp) => {
     remoteTimeout.value = resp.data;
     setInterval(() => {
@@ -1314,64 +1381,124 @@ const getIdleTimeout = () => {
 const checkAlive = () => {
   setInterval(() => {
     idleCount.value++;
-    const nowTime = new Date().getTime();
-    if (nowTime - activeTime > idleTimeout.value * 60 * 1000) {
-      close();
-    }
+    // const nowTime = new Date().getTime();
+    // if (nowTime - activeTime > idleTimeout.value * 60 * 1000) {
+    //   close();
+    // }
   }, 1000);
 };
 </script>
 
 <template>
-  <el-dialog v-model="dialogImgElement" :title="$t('androidRemoteTS.code.elementsSnapshot')" width="28%">
+  <el-dialog
+    v-model="dialogImgElement"
+    :title="$t('androidRemoteTS.code.elementsSnapshot')"
+    width="28%"
+  >
     <el-card>
-      <el-image z-index="5000" fit="contain" style="width: 100%; height: 100px" :src="imgElementUrl"
-        :preview-src-list="[imgElementUrl]"></el-image>
+      <el-image
+        z-index="5000"
+        fit="contain"
+        style="width: 100%; height: 100px"
+        :src="imgElementUrl"
+        :preview-src-list="[imgElementUrl]"
+      ></el-image>
     </el-card>
-    <el-form ref="updateImgEle" :model="element" size="small" style="margin-top: 20px">
-      <el-form-item prop="eleName" :label="$t('androidRemoteTS.code.eleName')" :rules="{
-        required: true,
-        message: $t('androidRemoteTS.code.eleNullName'),
-        trigger: 'blur',
-      }">
-        <el-input v-model="element.eleName" :placeholder="$t('androidRemoteTS.code.inputName')"></el-input>
+    <el-form
+      ref="updateImgEle"
+      :model="element"
+      size="small"
+      style="margin-top: 20px"
+    >
+      <el-form-item
+        prop="eleName"
+        :label="$t('androidRemoteTS.code.eleName')"
+        :rules="{
+          required: true,
+          message: $t('androidRemoteTS.code.eleNullName'),
+          trigger: 'blur',
+        }"
+      >
+        <el-input
+          v-model="element.eleName"
+          :placeholder="$t('androidRemoteTS.code.inputName')"
+        ></el-input>
       </el-form-item>
       <div style="text-align: center">
-        <el-button size="small" type="primary" @click="saveEle">{{ $t('androidRemoteTS.code.saveEle') }}
+        <el-button size="small" type="primary" @click="saveEle"
+          >{{ $t('androidRemoteTS.code.saveEle') }}
         </el-button>
       </div>
     </el-form>
   </el-dialog>
-  <el-dialog v-model="dialogElement" :title="$t('elements.eleInfo')" width="600px">
-    <element-update v-if="dialogElement" :project-id="project['id']" :element-id="0" :element-obj="element"
-      :is-remote-page="true" :check-loading="checkElementLoading" @flush="dialogElement = false"
-      @check-location="checkLocation" />
+  <el-dialog
+    v-model="dialogElement"
+    :title="$t('elements.eleInfo')"
+    width="600px"
+  >
+    <element-update
+      v-if="dialogElement"
+      :project-id="project['id']"
+      :element-id="0"
+      :element-obj="element"
+      :is-remote-page="true"
+      :check-loading="checkElementLoading"
+      @flush="dialogElement = false"
+      @check-location="checkLocation"
+    />
   </el-dialog>
-  <remote-page-header :ticker="ticker" :idle-count="idleCount" :remote-timeout="remoteTimeout"
-    :idle-timeout="idleTimeout" @close="close" />
+  <remote-page-header
+    :ticker="ticker"
+    :idle-count="idleCount"
+    :remote-timeout="remoteTimeout"
+    :idle-timeout="idleTimeout"
+    :is-show-renew-button="isShowRenewButton"
+    @close="close"
+    @add-time="addTime"
+  />
   <div style="padding: 20px">
-    <el-row :gutter="24" @mouseup="lineMouseup" @mouseleave="lineMouseleave" @mousemove="lineMousemove">
-      <el-col :span="tabPosition == 'left' ? 12 : 24" :style="{
-        flexBasis: tabPosition == 'left' ? layoutSplitInfo.left + '%' : '',
-        maxWidth: tabPosition == 'left' ? layoutSplitInfo.left + '%' : '',
-        transition: !isSplitPressing ? 'flex-basis 0.3s,max-width 0.3s' : '',
-      }">
-        <el-card v-loading="loading" :element-loading-text="$t('androidRemoteTS.code.preparingImager')"
-          element-loading-background="rgba(255, 255, 255, 1)" style="font-size: 14px" :body-style="{
+    <el-row
+      :gutter="24"
+      @mouseup="lineMouseup"
+      @mouseleave="lineMouseleave"
+      @mousemove="lineMousemove"
+    >
+      <el-col
+        :span="tabPosition == 'left' ? 12 : 24"
+        :style="{
+          flexBasis: tabPosition == 'left' ? layoutSplitInfo.left + '%' : '',
+          maxWidth: tabPosition == 'left' ? layoutSplitInfo.left + '%' : '',
+          transition: !isSplitPressing ? 'flex-basis 0.3s,max-width 0.3s' : '',
+        }"
+      >
+        <el-card
+          v-loading="loading"
+          :element-loading-text="$t('androidRemoteTS.code.preparingImager')"
+          element-loading-background="rgba(255, 255, 255, 1)"
+          style="font-size: 14px"
+          :body-style="{
             padding: '10px',
             background: '#ccc',
             position: 'relative',
             minHeight: '340px',
-          }">
+          }"
+        >
           <template #header>
             <div style="position: relative; display: flex; align-items: center">
               <el-icon :size="14" style="vertical-align: middle">
                 <Cellphone />
               </el-icon>
-              <RenderDeviceName style="color: #e6a23c; margin-left: 5px" :device="device" />
+              <RenderDeviceName
+                style="color: #e6a23c; margin-left: 5px"
+                :device="device"
+              />
               <el-popover placement="bottom-end" width="270" trigger="hover">
-                <el-form label-position="left" class="demo-table-expand" label-width="90px"
-                  style="margin-left: 10px; word-break: break-all">
+                <el-form
+                  label-position="left"
+                  class="demo-table-expand"
+                  label-width="90px"
+                  style="margin-left: 10px; word-break: break-all"
+                >
                   <el-form-item :label="$t('devices.detail.name')">
                     <span>{{ device.name }}</span>
                   </el-form-item>
@@ -1382,15 +1509,22 @@ const checkAlive = () => {
                     <span>{{ device['udId'] }}</span>
                   </el-form-item>
                   <el-form-item :label="$t('devices.form.system')">
-                    <img height="25" style="
+                    <img
+                      height="25"
+                      style="
                         position: absolute;
                         top: 7px;
                         bottom: 7px;
                         left: 7px;
-                      " :src="getImg(device['platform'] === 1 ? 'ANDROID' : 'IOS')
-                        " />
+                      "
+                      :src="
+                        getImg(device['platform'] === 1 ? 'ANDROID' : 'IOS')
+                      "
+                    />
                   </el-form-item>
-                  <el-form-item :label="$t('androidRemoteTS.code.systemVersion')">
+                  <el-form-item
+                    :label="$t('androidRemoteTS.code.systemVersion')"
+                  >
                     <span>{{ device['version'] }}</span>
                   </el-form-item>
                   <el-form-item :label="$t('devices.detail.size')">
@@ -1400,12 +1534,16 @@ const checkAlive = () => {
                     <span>{{ device['cpu'] }}</span>
                   </el-form-item>
                   <el-form-item :label="$t('devices.filter.manufacturer')">
-                    <img height="25" style="
+                    <img
+                      height="25"
+                      style="
                         position: absolute;
                         top: 7px;
                         bottom: 7px;
                         left: 7px;
-                      " :src="getImg(device['manufacturer'])" />
+                      "
+                      :src="getImg(device['manufacturer'])"
+                    />
                   </el-form-item>
                 </el-form>
                 <template #reference>
@@ -1437,17 +1575,27 @@ const checkAlive = () => {
                     display: inline-block;
                     min-height: 100%;
                     max-height: calc(100vh - 200px);
-                  " :style="{
+                  "
+                  :style="{
                     width:
                       directionStatus.value === 0 ||
-                        directionStatus.value === 180
+                      directionStatus.value === 180
                         ? 'auto'
                         : canvasRectInfo.width || '100%',
                     height: canvasRectInfo.height,
-                  }" @mouseup="mouseup" @mousedown="mousedown" @mouseleave="mouseleave" />
+                  }"
+                  @mouseup="mouseup"
+                  @mousedown="mousedown"
+                  @mouseleave="mouseleave"
+                />
               </div>
               <el-button-group id="iOSpressKey">
-                <el-button size="small" style="width: 100%" type="info" @click="pressKey('home')">
+                <el-button
+                  size="small"
+                  style="width: 100%"
+                  type="info"
+                  @click="pressKey('home')"
+                >
                   <el-icon :size="13" style="vertical-align: middle">
                     <House />
                   </el-icon>
@@ -1455,10 +1603,20 @@ const checkAlive = () => {
               </el-button-group>
             </div>
             <div style="width: 50px; text-align: right">
-              <el-tooltip :enterable="false" effect="dark" :content="$t('IOSRemote.clarityAndFps')"
-                :placement="tabPosition == 'left' ? 'right' : 'left'" :offset="15">
+              <el-tooltip
+                :enterable="false"
+                effect="dark"
+                :content="$t('IOSRemote.clarityAndFps')"
+                :placement="tabPosition == 'left' ? 'right' : 'left'"
+                :offset="15"
+              >
                 <div>
-                  <el-dropdown :hide-on-click="false" trigger="click" placement="right" style="margin-top: 4px">
+                  <el-dropdown
+                    :hide-on-click="false"
+                    trigger="click"
+                    placement="right"
+                    style="margin-top: 4px"
+                  >
                     <el-button size="small" type="info" circle>
                       <el-icon :size="12" style="vertical-align: middle">
                         <VideoCamera />
@@ -1466,10 +1624,17 @@ const checkAlive = () => {
                     </el-button>
                     <template #dropdown>
                       <el-dropdown-menu class="divider">
-                        <el-radio-group v-model="screenFps" v-loading="loading" size="mini" @change="switchScreen">
-                          <el-radio-button label="low">{{ $t('androidRemoteTS.low') }}
+                        <el-radio-group
+                          v-model="screenFps"
+                          v-loading="loading"
+                          size="mini"
+                          @change="switchScreen"
+                        >
+                          <el-radio-button label="low"
+                            >{{ $t('androidRemoteTS.low') }}
                           </el-radio-button>
-                          <el-radio-button label="high">{{ $t('androidRemoteTS.high') }}
+                          <el-radio-button label="high"
+                            >{{ $t('androidRemoteTS.high') }}
                           </el-radio-button>
                         </el-radio-group>
                       </el-dropdown-menu>
@@ -1477,10 +1642,20 @@ const checkAlive = () => {
                   </el-dropdown>
                 </div>
               </el-tooltip>
-              <el-tooltip :enterable="false" effect="dark" :content="$t('androidRemoteTS.code.manualRepair')"
-                :placement="tabPosition == 'left' ? 'right' : 'left'" :offset="15">
+              <el-tooltip
+                :enterable="false"
+                effect="dark"
+                :content="$t('androidRemoteTS.code.manualRepair')"
+                :placement="tabPosition == 'left' ? 'right' : 'left'"
+                :offset="15"
+              >
                 <div>
-                  <el-dropdown :hide-on-click="false" trigger="click" placement="right" style="margin-top: 4px">
+                  <el-dropdown
+                    :hide-on-click="false"
+                    trigger="click"
+                    placement="right"
+                    style="margin-top: 4px"
+                  >
                     <el-button size="small" type="info" circle>
                       <el-icon :size="12" style="vertical-align: middle">
                         <Place />
@@ -1489,9 +1664,21 @@ const checkAlive = () => {
                     <template #dropdown>
                       <el-dropdown-menu class="divider">
                         <el-button-group>
-                          <el-tooltip effect="dark" :content="$t('IOSRemote.calibrationCoordinates')" placement="top">
-                            <el-button size="small" type="info" circle @click="switchLocation">
-                              <el-icon :size="14" style="vertical-align: middle">
+                          <el-tooltip
+                            effect="dark"
+                            :content="$t('IOSRemote.calibrationCoordinates')"
+                            placement="top"
+                          >
+                            <el-button
+                              size="small"
+                              type="info"
+                              circle
+                              @click="switchLocation"
+                            >
+                              <el-icon
+                                :size="14"
+                                style="vertical-align: middle"
+                              >
                                 <Pointer />
                               </el-icon>
                             </el-button>
@@ -1502,10 +1689,20 @@ const checkAlive = () => {
                   </el-dropdown>
                 </div>
               </el-tooltip>
-              <el-tooltip :enterable="false" effect="dark" :content="$t('IOSRemote.volume')"
-                :placement="tabPosition == 'left' ? 'right' : 'left'" :offset="15">
+              <el-tooltip
+                :enterable="false"
+                effect="dark"
+                :content="$t('IOSRemote.volume')"
+                :placement="tabPosition == 'left' ? 'right' : 'left'"
+                :offset="15"
+              >
                 <div>
-                  <el-dropdown :hide-on-click="false" trigger="click" placement="right" style="margin-top: 4px">
+                  <el-dropdown
+                    :hide-on-click="false"
+                    trigger="click"
+                    placement="right"
+                    style="margin-top: 4px"
+                  >
                     <el-button size="small" type="primary" circle>
                       <el-icon :size="12" style="vertical-align: middle">
                         <Operation />
@@ -1514,18 +1711,37 @@ const checkAlive = () => {
                     <template #dropdown>
                       <el-dropdown-menu class="divider">
                         <div style="text-align: center">
-                          <el-icon :size="14" style="color: #909399; vertical-align: middle">
+                          <el-icon
+                            :size="14"
+                            style="color: #909399; vertical-align: middle"
+                          >
                             <Phone />
                           </el-icon>
                           <el-divider direction="vertical"></el-divider>
                           <el-button-group>
-                            <el-button size="small" type="info" circle @click="pressKey('volumeup')">
-                              <el-icon :size="12" style="vertical-align: middle">
+                            <el-button
+                              size="small"
+                              type="info"
+                              circle
+                              @click="pressKey('volumeup')"
+                            >
+                              <el-icon
+                                :size="12"
+                                style="vertical-align: middle"
+                              >
                                 <Plus />
                               </el-icon>
                             </el-button>
-                            <el-button size="small" type="info" circle @click="pressKey('volumedown')">
-                              <el-icon :size="12" style="vertical-align: middle">
+                            <el-button
+                              size="small"
+                              type="info"
+                              circle
+                              @click="pressKey('volumedown')"
+                            >
+                              <el-icon
+                                :size="12"
+                                style="vertical-align: middle"
+                              >
                                 <Minus />
                               </el-icon>
                             </el-button>
@@ -1536,40 +1752,72 @@ const checkAlive = () => {
                   </el-dropdown>
                 </div>
               </el-tooltip>
-              <el-tooltip effect="dark" :content="$t('androidRemoteTS.code.dial')"
-                :placement="tabPosition == 'left' ? 'right' : 'left'">
+              <el-tooltip
+                effect="dark"
+                :content="$t('androidRemoteTS.code.dial')"
+                :placement="tabPosition == 'left' ? 'right' : 'left'"
+              >
                 <div style="margin-top: 4px">
-                  <el-button size="small" type="primary" circle @click="pressKey('mobilephone')">
+                  <el-button
+                    size="small"
+                    type="primary"
+                    circle
+                    @click="pressKey('mobilephone')"
+                  >
                     <el-icon :size="12" style="vertical-align: middle">
                       <PhoneFilled />
                     </el-icon>
                   </el-button>
                 </div>
               </el-tooltip>
-              <el-tooltip effect="dark" :content="$t('androidRemoteTS.code.photograph')"
-                :placement="tabPosition == 'left' ? 'right' : 'left'">
+              <el-tooltip
+                effect="dark"
+                :content="$t('androidRemoteTS.code.photograph')"
+                :placement="tabPosition == 'left' ? 'right' : 'left'"
+              >
                 <div style="margin-top: 4px">
-                  <el-button size="small" type="primary" circle @click="pressKey('camera')">
+                  <el-button
+                    size="small"
+                    type="primary"
+                    circle
+                    @click="pressKey('camera')"
+                  >
                     <el-icon :size="12" style="vertical-align: middle">
                       <Camera />
                     </el-icon>
                   </el-button>
                 </div>
               </el-tooltip>
-              <el-tooltip effect="dark" :content="$t('androidRemoteTS.code.browser')"
-                :placement="tabPosition == 'left' ? 'right' : 'left'">
+              <el-tooltip
+                effect="dark"
+                :content="$t('androidRemoteTS.code.browser')"
+                :placement="tabPosition == 'left' ? 'right' : 'left'"
+              >
                 <div style="margin-top: 4px">
-                  <el-button size="small" type="primary" circle @click="pressKey('mobilesafari')">
+                  <el-button
+                    size="small"
+                    type="primary"
+                    circle
+                    @click="pressKey('mobilesafari')"
+                  >
                     <el-icon :size="12" style="vertical-align: middle">
                       <Position />
                     </el-icon>
                   </el-button>
                 </div>
               </el-tooltip>
-              <el-tooltip effect="dark" :content="$t('androidRemoteTS.code.LUS')"
-                :placement="tabPosition == 'left' ? 'right' : 'left'">
+              <el-tooltip
+                effect="dark"
+                :content="$t('androidRemoteTS.code.LUS')"
+                :placement="tabPosition == 'left' ? 'right' : 'left'"
+              >
                 <div style="margin-top: 4px">
-                  <el-button size="small" type="primary" circle @click="pressKey('lock')">
+                  <el-button
+                    size="small"
+                    type="primary"
+                    circle
+                    @click="pressKey('lock')"
+                  >
                     <el-icon :size="12" style="vertical-align: middle">
                       <SwitchButton />
                     </el-icon>
@@ -1581,23 +1829,38 @@ const checkAlive = () => {
         </el-card>
       </el-col>
 
-      <div :class="{
-        line: tabPosition == 'left',
-        lineVertical: tabPosition == 'top',
-      }" @mousedown="lineMousedown" />
+      <div
+        :class="{
+          line: tabPosition == 'left',
+          lineVertical: tabPosition == 'top',
+        }"
+        @mousedown="lineMousedown"
+      />
 
-      <el-col :span="tabPosition == 'left' ? 12 : 24" :style="{
-        flexBasis:
-          tabPosition == 'left'
-            ? 100 - Number(layoutSplitInfo.left) + '%'
-            : '',
-        maxWidth:
-          tabPosition == 'left'
-            ? 100 - Number(layoutSplitInfo.left) + '%'
-            : '',
-      }">
-        <el-tabs v-model="activeTab" stretch class="remote-tab" :tab-position="tabPosition" @tab-click="switchTabs">
-          <el-tab-pane :label="$t('androidRemoteTS.code.remoteControlPanel')" name="main">
+      <el-col
+        :span="tabPosition == 'left' ? 12 : 24"
+        :style="{
+          flexBasis:
+            tabPosition == 'left'
+              ? 100 - Number(layoutSplitInfo.left) + '%'
+              : '',
+          maxWidth:
+            tabPosition == 'left'
+              ? 100 - Number(layoutSplitInfo.left) + '%'
+              : '',
+        }"
+      >
+        <el-tabs
+          v-model="activeTab"
+          stretch
+          class="remote-tab"
+          :tab-position="tabPosition"
+          @tab-click="switchTabs"
+        >
+          <el-tab-pane
+            :label="$t('androidRemoteTS.code.remoteControlPanel')"
+            name="main"
+          >
             <el-row :gutter="20">
               <el-col :span="12">
                 <el-card>
@@ -1605,11 +1868,18 @@ const checkAlive = () => {
                     <strong>{{ $t('IOSRemote.siri.command') }}</strong>
                   </template>
                   <div style="padding: 12px 0">
-                    <el-input v-model="text.content" clearable size="small"
-                      :placeholder="$t('IOSRemote.siri.inputCommand')"></el-input>
+                    <el-input
+                      v-model="text.content"
+                      clearable
+                      size="small"
+                      :placeholder="$t('IOSRemote.siri.inputCommand')"
+                    ></el-input>
                     <div style="text-align: center; margin-top: 15px">
-                      <el-button size="mini" type="primary" @click="sendCommand(text.content)">{{
-                        $t('androidRemoteTS.code.send') }}
+                      <el-button
+                        size="mini"
+                        type="primary"
+                        @click="sendCommand(text.content)"
+                        >{{ $t('androidRemoteTS.code.send') }}
                       </el-button>
                     </div>
                   </div>
@@ -1619,53 +1889,69 @@ const checkAlive = () => {
                 <el-tabs type="border-card" stretch>
                   <el-tab-pane :label="$t('IOSRemote.remoteSIB')">
                     <div style="padding: 13px 0">
-                      <div v-loading="remoteSIBPort === 0" element-loading-background="rgba(255, 255, 255, 1)"
-                        style="margin-top: 20px; margin-bottom: 20px">
-                        <el-card :body-style="{
-                          backgroundColor: '#303133',
-                          cursor: 'pointer',
-                        }" @click="
+                      <div
+                        v-loading="remoteSIBPort === 0"
+                        element-loading-background="rgba(255, 255, 255, 1)"
+                        style="margin-top: 20px; margin-bottom: 20px"
+                      >
+                        <el-card
+                          :body-style="{
+                            backgroundColor: '#303133',
+                            cursor: 'pointer',
+                          }"
+                          @click="
                             copy(
                               'sib remote connect --host ' +
-                              agent['host'] +
-                              ' -p ' +
-                              remoteSIBPort
+                                agent['host'] +
+                                ' -p ' +
+                                remoteSIBPort
                             )
-                            ">
+                          "
+                        >
                           <strong style="color: #f2f6fc">{{
                             'sib remote connect --host ' +
                             agent['host'] +
                             ' -p ' +
                             remoteSIBPort
-                            }}</strong>
+                          }}</strong>
                         </el-card>
                       </div>
                     </div>
                   </el-tab-pane>
                   <el-tab-pane :label="$t('IOSRemote.remoteWDA')">
                     <div style="padding: 13px 0">
-                      <div v-if="remoteWDAPort !== 0" style="margin-top: 20px; margin-bottom: 20px">
-                        <el-card :body-style="{
-                          backgroundColor: '#303133',
-                          cursor: 'pointer',
-                        }" @click="
+                      <div
+                        v-if="remoteWDAPort !== 0"
+                        style="margin-top: 20px; margin-bottom: 20px"
+                      >
+                        <el-card
+                          :body-style="{
+                            backgroundColor: '#303133',
+                            cursor: 'pointer',
+                          }"
+                          @click="
                             copy(
                               'http://' + agent['host'] + ':' + remoteWDAPort
                             )
-                            ">
+                          "
+                        >
                           <strong style="color: #f2f6fc">{{
                             'http://' + agent['host'] + ':' + remoteWDAPort
-                            }}</strong>
+                          }}</strong>
                         </el-card>
                       </div>
-                      <div v-else v-loading="remoteWDAPort.length === 0" element-loading-spinner="el-icon-lock"
+                      <div
+                        v-else
+                        v-loading="remoteWDAPort.length === 0"
+                        element-loading-spinner="el-icon-lock"
                         element-loading-background="rgba(255, 255, 255, 1)"
                         :element-loading-text="$t('IOSRemote.driverNotSuccess')"
-                        style="margin-top: 18px; margin-bottom: 18px">
+                        style="margin-top: 18px; margin-bottom: 18px"
+                      >
                         <el-card>
                           <strong>{{
                             $t('IOSRemote.driverNotSuccess')
-                            }}</strong>
+                          }}</strong>
                         </el-card>
                       </div>
                     </div>
@@ -1677,13 +1963,24 @@ const checkAlive = () => {
                   <template #header>
                     <strong>{{ $t('IOSRemote.clipboard.operate') }}</strong>
                   </template>
-                  <el-input v-model="paste" :rows="7" show-word-limit clearable type="textarea"
-                    :placeholder="$t('IOSRemote.clipboard.inputText')"></el-input>
+                  <el-input
+                    v-model="paste"
+                    :rows="7"
+                    show-word-limit
+                    clearable
+                    type="textarea"
+                    :placeholder="$t('IOSRemote.clipboard.inputText')"
+                  ></el-input>
                   <div style="text-align: center; margin-top: 15px">
-                    <el-button size="mini" type="primary" @click="setPasteboard(paste)">
+                    <el-button
+                      size="mini"
+                      type="primary"
+                      @click="setPasteboard(paste)"
+                    >
                       {{ $t('IOSRemote.clipboard.send') }}
                     </el-button>
-                    <el-button size="mini" type="primary" @click="getPasteboard">{{ $t('IOSRemote.clipboard.getText') }}
+                    <el-button size="mini" type="primary" @click="getPasteboard"
+                      >{{ $t('IOSRemote.clipboard.getText') }}
                     </el-button>
                   </div>
                 </el-card>
@@ -1693,20 +1990,36 @@ const checkAlive = () => {
                   <template #header>
                     <strong>{{ $t('IOSRemote.positioning.mock') }}</strong>
                   </template>
-                  <el-form size="small" :model="simLocation" style="padding: 38px 0">
+                  <el-form
+                    size="small"
+                    :model="simLocation"
+                    style="padding: 38px 0"
+                  >
                     <el-form-item :label="$t('IOSRemote.positioning.x')">
-                      <el-input-number v-model="simLocation.long" style="width: 100%" :precision="6" :step="0.1"
-                        controls-position="right" />
+                      <el-input-number
+                        v-model="simLocation.long"
+                        style="width: 100%"
+                        :precision="6"
+                        :step="0.1"
+                        controls-position="right"
+                      />
                     </el-form-item>
                     <el-form-item :label="$t('IOSRemote.positioning.y')">
-                      <el-input-number v-model="simLocation.lat" style="width: 100%" :precision="6" :step="0.1"
-                        controls-position="right" />
+                      <el-input-number
+                        v-model="simLocation.lat"
+                        style="width: 100%"
+                        :precision="6"
+                        :step="0.1"
+                        controls-position="right"
+                      />
                     </el-form-item>
                   </el-form>
                   <div style="text-align: center">
-                    <el-button size="mini" type="primary" @click="locationSet">{{ $t('IOSRemote.positioning.start') }}
+                    <el-button size="mini" type="primary" @click="locationSet"
+                      >{{ $t('IOSRemote.positioning.start') }}
                     </el-button>
-                    <el-button size="mini" type="primary" @click="locationUnset">{{ $t('IOSRemote.positioning.end') }}
+                    <el-button size="mini" type="primary" @click="locationUnset"
+                      >{{ $t('IOSRemote.positioning.end') }}
                     </el-button>
                   </div>
                 </el-card>
@@ -1720,8 +2033,16 @@ const checkAlive = () => {
                   <strong>{{ $t('IOSRemote.installIPA') }}</strong>
                 </template>
                 <div style="text-align: center">
-                  <el-upload v-loading="uploadLoading" drag action="" :with-credentials="true" :limit="1"
-                    :before-upload="beforeAvatarUpload2" :on-exceed="limitOut" :http-request="uploadPackage">
+                  <el-upload
+                    v-loading="uploadLoading"
+                    drag
+                    action=""
+                    :with-credentials="true"
+                    :limit="1"
+                    :before-upload="beforeAvatarUpload2"
+                    :on-exceed="limitOut"
+                    :http-request="uploadPackage"
+                  >
                     <i class="el-icon-upload"></i>
                     <div class="el-upload__text">
                       {{ $t('IOSRemote.moveIPA')
@@ -1740,12 +2061,19 @@ const checkAlive = () => {
                 <template #label>
                   <strong>{{ $t('androidRemoteTS.code.URLInstall') }}</strong>
                 </template>
-                <el-input v-model="uploadUrl" clearable size="small"
-                  :placeholder="$t('IOSRemote.pleaseIPAFilePath')"></el-input>
+                <el-input
+                  v-model="uploadUrl"
+                  clearable
+                  size="small"
+                  :placeholder="$t('IOSRemote.pleaseIPAFilePath')"
+                ></el-input>
                 <div style="text-align: center; margin-top: 20px">
-                  <el-button size="mini" type="primary" :disabled="uploadUrl.length === 0"
-                    @click="install(uploadUrl)">{{
-                      $t('androidRemoteTS.code.send') }}
+                  <el-button
+                    size="mini"
+                    type="primary"
+                    :disabled="uploadUrl.length === 0"
+                    @click="install(uploadUrl)"
+                    >{{ $t('androidRemoteTS.code.send') }}
                   </el-button>
                 </div>
               </el-tab-pane>
@@ -1755,29 +2083,52 @@ const checkAlive = () => {
                 </template>
                 <span style="color: #909399; margin-right: 10px">{{
                   $t('androidRemoteTS.code.associatedProject')
-                  }}</span>
-                <el-select v-model="project" size="mini" value-key="id"
-                  :placeholder="$t('androidRemoteTS.code.chooseProject')">
-                  <el-option v-for="item in store.state.projectList" :key="item.id" :value="item"
-                    :label="item['projectName']">
+                }}</span>
+                <el-select
+                  v-model="project"
+                  size="mini"
+                  value-key="id"
+                  :placeholder="$t('androidRemoteTS.code.chooseProject')"
+                >
+                  <el-option
+                    v-for="item in store.state.projectList"
+                    :key="item.id"
+                    :value="item"
+                    :label="item['projectName']"
+                  >
                     <div style="display: flex; align-items: center">
-                      <el-avatar style="margin-right: 10px" :size="32" :src="item['projectImg'].length > 0
-                          ? item['projectImg']
-                          : defaultLogo
-                        " shape="square"></el-avatar>
+                      <el-avatar
+                        style="margin-right: 10px"
+                        :size="32"
+                        :src="
+                          item['projectImg'].length > 0
+                            ? item['projectImg']
+                            : defaultLogo
+                        "
+                        shape="square"
+                      ></el-avatar>
                       {{ item['projectName'] }}
                     </div>
                   </el-option>
                 </el-select>
 
                 <div v-if="project !== null">
-                  <package-list v-if="project !== null" :project-id="project['id']" platform-type="iOS"
-                    @select-package="selectPackage"></package-list>
+                  <package-list
+                    v-if="project !== null"
+                    :project-id="project['id']"
+                    platform-type="iOS"
+                    @select-package="selectPackage"
+                  ></package-list>
                 </div>
                 <div v-else>
                   <el-card style="height: 100%; margin-top: 20px">
-                    <el-result icon="info" :title="$t('androidRemoteTS.code.hintText')" :sub-title="$t('androidRemoteTS.code.hintAssociatedProject')
-                      ">
+                    <el-result
+                      icon="info"
+                      :title="$t('androidRemoteTS.code.hintText')"
+                      :sub-title="
+                        $t('androidRemoteTS.code.hintAssociatedProject')
+                      "
+                    >
                     </el-result>
                   </el-card>
                 </div>
@@ -1788,61 +2139,111 @@ const checkAlive = () => {
               <el-table :data="currAppListPageData" border>
                 <el-table-column width="100" header-align="center">
                   <template #header>
-                    <el-button size="mini" @click="refreshAppList">{{ $t('androidRemoteTS.code.refresh') }}
+                    <el-button size="mini" @click="refreshAppList"
+                      >{{ $t('androidRemoteTS.code.refresh') }}
                     </el-button>
                   </template>
                   <template #default="scope">
-                    <div style="
+                    <div
+                      style="
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                      ">
-                      <el-avatar shape="square" :size="40"
-                        :src="'data:image/png;base64,' + scope.row.iconBase64"></el-avatar>
+                      "
+                    >
+                      <el-avatar
+                        shape="square"
+                        :size="40"
+                        :src="'data:image/png;base64,' + scope.row.iconBase64"
+                      ></el-avatar>
                     </div>
                   </template>
                 </el-table-column>
-                <el-table-column width="150" show-overflow-tooltip header-align="center" prop="name"
-                  :label="$t('androidRemoteTS.code.appName')">
+                <el-table-column
+                  width="150"
+                  show-overflow-tooltip
+                  header-align="center"
+                  prop="name"
+                  :label="$t('androidRemoteTS.code.appName')"
+                >
                 </el-table-column>
-                <el-table-column header-align="center" show-overflow-tooltip prop="bundleId"
-                  :label="$t('androidRemoteTS.code.packagesName')">
+                <el-table-column
+                  header-align="center"
+                  show-overflow-tooltip
+                  prop="bundleId"
+                  :label="$t('androidRemoteTS.code.packagesName')"
+                >
                   <template #default="scope">
-                    <div style="cursor: pointer" @click="copy(scope.row.bundleId)">
+                    <div
+                      style="cursor: pointer"
+                      @click="copy(scope.row.bundleId)"
+                    >
                       {{ scope.row.bundleId }}
                     </div>
                   </template>
                 </el-table-column>
-                <el-table-column header-align="center" show-overflow-tooltip prop="version"
-                  :label="$t('androidRemoteTS.code.version')" width="120"></el-table-column>
-                <el-table-column header-align="center" show-overflow-tooltip prop="shortVersion"
-                  :label="$t('androidRemoteTS.code.subversion')" width="120"></el-table-column>
+                <el-table-column
+                  header-align="center"
+                  show-overflow-tooltip
+                  prop="version"
+                  :label="$t('androidRemoteTS.code.version')"
+                  width="120"
+                ></el-table-column>
+                <el-table-column
+                  header-align="center"
+                  show-overflow-tooltip
+                  prop="shortVersion"
+                  :label="$t('androidRemoteTS.code.subversion')"
+                  width="120"
+                ></el-table-column>
                 <el-table-column align="center" width="260">
                   <template #header>
-                    <el-input v-model="filterAppText" size="mini"
-                      :placeholder="$t('androidRemoteTS.code.nameSearch')" />
+                    <el-input
+                      v-model="filterAppText"
+                      size="mini"
+                      :placeholder="$t('androidRemoteTS.code.nameSearch')"
+                    />
                   </template>
                   <template #default="scope">
-                    <el-button size="mini" type="primary" @click="openApp(scope.row.bundleId)">
+                    <el-button
+                      size="mini"
+                      type="primary"
+                      @click="openApp(scope.row.bundleId)"
+                    >
                       {{ $t('androidRemoteTS.code.open') }}
                     </el-button>
-                    <el-button size="mini" type="warning" @click="killApp(scope.row.bundleId)">
+                    <el-button
+                      size="mini"
+                      type="warning"
+                      @click="killApp(scope.row.bundleId)"
+                    >
                       {{ $t('androidRemoteTS.code.kill') }}
                     </el-button>
-                    <el-button size="mini" type="danger" @click="uninstallApp(scope.row.bundleId)">
+                    <el-button
+                      size="mini"
+                      type="danger"
+                      @click="uninstallApp(scope.row.bundleId)"
+                    >
                       {{ $t('androidRemoteTS.code.unInstall') }}
                     </el-button>
                   </template>
                 </el-table-column>
               </el-table>
-              <Pageable :is-page-set="false" :total="filterTableData.length" :current-page="currAppListPageIndex + 1"
-                :page-size="7" @change="changeAppListPage"></Pageable>
+              <Pageable
+                :is-page-set="false"
+                :total="filterTableData.length"
+                :current-page="currAppListPageIndex + 1"
+                :page-size="7"
+                @change="changeAppListPage"
+              ></Pageable>
             </el-card>
           </el-tab-pane>
           <el-tab-pane :label="$t('androidRemoteTS.code.packet')" name="proxy">
-            <el-button size="small" type="success" @click="startProxy">{{ $t('androidRemoteTS.code.startPacket') }}
+            <el-button size="small" type="success" @click="startProxy"
+              >{{ $t('androidRemoteTS.code.startPacket') }}
             </el-button>
-            <el-button size="small" @click="installCert">{{ $t('IOSRemote.openWeb') }}
+            <el-button size="small" @click="installCert"
+              >{{ $t('IOSRemote.openWeb') }}
             </el-button>
             <strong style="color: #545c64; font-size: 14px; margin-left: 6px">
               {{ $t('IOSRemote.web.openInput') }}
@@ -1852,37 +2253,69 @@ const checkAlive = () => {
                 ':' +
                 agent['port'] +
                 '/assets/download'
-                }}</span>
-              {{ $t('androidRemoteTS.code.downloadCertificate') }}</strong>
-            <strong v-if="proxyConnPort !== 0" style="color: #67c23a; float: right; margin-top: 5px">{{
-              $t('androidRemoteTS.code.proxyConnection') }}：{{
+              }}</span>
+              {{ $t('androidRemoteTS.code.downloadCertificate') }}</strong
+            >
+            <strong
+              v-if="proxyConnPort !== 0"
+              style="color: #67c23a; float: right; margin-top: 5px"
+              >{{ $t('androidRemoteTS.code.proxyConnection') }}：{{
                 agent['host'] + ':' + proxyConnPort
-              }}</strong>
-            <iframe v-if="proxyWebPort !== 0" allow="clipboard-read;clipboard-write" :style="'border:1px solid #C0C4CC;width: 100%;height: ' +
-              iFrameHeight +
-              'px;margin-top:15px'
-              " :src="'http://' + agent['host'] + ':' + proxyWebPort"></iframe>
+              }}</strong
+            >
+            <iframe
+              v-if="proxyWebPort !== 0"
+              allow="clipboard-read;clipboard-write"
+              :style="
+                'border:1px solid #C0C4CC;width: 100%;height: ' +
+                iFrameHeight +
+                'px;margin-top:15px'
+              "
+              :src="'http://' + agent['host'] + ':' + proxyWebPort"
+            ></iframe>
             <el-card v-else style="margin-top: 20px">
-              <template #header><strong>{{
-                $t('androidRemoteTS.code.useTeaching')
-                  }}</strong></template>
+              <template #header
+                ><strong>{{
+                  $t('androidRemoteTS.code.useTeaching')
+                }}</strong></template
+              >
               <div style="height: 300px">
                 <el-steps direction="vertical" :active="3">
-                  <el-step :title="$t('androidRemoteTS.code.connectWifi')" status="process"
-                    :description="$t('androidRemoteTS.code.connectWifiText')" />
-                  <el-step :title="$t('androidRemoteTS.code.downloadCertificate')" status="process" :description="$t('androidRemoteTS.code.installCertificateText')
-                    " />
-                  <el-step :title="$t('androidRemoteTS.code.installCertificate')" status="process"
-                    :description="$t('IOSRemote.messageStep')" />
-                  <el-step :title="$t('IOSRemote.trustCertificate')" status="process"
-                    :description="$t('IOSRemote.certificateStep')" />
-                  <el-step :title="$t('androidRemoteTS.code.startPacket')" status="process"
-                    :description="$t('IOSRemote.startPacketMessage')" />
+                  <el-step
+                    :title="$t('androidRemoteTS.code.connectWifi')"
+                    status="process"
+                    :description="$t('androidRemoteTS.code.connectWifiText')"
+                  />
+                  <el-step
+                    :title="$t('androidRemoteTS.code.downloadCertificate')"
+                    status="process"
+                    :description="
+                      $t('androidRemoteTS.code.installCertificateText')
+                    "
+                  />
+                  <el-step
+                    :title="$t('androidRemoteTS.code.installCertificate')"
+                    status="process"
+                    :description="$t('IOSRemote.messageStep')"
+                  />
+                  <el-step
+                    :title="$t('IOSRemote.trustCertificate')"
+                    status="process"
+                    :description="$t('IOSRemote.certificateStep')"
+                  />
+                  <el-step
+                    :title="$t('androidRemoteTS.code.startPacket')"
+                    status="process"
+                    :description="$t('IOSRemote.startPacketMessage')"
+                  />
                 </el-steps>
               </div>
             </el-card>
           </el-tab-pane>
-          <el-tab-pane :label="$t('androidRemoteTS.code.screenshotQuick')" name="screenCap">
+          <el-tab-pane
+            :label="$t('androidRemoteTS.code.screenshotQuick')"
+            name="screenCap"
+          >
             <el-button type="primary" size="small" @click="quickCap">
               <el-icon :size="12" style="vertical-align: middle">
                 <Camera />
@@ -1895,15 +2328,37 @@ const checkAlive = () => {
               </el-icon>
               {{ $t('androidRemoteTS.code.clean') }}
             </el-button>
-            <el-card v-if="screenUrls.length === 0" style="height: 100%; margin-top: 10px">
-              <el-empty :description="$t('androidRemoteTS.code.noScreenshots')"></el-empty>
+            <el-card
+              v-if="screenUrls.length === 0"
+              style="height: 100%; margin-top: 10px"
+            >
+              <el-empty
+                :description="$t('androidRemoteTS.code.noScreenshots')"
+              ></el-empty>
             </el-card>
             <el-row v-else :gutter="20">
-              <el-col v-for="u in screenUrls" :xs="8" :sm="8" :md="8" :lg="4" :xl="4" style="margin-top: 10px">
+              <el-col
+                v-for="u in screenUrls"
+                :xs="8"
+                :sm="8"
+                :md="8"
+                :lg="4"
+                :xl="4"
+                style="margin-top: 10px"
+              >
                 <el-card shadow="hover" :body-style="{ padding: '10px' }">
-                  <el-image :src="u" :preview-src-list="screenUrls" hide-on-click-modal></el-image>
+                  <el-image
+                    :src="u"
+                    :preview-src-list="screenUrls"
+                    hide-on-click-modal
+                  ></el-image>
                   <div style="text-align: center; margin-top: 5px">
-                    <el-button type="primary" plain size="mini" @click="downloadImg(u)">
+                    <el-button
+                      type="primary"
+                      plain
+                      size="mini"
+                      @click="downloadImg(u)"
+                    >
                       <el-icon :size="12" style="vertical-align: middle">
                         <Download />
                       </el-icon>
@@ -1918,91 +2373,194 @@ const checkAlive = () => {
             <el-tabs stretch type="border-card">
               <el-tab-pane label="Process">
                 <div style="text-align: center">
-                  <el-button size="mini" style="margin-left: 5px" type="primary" @click="getProcessList">Search
+                  <el-button
+                    size="mini"
+                    style="margin-left: 5px"
+                    type="primary"
+                    @click="getProcessList"
+                    >Search
                   </el-button>
-                  <el-button size="mini" style="margin-left: 5px" type="warning" @click="clearProcess">Clear
+                  <el-button
+                    size="mini"
+                    style="margin-left: 5px"
+                    type="warning"
+                    @click="clearProcess"
+                    >Clear
                   </el-button>
                 </div>
-                <el-table style="margin-top: 10px" border :data="currProcessListPage">
-                  <el-table-column align="center" label="PID" width="90" prop="pid" />
-                  <el-table-column align="center" label="Name" width="290" prop="name" />
-                  <el-table-column header-align="center" label="Real Application Name" show-overflow-tooltip
-                    prop="realAppName" />
-                  <el-table-column align="center" label="Start Date" width="250" prop="startDate" />
+                <el-table
+                  style="margin-top: 10px"
+                  border
+                  :data="currProcessListPage"
+                >
+                  <el-table-column
+                    align="center"
+                    label="PID"
+                    width="90"
+                    prop="pid"
+                  />
+                  <el-table-column
+                    align="center"
+                    label="Name"
+                    width="290"
+                    prop="name"
+                  />
+                  <el-table-column
+                    header-align="center"
+                    label="Real Application Name"
+                    show-overflow-tooltip
+                    prop="realAppName"
+                  />
+                  <el-table-column
+                    align="center"
+                    label="Start Date"
+                    width="250"
+                    prop="startDate"
+                  />
                 </el-table>
-                <Pageable :is-page-set="false" :total="processList.length" :current-page="currProcessListIndex + 1"
-                  :page-size="processPageSize" @change="changeProcessListPage"></Pageable>
+                <Pageable
+                  :is-page-set="false"
+                  :total="processList.length"
+                  :current-page="currProcessListIndex + 1"
+                  :page-size="processPageSize"
+                  @change="changeProcessListPage"
+                ></Pageable>
               </el-tab-pane>
               <el-tab-pane label="Syslog">
-                <el-card style="border: 0px" :body-style="{
-                  color: '#FFFFFF',
-                  backgroundColor: '#303133',
-                  lineHeight: '1.5',
-                }">
+                <el-card
+                  style="border: 0px"
+                  :body-style="{
+                    color: '#FFFFFF',
+                    backgroundColor: '#303133',
+                    lineHeight: '1.5',
+                  }"
+                >
                   <div style="display: flex; margin-bottom: 10px">
-                    <el-input v-model="logFilter" style="margin-left: 5px" size="mini"
-                      :placeholder="$t('androidRemoteTS.code.enterInput')">
+                    <el-input
+                      v-model="logFilter"
+                      style="margin-left: 5px"
+                      size="mini"
+                      :placeholder="$t('androidRemoteTS.code.enterInput')"
+                    >
                       <template #prepend>| grep</template>
                     </el-input>
-                    <el-button size="mini" style="margin-left: 5px" type="primary" @click="getSyslog">Search
+                    <el-button
+                      size="mini"
+                      style="margin-left: 5px"
+                      type="primary"
+                      @click="getSyslog"
+                      >Search
                     </el-button>
-                    <el-button size="mini" style="margin-left: 5px" type="danger" @click="stopSyslog">Stop
+                    <el-button
+                      size="mini"
+                      style="margin-left: 5px"
+                      type="danger"
+                      @click="stopSyslog"
+                      >Stop
                     </el-button>
-                    <el-button size="mini" style="margin-left: 5px" type="warning" @click="clearLogcat">Clear
+                    <el-button
+                      size="mini"
+                      style="margin-left: 5px"
+                      type="warning"
+                      @click="clearLogcat"
+                      >Clear
                     </el-button>
                   </div>
-                  <el-scrollbar ref="terminalScroll" noresize
-                    :style="'height:' + terminalHeight + 'px;min-height:450px'">
-                    <div v-for="l in logOutPut" style="white-space: pre-wrap" v-html="l"></div>
+                  <el-scrollbar
+                    ref="terminalScroll"
+                    noresize
+                    :style="'height:' + terminalHeight + 'px;min-height:450px'"
+                  >
+                    <div
+                      v-for="l in logOutPut"
+                      style="white-space: pre-wrap"
+                      v-html="l"
+                    ></div>
                   </el-scrollbar>
                 </el-card>
               </el-tab-pane>
             </el-tabs>
           </el-tab-pane>
-          <el-tab-pane :label="$t('androidRemoteTS.code.UIAutomation.UIAutomationName')" name="auto">
+          <el-tab-pane
+            :label="$t('androidRemoteTS.code.UIAutomation.UIAutomationName')"
+            name="auto"
+          >
             <div v-if="testCase['id']">
               <el-collapse accordion style="margin-bottom: 20px">
                 <el-collapse-item>
                   <template #title>
-                    <div style="
+                    <div
+                      style="
                         display: flex;
                         align-items: center;
                         width: 100%;
                         justify-content: space-between;
-                      ">
-                      <strong style="
+                      "
+                    >
+                      <strong
+                        style="
                           font-size: 15px;
                           color: #909399;
                           margin-left: 10px;
-                        ">{{
+                        "
+                        >{{
                           $t('androidRemoteTS.code.UIAutomation.testInfo')
-                        }}</strong>
-                      <el-button style="margin-right: 10px" type="danger" size="mini" @click="removeCase">
+                        }}</strong
+                      >
+                      <el-button
+                        style="margin-right: 10px"
+                        type="danger"
+                        size="mini"
+                        @click="removeCase"
+                      >
                         {{ $t('androidRemoteTS.code.UIAutomation.clean') }}
                       </el-button>
                     </div>
                   </template>
                   <el-descriptions :column="2" size="medium" border>
-                    <el-descriptions-item width="100px" :label="$t('projectIndexTS.page.caseId')">{{ testCase['id'] }}
+                    <el-descriptions-item
+                      width="100px"
+                      :label="$t('projectIndexTS.page.caseId')"
+                      >{{ testCase['id'] }}
                     </el-descriptions-item>
-                    <el-descriptions-item width="100px" :label="$t('projectIndexTS.page.caseName')">{{ testCase.name }}
+                    <el-descriptions-item
+                      width="100px"
+                      :label="$t('projectIndexTS.page.caseName')"
+                      >{{ testCase.name }}
                     </el-descriptions-item>
-                    <el-descriptions-item :label="$t('androidRemoteTS.code.UIAutomation.fatherPlayed')
-                      ">
+                    <el-descriptions-item
+                      :label="
+                        $t('androidRemoteTS.code.UIAutomation.fatherPlayed')
+                      "
+                    >
                       <div style="display: flex; align-items: center">
-                        <el-avatar style="margin-right: 10px" :size="27" :src="project['projectImg'].length > 0
-                            ? project['projectImg']
-                            : defaultLogo
-                          " shape="square"></el-avatar>
+                        <el-avatar
+                          style="margin-right: 10px"
+                          :size="27"
+                          :src="
+                            project['projectImg'].length > 0
+                              ? project['projectImg']
+                              : defaultLogo
+                          "
+                          shape="square"
+                        ></el-avatar>
                         {{ project['projectName'] }}
                       </div>
                     </el-descriptions-item>
-                    <el-descriptions-item :label="$t('stepListViewTS.platformToBe')">
+                    <el-descriptions-item
+                      :label="$t('stepListViewTS.platformToBe')"
+                    >
                       <div style="display: flex; align-items: center">
-                        <el-avatar style="margin-right: 10px" :size="27" :src="getImg(
-                          testCase['platform'] === 1 ? 'ANDROID' : 'IOS'
-                        )
-                          " shape="square"></el-avatar>
+                        <el-avatar
+                          style="margin-right: 10px"
+                          :size="27"
+                          :src="
+                            getImg(
+                              testCase['platform'] === 1 ? 'ANDROID' : 'IOS'
+                            )
+                          "
+                          shape="square"
+                        ></el-avatar>
                         {{
                           testCase['platform'] === 1
                             ? $t('publicStepTS.android')
@@ -2017,13 +2575,19 @@ const checkAlive = () => {
                           : ''
                       }}
                     </el-descriptions-item>
-                    <el-descriptions-item :label="$t('stepListViewTS.versionName')">{{ testCase['version'] }}
+                    <el-descriptions-item
+                      :label="$t('stepListViewTS.versionName')"
+                      >{{ testCase['version'] }}
                     </el-descriptions-item>
-                    <el-descriptions-item :label="$t('stepListViewTS.designer')">{{ testCase['designer'] }}
+                    <el-descriptions-item :label="$t('stepListViewTS.designer')"
+                      >{{ testCase['designer'] }}
                     </el-descriptions-item>
-                    <el-descriptions-item :label="$t('stepListViewTS.last')">{{ testCase['editTime'] }}
+                    <el-descriptions-item :label="$t('stepListViewTS.last')"
+                      >{{ testCase['editTime'] }}
                     </el-descriptions-item>
-                    <el-descriptions-item :label="$t('stepListViewTS.testMessage')">{{ testCase['des'] }}
+                    <el-descriptions-item
+                      :label="$t('stepListViewTS.testMessage')"
+                      >{{ testCase['des'] }}
                     </el-descriptions-item>
                   </el-descriptions>
                 </el-collapse-item>
@@ -2057,29 +2621,58 @@ const checkAlive = () => {
             <div v-else>
               <span style="color: #909399; margin-right: 10px">{{
                 $t('androidRemoteTS.code.associatedProject')
-                }}</span>
-              <el-select v-model="project" size="mini" value-key="id"
-                :placeholder="$t('androidRemoteTS.code.chooseProject')">
-                <el-option v-for="item in store.state.projectList" :key="item.id" :value="item"
-                  :label="item['projectName']">
+              }}</span>
+              <el-select
+                v-model="project"
+                size="mini"
+                value-key="id"
+                :placeholder="$t('androidRemoteTS.code.chooseProject')"
+              >
+                <el-option
+                  v-for="item in store.state.projectList"
+                  :key="item.id"
+                  :value="item"
+                  :label="item['projectName']"
+                >
                   <div style="display: flex; align-items: center">
-                    <el-avatar style="margin-right: 10px" :size="32" :src="item['projectImg'].length > 0
-                        ? item['projectImg']
-                        : defaultLogo
-                      " shape="square"></el-avatar>
+                    <el-avatar
+                      style="margin-right: 10px"
+                      :size="32"
+                      :src="
+                        item['projectImg'].length > 0
+                          ? item['projectImg']
+                          : defaultLogo
+                      "
+                      shape="square"
+                    ></el-avatar>
                     {{ item['projectName'] }}
                   </div>
                 </el-option>
               </el-select>
-              <el-button v-if="project !== null" size="mini" type="primary" round
-                style="position: absolute; right: 20px" @click="caseList.open()">
+              <el-button
+                v-if="project !== null"
+                size="mini"
+                type="primary"
+                round
+                style="position: absolute; right: 20px"
+                @click="caseList.open()"
+              >
                 新增用例
               </el-button>
-              <test-case-list v-if="project !== null" ref="caseList" :project-id="project['id']" :platform="2"
-                :is-read-only="true" @select-case="selectCase"></test-case-list>
+              <test-case-list
+                v-if="project !== null"
+                ref="caseList"
+                :project-id="project['id']"
+                :platform="2"
+                :is-read-only="true"
+                @select-case="selectCase"
+              ></test-case-list>
               <el-card style="height: 100%; margin-top: 20px">
-                <el-result icon="info" :title="$t('androidRemoteTS.code.hintText')"
-                  :sub-title="$t('androidRemoteTS.code.hintMessage')">
+                <el-result
+                  icon="info"
+                  :title="$t('androidRemoteTS.code.hintText')"
+                  :sub-title="$t('androidRemoteTS.code.hintMessage')"
+                >
                 </el-result>
               </el-card>
             </div>
@@ -2088,16 +2681,20 @@ const checkAlive = () => {
             <el-tabs stretch type="border-card">
               <el-tab-pane :label="$t('androidRemoteTS.code.nativeControls')">
                 <div v-show="isShowImg">
-                  <div style="
+                  <div
+                    style="
                       margin-bottom: 15px;
                       display: flex;
                       align-items: center;
-                    ">
-                    <span style="
+                    "
+                  >
+                    <span
+                      style="
                         margin-right: 10px;
                         color: #909399;
                         font-size: 14px;
-                      ">{{ $t('IOSRemote.depth') }}:
+                      "
+                      >{{ $t('IOSRemote.depth') }}:
                     </span>
                     <el-input-number
                       v-model="depth"
@@ -2122,26 +2719,50 @@ const checkAlive = () => {
                   <el-row :gutter="10">
                     <el-col :span="7">
                       <el-card shadow="hover">
-                        <div :style="'width: 100%;background-image: url(' +
-                          imgUrl +
-                          ');background-size: 100% 100%;'
-                          ">
-                          <canvas id="debugPicIOS" @mousedown="touchstart"></canvas>
+                        <div
+                          :style="
+                            'width: 100%;background-image: url(' +
+                            imgUrl +
+                            ');background-size: 100% 100%;'
+                          "
+                        >
+                          <canvas
+                            id="debugPicIOS"
+                            @mousedown="touchstart"
+                          ></canvas>
                         </div>
                       </el-card>
                     </el-col>
                     <el-col :span="9">
                       <el-card v-if="isShowTree" shadow="hover">
-                        <el-input v-model="filterText" style="margin-bottom: 10px" size="mini"
-                          :placeholder="$t('IOSRemote.filterClassOrName')"></el-input>
+                        <el-input
+                          v-model="filterText"
+                          style="margin-bottom: 10px"
+                          size="mini"
+                          :placeholder="$t('IOSRemote.filterClassOrName')"
+                        ></el-input>
                         <div style="height: 660px">
-                          <el-scrollbar class="element-tree-scrollbar" style="height: 100%">
-                            <el-tree ref="tree" :indent="13" :filter-node-method="filterNode"
-                              :default-expanded-keys="currentId" node-key="id"
-                              style="margin-top: 10px; margin-bottom: 20px" :highlight-current="true" :accordion="true"
-                              :data="elementData" @node-click="handleNodeClick">
+                          <el-scrollbar
+                            class="element-tree-scrollbar"
+                            style="height: 100%"
+                          >
+                            <el-tree
+                              ref="tree"
+                              :indent="13"
+                              :filter-node-method="filterNode"
+                              :default-expanded-keys="currentId"
+                              node-key="id"
+                              style="margin-top: 10px; margin-bottom: 20px"
+                              :highlight-current="true"
+                              :accordion="true"
+                              :data="elementData"
+                              @node-click="handleNodeClick"
+                            >
                               <template #default="{ node, data }">
-                                <span v-if="data.detail['name']" style="font-size: 14px">
+                                <span
+                                  v-if="data.detail['name']"
+                                  style="font-size: 14px"
+                                >
                                   {{
                                     node.label.substring(
                                       0,
@@ -2154,7 +2775,7 @@ const checkAlive = () => {
                                 </span>
                                 <span v-else style="font-size: 14px">{{
                                   node.label
-                                  }}</span>
+                                }}</span>
                               </template>
                             </el-tree>
                           </el-scrollbar>
@@ -2164,97 +2785,179 @@ const checkAlive = () => {
                     <el-col :span="8">
                       <el-card v-if="isShowTree" shadow="hover">
                         <div style="height: 695px; padding-bottom: 60px">
-                          <div v-if="project && project['id']" style="text-align: center; margin-bottom: 10px">
-                            <el-button :disabled="elementDetail === null" plain size="small" type="primary" round
-                              @click="toAddElement('', '')">{{ $t('androidRemoteTS.code.addControls') }}
+                          <div
+                            v-if="project && project['id']"
+                            style="text-align: center; margin-bottom: 10px"
+                          >
+                            <el-button
+                              :disabled="elementDetail === null"
+                              plain
+                              size="small"
+                              type="primary"
+                              round
+                              @click="toAddElement('', '')"
+                              >{{ $t('androidRemoteTS.code.addControls') }}
                             </el-button>
-                            <el-button v-if="
-                              elementDetail &&
-                              elementDetail['xpath'] &&
-                              isDriverFinish
-                            " :loading="elementScreenLoading" style="margin-left: 5px" plain size="small" round
-                              @click="getEleScreen(elementDetail['xpath'])">{{
-                                $t('androidRemoteTS.code.controlSnapshot') }}
+                            <el-button
+                              v-if="
+                                elementDetail &&
+                                elementDetail['xpath'] &&
+                                isDriverFinish
+                              "
+                              :loading="elementScreenLoading"
+                              style="margin-left: 5px"
+                              plain
+                              size="small"
+                              round
+                              @click="getEleScreen(elementDetail['xpath'])"
+                              >{{ $t('androidRemoteTS.code.controlSnapshot') }}
                             </el-button>
                           </div>
                           <div v-else>
-                            <el-alert style="margin-bottom: 10px" :title="$t('androidRemoteTS.code.titleMessage')"
-                              type="info" show-icon close-text="Get!" />
-                            <el-select v-model="project" style="width: 100%" size="mini" value-key="id" :placeholder="$t('androidRemoteTS.code.chooseProject')
-                              ">
-                              <el-option v-for="item in store.state.projectList" :key="item.id" :value="item"
-                                :label="item['projectName']">
+                            <el-alert
+                              style="margin-bottom: 10px"
+                              :title="$t('androidRemoteTS.code.titleMessage')"
+                              type="info"
+                              show-icon
+                              close-text="Get!"
+                            />
+                            <el-select
+                              v-model="project"
+                              style="width: 100%"
+                              size="mini"
+                              value-key="id"
+                              :placeholder="
+                                $t('androidRemoteTS.code.chooseProject')
+                              "
+                            >
+                              <el-option
+                                v-for="item in store.state.projectList"
+                                :key="item.id"
+                                :value="item"
+                                :label="item['projectName']"
+                              >
                                 <div style="display: flex; align-items: center">
-                                  <el-avatar style="margin-right: 10px" :size="32" :src="item['projectImg'].length > 0
-                                      ? item['projectImg']
-                                      : defaultLogo
-                                    " shape="square"></el-avatar>
+                                  <el-avatar
+                                    style="margin-right: 10px"
+                                    :size="32"
+                                    :src="
+                                      item['projectImg'].length > 0
+                                        ? item['projectImg']
+                                        : defaultLogo
+                                    "
+                                    shape="square"
+                                  ></el-avatar>
                                   {{ item['projectName'] }}
                                 </div>
                               </el-option>
                             </el-select>
                           </div>
-                          <el-scrollbar style="height: 100%" class="element-tree-scrollbar">
-                            <el-form v-if="elementDetail !== null" label-position="left" class="element-table"
-                              label-width="100px">
-                              <el-form-item label="type" style="cursor: pointer" @click="copy(elementDetail['type'])">
+                          <el-scrollbar
+                            style="height: 100%"
+                            class="element-tree-scrollbar"
+                          >
+                            <el-form
+                              v-if="elementDetail !== null"
+                              label-position="left"
+                              class="element-table"
+                              label-width="100px"
+                            >
+                              <el-form-item
+                                label="type"
+                                style="cursor: pointer"
+                                @click="copy(elementDetail['type'])"
+                              >
                                 <span>{{ elementDetail['type'] }}</span>
                               </el-form-item>
-                              <el-form-item v-if="elementDetail['name']" label="accessibilityId"
-                                style="cursor: pointer">
+                              <el-form-item
+                                v-if="elementDetail['name']"
+                                label="accessibilityId"
+                                style="cursor: pointer"
+                              >
                                 <span @click="copy(elementDetail['name'])">{{
                                   elementDetail['name']
-                                  }}</span>
-                                <el-icon color="green" size="16" style="
+                                }}</span>
+                                <el-icon
+                                  color="green"
+                                  size="16"
+                                  style="
                                     vertical-align: middle;
                                     margin-left: 10px;
                                     cursor: pointer;
-                                  " @click="
+                                  "
+                                  @click="
                                     checkLocation({
                                       eleType: 'accessibilityId',
                                       eleValue: elementDetail['name'],
                                     })
-                                    ">
+                                  "
+                                >
                                   <Location />
                                 </el-icon>
-                                <el-icon v-if="project && project['id']" color="green" size="16" style="
+                                <el-icon
+                                  v-if="project && project['id']"
+                                  color="green"
+                                  size="16"
+                                  style="
                                     vertical-align: middle;
                                     margin-left: 10px;
                                     cursor: pointer;
-                                  " @click="
+                                  "
+                                  @click="
                                     toAddElement(
                                       'accessibilityId',
                                       elementDetail['name']
                                     )
-                                    ">
+                                  "
+                                >
                                   <Pointer />
                                 </el-icon>
                               </el-form-item>
                               <el-form-item :label="$t('IOSRemote.predicate')">
-                                <el-table stripe :empty-text="$t('IOSRemote.noRecommend')" border
-                                  :data="findBestNS(elementDetail)" :show-header="false">
+                                <el-table
+                                  stripe
+                                  :empty-text="$t('IOSRemote.noRecommend')"
+                                  border
+                                  :data="findBestNS(elementDetail)"
+                                  :show-header="false"
+                                >
                                   <el-table-column>
                                     <template #default="scope">
-                                      <span style="cursor: pointer" @click="copy(scope.row)">{{ scope.row }}</span>
-                                      <el-icon color="green" size="16" style="
+                                      <span
+                                        style="cursor: pointer"
+                                        @click="copy(scope.row)"
+                                        >{{ scope.row }}</span
+                                      >
+                                      <el-icon
+                                        color="green"
+                                        size="16"
+                                        style="
                                           vertical-align: middle;
                                           margin-left: 10px;
                                           cursor: pointer;
-                                        " @click="
+                                        "
+                                        @click="
                                           checkLocation({
                                             eleType: 'nsPredicate',
                                             eleValue: scope.row,
                                           })
-                                          ">
+                                        "
+                                      >
                                         <Location />
                                       </el-icon>
-                                      <el-icon v-if="project && project['id']" color="green" size="16" style="
+                                      <el-icon
+                                        v-if="project && project['id']"
+                                        color="green"
+                                        size="16"
+                                        style="
                                           vertical-align: middle;
                                           margin-left: 10px;
                                           cursor: pointer;
-                                        " @click="
+                                        "
+                                        @click="
                                           toAddElement('nsPredicate', scope.row)
-                                          ">
+                                        "
+                                      >
                                         <Pointer />
                                       </el-icon>
                                     </template>
@@ -2262,130 +2965,210 @@ const checkAlive = () => {
                                 </el-table>
                               </el-form-item>
                               <el-form-item :label="$t('IOSRemote.classChain')">
-                                <el-table stripe :empty-text="$t('IOSRemote.noRecommend')" border
-                                  :data="findBestClassChain(elementDetail)" :show-header="false">
+                                <el-table
+                                  stripe
+                                  :empty-text="$t('IOSRemote.noRecommend')"
+                                  border
+                                  :data="findBestClassChain(elementDetail)"
+                                  :show-header="false"
+                                >
                                   <el-table-column>
                                     <template #default="scope">
-                                      <span style="cursor: pointer" @click="copy(scope.row)">{{ scope.row }}</span>
-                                      <el-icon color="green" size="16" style="
+                                      <span
+                                        style="cursor: pointer"
+                                        @click="copy(scope.row)"
+                                        >{{ scope.row }}</span
+                                      >
+                                      <el-icon
+                                        color="green"
+                                        size="16"
+                                        style="
                                           vertical-align: middle;
                                           margin-left: 10px;
                                           cursor: pointer;
-                                        " @click="
+                                        "
+                                        @click="
                                           checkLocation({
                                             eleType: 'classChain',
                                             eleValue: scope.row,
                                           })
-                                          ">
+                                        "
+                                      >
                                         <Location />
                                       </el-icon>
-                                      <el-icon v-if="project && project['id']" color="green" size="16" style="
+                                      <el-icon
+                                        v-if="project && project['id']"
+                                        color="green"
+                                        size="16"
+                                        style="
                                           vertical-align: middle;
                                           margin-left: 10px;
                                           cursor: pointer;
-                                        " @click="
+                                        "
+                                        @click="
                                           toAddElement('classChain', scope.row)
-                                          ">
+                                        "
+                                      >
                                         <Pointer />
                                       </el-icon>
                                     </template>
                                   </el-table-column>
                                 </el-table>
                               </el-form-item>
-                              <el-form-item :label="$t('androidRemoteTS.code.xpath')">
-                                <el-table stripe :empty-text="$t('androidRemoteTS.code.xpathNull')
-                                  " border :data="findBestXpath(elementDetail)" :show-header="false">
+                              <el-form-item
+                                :label="$t('androidRemoteTS.code.xpath')"
+                              >
+                                <el-table
+                                  stripe
+                                  :empty-text="
+                                    $t('androidRemoteTS.code.xpathNull')
+                                  "
+                                  border
+                                  :data="findBestXpath(elementDetail)"
+                                  :show-header="false"
+                                >
                                   <el-table-column>
                                     <template #default="scope">
-                                      <span style="cursor: pointer" @click="copy(scope.row)">{{ scope.row }}</span>
-                                      <el-icon color="green" size="16" style="
+                                      <span
+                                        style="cursor: pointer"
+                                        @click="copy(scope.row)"
+                                        >{{ scope.row }}</span
+                                      >
+                                      <el-icon
+                                        color="green"
+                                        size="16"
+                                        style="
                                           vertical-align: middle;
                                           margin-left: 10px;
                                           cursor: pointer;
-                                        " @click="
+                                        "
+                                        @click="
                                           checkLocation({
                                             eleType: 'xpath',
                                             eleValue: scope.row,
                                           })
-                                          ">
+                                        "
+                                      >
                                         <Location />
                                       </el-icon>
-                                      <el-icon v-if="project && project['id']" color="green" size="16" style="
+                                      <el-icon
+                                        v-if="project && project['id']"
+                                        color="green"
+                                        size="16"
+                                        style="
                                           vertical-align: middle;
                                           margin-left: 10px;
                                           cursor: pointer;
-                                        " @click="
+                                        "
+                                        @click="
                                           toAddElement('xpath', scope.row)
-                                          ">
+                                        "
+                                      >
                                         <Pointer />
                                       </el-icon>
                                     </template>
                                   </el-table-column>
                                 </el-table>
                               </el-form-item>
-                              <el-form-item :label="$t('androidRemoteTS.code.absolutePath')" style="cursor: pointer">
+                              <el-form-item
+                                :label="$t('androidRemoteTS.code.absolutePath')"
+                                style="cursor: pointer"
+                              >
                                 <span @click="copy(elementDetail['xpath'])">{{
                                   elementDetail['xpath']
-                                  }}</span>
-                                <el-icon color="green" size="16" style="
+                                }}</span>
+                                <el-icon
+                                  color="green"
+                                  size="16"
+                                  style="
                                     vertical-align: middle;
                                     margin-left: 10px;
                                     cursor: pointer;
-                                  " @click="
+                                  "
+                                  @click="
                                     checkLocation({
                                       eleType: 'xpath',
                                       eleValue: elementDetail['xpath'],
                                     })
-                                    ">
+                                  "
+                                >
                                   <Location />
                                 </el-icon>
-                                <el-icon v-if="project && project['id']" color="green" size="16" style="
+                                <el-icon
+                                  v-if="project && project['id']"
+                                  color="green"
+                                  size="16"
+                                  style="
                                     vertical-align: middle;
                                     margin-left: 10px;
                                     cursor: pointer;
-                                  " @click="
+                                  "
+                                  @click="
                                     toAddElement(
                                       'xpath',
                                       elementDetail['xpath']
                                     )
-                                    ">
+                                  "
+                                >
                                   <Pointer />
                                 </el-icon>
                               </el-form-item>
-                              <el-form-item label="name" style="cursor: pointer" @click="copy(elementDetail['name'])">
+                              <el-form-item
+                                label="name"
+                                style="cursor: pointer"
+                                @click="copy(elementDetail['name'])"
+                              >
                                 <span>{{ elementDetail['name'] }}</span>
                               </el-form-item>
-                              <el-form-item v-if="elementDetail['label']" label="label" style="cursor: pointer"
-                                @click="copy(elementDetail['label'])">
+                              <el-form-item
+                                v-if="elementDetail['label']"
+                                label="label"
+                                style="cursor: pointer"
+                                @click="copy(elementDetail['label'])"
+                              >
                                 <span>{{ elementDetail['label'] }}</span>
                               </el-form-item>
-                              <el-form-item v-if="elementDetail['value']" label="value" style="cursor: pointer"
-                                @click="copy(elementDetail['value'])">
+                              <el-form-item
+                                v-if="elementDetail['value']"
+                                label="value"
+                                style="cursor: pointer"
+                                @click="copy(elementDetail['value'])"
+                              >
                                 <span>{{ elementDetail['value'] }}</span>
                               </el-form-item>
-                              <el-form-item :label="$t('androidRemoteTS.code.centerXY')" style="cursor: pointer">
-                                <span @click="
-                                  copy(
+                              <el-form-item
+                                :label="$t('androidRemoteTS.code.centerXY')"
+                                style="cursor: pointer"
+                              >
+                                <span
+                                  @click="
+                                    copy(
+                                      computedCenter(
+                                        elementDetail['x'],
+                                        elementDetail['y'],
+                                        elementDetail['width'],
+                                        elementDetail['height']
+                                      )
+                                    )
+                                  "
+                                  >{{
                                     computedCenter(
                                       elementDetail['x'],
                                       elementDetail['y'],
                                       elementDetail['width'],
                                       elementDetail['height']
                                     )
-                                  )
-                                  ">{{
-                                    computedCenter(
-                                      elementDetail['x'],
-                                      elementDetail['y'],
-                                      elementDetail['width'],
-                                      elementDetail['height']
-                                    )
-                                  }}</span>
-                                <el-icon color="green" size="16" style="
+                                  }}</span
+                                >
+                                <el-icon
+                                  color="green"
+                                  size="16"
+                                  style="
                                     vertical-align: middle;
                                     margin-left: 10px;
                                     cursor: pointer;
-                                  " @click="
+                                  "
+                                  @click="
                                     checkLocation({
                                       eleType: 'point',
                                       eleValue: computedCenter(
@@ -2395,14 +3178,20 @@ const checkAlive = () => {
                                         elementDetail['height']
                                       ),
                                     })
-                                    ">
+                                  "
+                                >
                                   <Location />
                                 </el-icon>
-                                <el-icon v-if="project && project['id']" color="green" size="16" style="
+                                <el-icon
+                                  v-if="project && project['id']"
+                                  color="green"
+                                  size="16"
+                                  style="
                                     vertical-align: middle;
                                     margin-left: 10px;
                                     cursor: pointer;
-                                  " @click="
+                                  "
+                                  @click="
                                     toAddElement(
                                       'point',
                                       computedCenter(
@@ -2412,7 +3201,8 @@ const checkAlive = () => {
                                         elementDetail['height']
                                       )
                                     )
-                                    ">
+                                  "
+                                >
                                   <Pointer />
                                 </el-icon>
                               </el-form-item>
@@ -2420,11 +3210,17 @@ const checkAlive = () => {
                                 <span>{{ elementDetail['index'] }}</span>
                               </el-form-item>
                               <el-form-item label="enabled">
-                                <el-switch :value="JSON.parse(elementDetail['enabled'])" disabled>
+                                <el-switch
+                                  :value="JSON.parse(elementDetail['enabled'])"
+                                  disabled
+                                >
                                 </el-switch>
                               </el-form-item>
                               <el-form-item label="visible">
-                                <el-switch :value="JSON.parse(elementDetail['visible'])" disabled>
+                                <el-switch
+                                  :value="JSON.parse(elementDetail['visible'])"
+                                  disabled
+                                >
                                 </el-switch>
                               </el-form-item>
                               <el-form-item label="x">
@@ -2447,11 +3243,19 @@ const checkAlive = () => {
                   </el-row>
                 </div>
                 <el-card v-show="!isShowImg" style="height: 100%">
-                  <el-result icon="info" :title="$t('androidRemoteTS.code.hintText')"
-                    :sub-title="$t('androidRemoteTS.code.subTitleText')">
+                  <el-result
+                    icon="info"
+                    :title="$t('androidRemoteTS.code.hintText')"
+                    :sub-title="$t('androidRemoteTS.code.subTitleText')"
+                  >
                     <template #extra>
-                      <el-button type="primary" size="mini" :loading="elementLoading"
-                        :disabled="isDriverFinish === false" @click="getElement">
+                      <el-button
+                        type="primary"
+                        size="mini"
+                        :loading="elementLoading"
+                        :disabled="isDriverFinish === false"
+                        @click="getElement"
+                      >
                         <el-icon :size="12" style="vertical-align: middle">
                           <Search />
                         </el-icon>
@@ -2462,19 +3266,37 @@ const checkAlive = () => {
                 </el-card>
               </el-tab-pane>
               <el-tab-pane :label="$t('androidRemoteTS.code.poco')">
-                <poco-pane ref="pocoPaneRef" :poco-loading="pocoLoading" :is-driver-finish="isDriverFinish"
-                  :direction-status="directionStatus" :project-list="store.state.projectList" :get-img-url="getImgUrl"
-                  @get-poco="getPoco" @copy="copy" />
+                <poco-pane
+                  ref="pocoPaneRef"
+                  :poco-loading="pocoLoading"
+                  :is-driver-finish="isDriverFinish"
+                  :direction-status="directionStatus"
+                  :project-list="store.state.projectList"
+                  :get-img-url="getImgUrl"
+                  @get-poco="getPoco"
+                  @copy="copy"
+                />
               </el-tab-pane>
             </el-tabs>
           </el-tab-pane>
-          <el-tab-pane :label="$t('androidRemoteTS.code.webView.webDebug')" name="webview">
+          <el-tab-pane
+            :label="$t('androidRemoteTS.code.webView.webDebug')"
+            name="webview"
+          >
             <div v-if="isWebView">
               <div v-if="webViewListDetail.length == 0">
-                <el-result icon="info" :title="$t('androidRemoteTS.code.hintText')"
-                  :sub-title="$t('androidRemoteTS.code.webView.err')">
+                <el-result
+                  icon="info"
+                  :title="$t('androidRemoteTS.code.hintText')"
+                  :sub-title="$t('androidRemoteTS.code.webView.err')"
+                >
                   <template #extra>
-                    <el-button type="primary" size="mini" :loading="webViewLoading" @click="getWebViewForward">
+                    <el-button
+                      type="primary"
+                      size="mini"
+                      :loading="webViewLoading"
+                      @click="getWebViewForward"
+                    >
                       <el-icon :size="12" style="vertical-align: middle">
                         <Search />
                       </el-icon>
@@ -2484,11 +3306,20 @@ const checkAlive = () => {
                 </el-result>
               </div>
               <div v-else>
-                <el-button :loading="webViewLoading" type="primary" size="mini" @click="getWebViewForward">
+                <el-button
+                  :loading="webViewLoading"
+                  type="primary"
+                  size="mini"
+                  @click="getWebViewForward"
+                >
                   {{ $t('androidRemoteTS.code.webView.againGetWeb') }}
                 </el-button>
-                <el-card v-for="web in webViewListDetail" style="margin-top: 15px" class="device-card"
-                  :body-style="{ padding: '0px 10px 10px 10px' }">
+                <el-card
+                  v-for="web in webViewListDetail"
+                  style="margin-top: 15px"
+                  class="device-card"
+                  :body-style="{ padding: '0px 10px 10px 10px' }"
+                >
                   <template #header>
                     <div>
                       <div style="display: flex; align-items: center">
@@ -2504,19 +3335,30 @@ const checkAlive = () => {
                       </div>
                     </div>
                   </template>
-                  <el-card v-for="w in web['pages']" :body-style="{ padding: '15px' }" style="
+                  <el-card
+                    v-for="w in web['pages']"
+                    :body-style="{ padding: '15px' }"
+                    style="
                       margin-top: 10px;
                       word-wrap: break-word;
                       overflow: hidden;
-                    ">
-                    <div style="
+                    "
+                  >
+                    <div
+                      style="
                         display: flex;
                         align-items: center;
                         justify-content: space-between;
-                      ">
+                      "
+                    >
                       <div>
                         <div style="display: flex; align-items: center">
-                          <img v-if="w.favicon" :src="w.favicon" width="15" style="margin-right: 5px" />
+                          <img
+                            v-if="w.favicon"
+                            :src="w.favicon"
+                            width="15"
+                            style="margin-right: 5px"
+                          />
                           <strong>{{
                             w.title.length > 0
                               ? w.title
@@ -2531,15 +3373,19 @@ const checkAlive = () => {
                           }}
                         </div>
                       </div>
-                      <el-button type="primary" size="mini" @click="
-                        tabWebView(
-                          w.port,
-                          w.id,
-                          w.title.length > 0
-                            ? w.title
-                            : $t('androidRemoteTS.code.webView.Untitled')
-                        )
-                        ">
+                      <el-button
+                        type="primary"
+                        size="mini"
+                        @click="
+                          tabWebView(
+                            w.port,
+                            w.id,
+                            w.title.length > 0
+                              ? w.title
+                              : $t('androidRemoteTS.code.webView.Untitled')
+                          )
+                        "
+                      >
                         {{ $t('androidRemoteTS.code.webView.nowDebug') }}
                       </el-button>
                     </div>
@@ -2549,29 +3395,42 @@ const checkAlive = () => {
             </div>
             <div v-else>
               <div style="display: flex; align-items: center">
-                <el-page-header icon="el-icon-arrow-left" @back="switchIsWebView">
+                <el-page-header
+                  icon="el-icon-arrow-left"
+                  @back="switchIsWebView"
+                >
                   <template #title>
                     <span style="color: #606266">{{
                       $t('androidRemoteTS.code.webView.return')
-                      }}</span>
+                    }}</span>
                   </template>
                   <template #content>
                     {{ $t('androidRemoteTS.code.webView.nowWeb') }}：<strong>{{
                       title
-                      }}</strong>
+                    }}</strong>
                   </template>
                 </el-page-header>
               </div>
-              <iframe v-if="!isWebView" allow="clipboard-read;clipboard-write" :style="'border:1px solid #C0C4CC;;width: 100%;height: ' +
-                iFrameHeight +
-                'px;margin-top:15px'
-                " :src="iframeUrl">
+              <iframe
+                v-if="!isWebView"
+                allow="clipboard-read;clipboard-write"
+                :style="
+                  'border:1px solid #C0C4CC;;width: 100%;height: ' +
+                  iFrameHeight +
+                  'px;margin-top:15px'
+                "
+                :src="iframeUrl"
+              >
               </iframe>
             </div>
           </el-tab-pane>
           <el-tab-pane :label="$t('IOSRemote.perfmon')" name="perfmon">
-            <i-o-s-perf ref="iosPerfRef" :app-list="appList" @start-perfmon="startPerfmon"
-              @stop-perfmon="stopPerfmon" />
+            <i-o-s-perf
+              ref="iosPerfRef"
+              :app-list="appList"
+              @start-perfmon="startPerfmon"
+              @stop-perfmon="stopPerfmon"
+            />
           </el-tab-pane>
         </el-tabs>
       </el-col>

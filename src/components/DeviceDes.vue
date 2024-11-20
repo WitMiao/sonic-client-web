@@ -1,11 +1,12 @@
 <script setup>
-import { useI18n } from 'vue-i18n';
-import { ElMessage } from 'element-plus';
 import ColorImg from '@/components/ColorImg.vue';
+import { ElMessage } from 'element-plus';
+import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import RenderStatus from './RenderStatus.vue';
-import RenderDeviceName from './RenderDeviceName.vue';
 import axios from '../http/axios';
+import RenderDeviceName from './RenderDeviceName.vue';
+import RenderStatus from './RenderStatus.vue';
 
 const router = useRouter();
 const { t: $t } = useI18n();
@@ -13,13 +14,20 @@ const img = import.meta.globEager('./../assets/img/*');
 const props = defineProps({
   device: Object,
   agentList: Array,
-  projectList:Array,
+  projectList: Array,
+  listLoading: {
+    type: Boolean,
+    default: false,
+  },
   detail: {
     type: Boolean,
     default: false,
   },
 });
 const emit = defineEmits(['flush']);
+const useTimeDialogVisible = ref(false);
+const useTime = ref(0);
+const remoteTimeout = ref(0);
 const upload = (content) => {
   const formData = new FormData();
   formData.append('file', content.file);
@@ -78,45 +86,61 @@ const deleteDevice = (id) => {
     }
   });
 };
+const openDialogVisible = async () => {
+  // 获取系统时间
+  const resp = await axios.get('/controller/confList/getRemoteTimeout');
+  remoteTimeout.value = resp.data;
+  useTime.value = remoteTimeout.value;
+  useTimeDialogVisible.value = true;
+};
 const jump = (id, platform) => {
   let routeData;
   if (platform === 1) {
     routeData = router.resolve({
       path: `/AndroidRemote/${id}`,
+      query: {
+        useTime: useTime.value,
+      },
     });
   } else {
     routeData = router.resolve({
       path: `/IOSRemote/${id}`,
+      query: {
+        useTime: useTime.value,
+      },
     });
   }
   window.open(routeData.href, '_self');
 };
-
 const offline = (device) => {
-  axios.put('/controller/devices/updateStatus', {
+  axios
+    .put('/controller/devices/updateStatus', {
       id: device.id,
       status: 'OFFLINE',
-  }).then((resp) => {
-    if (resp.code === 2000) {
-      ElMessage.success({
-        message: resp.message,
-      });
-      emit('flush');
-    }
-  });
+    })
+    .then((resp) => {
+      if (resp.code === 2000) {
+        ElMessage.success({
+          message: resp.message,
+        });
+        emit('flush');
+      }
+    });
 };
 const online = (device) => {
-  axios.put('/controller/devices/updateStatus', {
-    id: device.id,
-    status: 'ONLINE'
-  }).then((resp) => {
-    if (resp.code === 2000) {
-      ElMessage.success({
-        message: resp.message,
-      });
-      emit('flush');
-    }
-  });
+  axios
+    .put('/controller/devices/updateStatus', {
+      id: device.id,
+      status: 'ONLINE',
+    })
+    .then((resp) => {
+      if (resp.code === 2000) {
+        ElMessage.success({
+          message: resp.message,
+        });
+        emit('flush');
+      }
+    });
 };
 const reboot = (id) => {
   axios.get('/transport/exchange/reboot', { params: { id } }).then((resp) => {
@@ -164,16 +188,14 @@ const findAgentById = (id) => {
 
 const findProjectById = (id) => {
   let result = $t('form.unknown');
-  for (const i in props.projectList){
-    if(i == id)
-    {
+  for (const i in props.projectList) {
+    if (i == id) {
       result = props.projectList[i].projectName;
       break;
     }
   }
   return result;
 };
-
 </script>
 
 <template>
@@ -395,27 +417,28 @@ const findProjectById = (id) => {
         </el-form>
       </el-col>
     </el-row>
-    <div style="text-align: center">
+    <div v-if="!listLoading" style="text-align: center">
       <el-button
+        v-show="device.status !== 'DISCONNECTED' && device.status !== 'OFFLINE'"
         type="primary"
         size="mini"
-        v-show="device.status !== 'DISCONNECTED' && device.status !== 'OFFLINE'"
-        @click="jump(device.id, device.platform)"
+        :disabled="device.status === 'DEBUGGING'"
+        @click="openDialogVisible"
         >{{ $t('devices.useRightNow') }}
       </el-button>
       <el-button
-          size="mini"
-          :disabled="device.status !== 'ONLINE'"
-          v-show="device.status !== 'OFFLINE' && device.status !== 'DISCONNECTED'"
-          @click="offline(device)"
-      >下线
+        v-show="device.status !== 'OFFLINE' && device.status !== 'DISCONNECTED'"
+        size="mini"
+        :disabled="device.status !== 'ONLINE'"
+        @click="offline(device)"
+        >下线
       </el-button>
       <el-button
-          size="mini"
-          :disabled="device.status !== 'OFFLINE'"
-          v-show="device.status !== 'ONLINE' && device.status !== 'DISCONNECTED'"
-          @click="online(device)"
-      >上线
+        v-show="device.status !== 'ONLINE' && device.status !== 'DISCONNECTED'"
+        size="mini"
+        :disabled="device.status !== 'OFFLINE'"
+        @click="online(device)"
+        >上线
       </el-button>
       <el-popover placement="top" width="340px" trigger="hover">
         <el-form
@@ -584,6 +607,33 @@ const findProjectById = (id) => {
       </el-popover>
     </div>
   </el-card>
+  <el-dialog v-model="useTimeDialogVisible" title="使用时长" :width="400">
+    <el-form label-width="auto" style="max-width: 600px">
+      <el-form-item label="使用时长">
+        <el-input-number
+          v-model="useTime"
+          :precision="0"
+          :min="0"
+          :max="remoteTimeout"
+        /><span style="margin-left: 10px">分</span>
+      </el-form-item>
+    </el-form>
+
+    <template #footer>
+      <div style="text-align: center">
+        <el-button size="small" @click="useTimeDialogVisible = false"
+          >取消</el-button
+        >
+        <el-button
+          size="small"
+          type="primary"
+          @click="jump(device.id, device.platform)"
+        >
+          确认
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 
 <style scoped>
@@ -595,6 +645,6 @@ const findProjectById = (id) => {
 }
 
 .clickable-icon:hover {
-  color: #409EFF; /* 鼠标悬停时改变图标颜色 */
+  color: #409eff; /* 鼠标悬停时改变图标颜色 */
 }
 </style>
