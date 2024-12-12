@@ -7,7 +7,10 @@ import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import axios from '../http/axios';
+import ProjectUpdate from '../views/ProjectOption.vue';
 
+// 国际化设置
+const { t: $t } = useI18n();
 const { toClipboard } = useClipboard();
 
 const changePwdForm = ref(null);
@@ -16,6 +19,16 @@ const changePwd = ref({
   newPwd: '',
   newPwdSec: '',
 });
+const dialogUserInfo = ref(false);
+const dialogVisible = ref(false);
+const dialogToken = ref(false);
+const day = ref(14);
+const store = useStore();
+const router = useRouter();
+const route = useRoute();
+const projectData = ref([]);
+const theme = ref('');
+
 const copy = (value) => {
   try {
     toClipboard(value);
@@ -82,24 +95,16 @@ const changePwdSummit = () => {
     }
   });
 };
-const dialogUserInfo = ref(false);
-const dialogVisible = ref(false);
-const dialogToken = ref(false);
-const day = ref(14);
-const store = useStore();
-const router = useRouter();
-const route = useRoute();
-const projectData = ref([]);
-const theme = ref('');
-const flush = () => {
-  dialogVisible.value = false;
-  getProjectList();
-};
+
 const getProjectList = () => {
   axios.get('/controller/projects/list').then((resp) => {
     projectData.value = resp.data;
     store.commit('saveProjectList', projectData.value);
   });
+};
+const flush = () => {
+  dialogVisible.value = false;
+  getProjectList();
 };
 const pushIndex = (path) => {
   router.push({
@@ -125,8 +130,7 @@ onMounted(() => {
   getProjectList();
 });
 
-// 国际化设置
-const { t: $t } = useI18n();
+
 </script>
 
 <template>

@@ -1,9 +1,10 @@
 <script setup>
 import ColorImg from '@/components/ColorImg.vue';
 import { ElMessage } from 'element-plus';
-import { ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 import axios from '../http/axios';
 import RenderDeviceName from './RenderDeviceName.vue';
 import RenderStatus from './RenderStatus.vue';
@@ -23,11 +24,27 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  controlsMode: {
+    type: Boolean,
+    default: false,
+  },
 });
 const emit = defineEmits(['flush']);
 const useTimeDialogVisible = ref(false);
 const useTime = ref(0);
 const remoteTimeout = ref(0);
+const store = useStore();
+
+const updateImg = (id, imgUrl) => {
+  axios.put('/controller/devices/updateImg', { id, imgUrl }).then((resp) => {
+    if (resp.code === 2000) {
+      ElMessage.success({
+        message: resp.message,
+      });
+      emit('flush');
+    }
+  });
+};
 const upload = (content) => {
   const formData = new FormData();
   formData.append('file', content.file);
@@ -51,16 +68,7 @@ const beforeAvatarUpload = (file) => {
   });
   return false;
 };
-const updateImg = (id, imgUrl) => {
-  axios.put('/controller/devices/updateImg', { id, imgUrl }).then((resp) => {
-    if (resp.code === 2000) {
-      ElMessage.success({
-        message: resp.message,
-      });
-      emit('flush');
-    }
-  });
-};
+
 const saveDetail = (device) => {
   axios
     .put('/controller/devices/saveDetail', {
@@ -100,6 +108,7 @@ const jump = (id, platform) => {
       path: `/AndroidRemote/${id}`,
       query: {
         useTime: useTime.value,
+        isMultiple: false,
       },
     });
   } else {
@@ -107,6 +116,7 @@ const jump = (id, platform) => {
       path: `/IOSRemote/${id}`,
       query: {
         useTime: useTime.value,
+        isMultiple: false,
       },
     });
   }
@@ -177,25 +187,55 @@ const getImg = (name) => {
 };
 const findAgentById = (id) => {
   let result = $t('form.unknown');
-  for (const i in props.agentList) {
-    if (props.agentList[i].id === id) {
-      result = props.agentList[i].name;
-      break;
+  props.agentList?.forEach((agent) => {
+    if (agent.id === id) {
+      result = agent.name;
     }
-  }
+  });
   return result;
 };
+const checked = ref(false);
+onMounted(() => {
+  checked.value = store.getters.getControlsMachine.includes(props.device.id);
+});
 
 const findProjectById = (id) => {
-  let result = $t('form.unknown');
-  for (const i in props.projectList) {
-    if (i == id) {
-      result = props.projectList[i].projectName;
-      break;
-    }
-  }
-  return result;
+  return (
+    props.projectList?.find((project) => project.id === id)?.projectName ||
+    $t('form.unknown')
+  );
 };
+const clickMasterControl = (device) => {
+  if (store.getters.getMasterControl === device.id) {
+    store.commit('setMasterControl', '');
+  } else {
+    store.commit('setMasterControl', device.id);
+  }
+};
+const controlsMachine = (val, id) => {
+  if (!val) {
+    clickMasterControl(val);
+  }
+  store.commit('setControlsMachine', { type: 1, val, id });
+};
+const clickDevice = () => {
+  if (!props.controlsMode || props.device.status !== 'ONLINE') {
+    return;
+  }
+  checked.value = !checked.value;
+  controlsMachine(checked.value, props.device.id);
+};
+watch(
+  () => store.getters.getControlsMachine,
+  (newVal) => {
+    if (newVal.length === 0) {
+      checked.value = false;
+    }
+  },
+  {
+    deep: true,
+  }
+);
 </script>
 
 <template>
@@ -203,6 +243,18 @@ const findProjectById = (id) => {
     shadow="hover"
     :body-style="{ padding: '15px 20px 15px 10px' }"
     class="device-card"
+    :style="{
+      borderColor: checked ? '#409eff' : undefined,
+      cursor:
+        controlsMode && device.status === 'ONLINE'
+          ? 'pointer'
+          : controlsMode && device.status !== 'ONLINE'
+          ? 'not-allowed'
+          : undefined,
+      userSelect:
+        controlsMode && device.status === 'ONLINE' ? 'none' : undefined,
+    }"
+    @click="clickDevice"
   >
     <template #header>
       <div style="display: flex; justify-content: space-between">
@@ -221,7 +273,11 @@ const findProjectById = (id) => {
             style="height: 160px"
             fit="contain"
             :src="getPhoneImg(device.model, device['imgUrl'])"
-            :preview-src-list="[getPhoneImg(device.model, device['imgUrl'])]"
+            :preview-src-list="
+              controlsMode
+                ? undefined
+                : [getPhoneImg(device.model, device['imgUrl'])]
+            "
             hide-on-click-modal
           />
         </div>
@@ -417,194 +473,242 @@ const findProjectById = (id) => {
         </el-form>
       </el-col>
     </el-row>
-    <div v-if="!listLoading" style="text-align: center">
-      <el-button
-        v-show="device.status !== 'DISCONNECTED' && device.status !== 'OFFLINE'"
-        type="primary"
-        size="mini"
-        :disabled="device.status === 'DEBUGGING'"
-        @click="openDialogVisible"
-        >{{ $t('devices.useRightNow') }}
-      </el-button>
-      <el-button
-        v-show="device.status !== 'OFFLINE' && device.status !== 'DISCONNECTED'"
-        size="mini"
-        :disabled="device.status !== 'ONLINE'"
-        @click="offline(device)"
-        >下线
-      </el-button>
-      <el-button
-        v-show="device.status !== 'ONLINE' && device.status !== 'DISCONNECTED'"
-        size="mini"
-        :disabled="device.status !== 'OFFLINE'"
-        @click="online(device)"
-        >上线
-      </el-button>
-      <el-popover placement="top" width="340px" trigger="hover">
-        <el-form
-          v-if="device.id"
-          label-position="left"
-          class="demo-table-expand"
-          label-width="90px"
-          style="margin-left: 10px; word-break: break-all"
+    <div v-if="!listLoading" style="position: relative">
+      <div style="text-align: center; height: 28px">
+        <el-button
+          v-show="
+            device.status !== 'DISCONNECTED' && device.status !== 'OFFLINE'
+          "
+          v-if="!controlsMode"
+          type="primary"
+          size="mini"
+          :disabled="device.status === 'DEBUGGING'"
+          @click="openDialogVisible"
+          >{{ $t('devices.useRightNow') }}
+        </el-button>
+        <el-button
+          v-show="
+            device.status !== 'OFFLINE' && device.status !== 'DISCONNECTED'
+          "
+          v-if="!controlsMode"
+          size="mini"
+          :disabled="device.status !== 'ONLINE'"
+          @click="offline(device)"
+          >下线
+        </el-button>
+        <el-button
+          v-show="
+            device.status !== 'ONLINE' && device.status !== 'DISCONNECTED'
+          "
+          v-if="!controlsMode"
+          size="mini"
+          :disabled="device.status !== 'OFFLINE'"
+          @click="online(device)"
+          >上线
+        </el-button>
+        <el-button
+          v-if="
+            props.controlsMode &&
+            store.state.controlsMachine.indexOf(device.id) !== -1 &&
+            device.status === 'ONLINE'
+          "
+          size="mini"
+          :type="
+            store.getters.getMasterControl === device.id ? 'danger' : 'primary'
+          "
+          @click.stop="clickMasterControl(device)"
         >
-          <el-form-item :label="$t('devices.detail.image')">
-            <el-upload
-              style="width: 30px"
-              :data="{ id: device.id }"
-              action=""
-              :with-credentials="true"
-              :before-upload="beforeAvatarUpload"
-              :http-request="upload"
-              :show-file-list="false"
-            >
-              <el-button type="primary" size="mini"
-                >{{ $t('devices.detail.uploadImg') }}
-              </el-button>
-            </el-upload>
-          </el-form-item>
-          <el-form-item :label="$t('devices.detail.nickName')">
-            <el-input
-              v-model="device['nickName']"
-              show-word-limit
-              type="text"
-              size="mini"
-              :placeholder="$t('devices.detail.nickPlaceholder')"
-              maxlength="30"
-              style="position: absolute; top: 7px; bottom: 7px"
-            >
-              <template #append>
-                <el-button size="mini" @click="saveDetail(device)"
-                  >{{ $t('form.save') }}
+          {{
+            store.getters.getMasterControl === device.id
+              ? '取消主控'
+              : '设为主控'
+          }}
+        </el-button>
+
+        <el-popover
+          v-if="!controlsMode"
+          placement="top"
+          width="340px"
+          trigger="hover"
+        >
+          <el-form
+            v-if="device.id"
+            label-position="left"
+            class="demo-table-expand"
+            label-width="90px"
+            style="margin-left: 10px; word-break: break-all"
+          >
+            <el-form-item :label="$t('devices.detail.image')">
+              <el-upload
+                style="width: 30px"
+                :data="{ id: device.id }"
+                action=""
+                :with-credentials="true"
+                :before-upload="beforeAvatarUpload"
+                :http-request="upload"
+                :show-file-list="false"
+              >
+                <el-button type="primary" size="mini"
+                  >{{ $t('devices.detail.uploadImg') }}
                 </el-button>
-              </template>
-            </el-input>
-          </el-form-item>
-          <el-form-item :label="$t('devices.detail.name')">
-            <span>{{ device.name }}</span>
-          </el-form-item>
-          <el-form-item :label="$t('devices.detail.model')">
-            <span>{{ device.model }}</span>
-          </el-form-item>
-          <el-form-item :label="$t('devices.detail.udId')">
-            <span>{{ device.udId }}</span>
-          </el-form-item>
-          <el-form-item :label="$t('devices.detail.size')">
-            <span>{{ device.size }}</span>
-          </el-form-item>
-          <el-form-item :label="$t('devices.detail.cpu')">
-            <span>{{ device.cpu }}</span>
-          </el-form-item>
-          <el-form-item :label="$t('devices.form.battery.voltage')">
-            <div
-              :style="{
-                position: 'relative',
-                display: 'flex',
-                'align-items': 'center',
-                color:
+              </el-upload>
+            </el-form-item>
+            <el-form-item :label="$t('devices.detail.nickName')">
+              <el-input
+                v-model="device['nickName']"
+                show-word-limit
+                type="text"
+                size="mini"
+                :placeholder="$t('devices.detail.nickPlaceholder')"
+                maxlength="30"
+                style="position: absolute; top: 7px; bottom: 7px"
+              >
+                <template #append>
+                  <el-button size="mini" @click="saveDetail(device)"
+                    >{{ $t('form.save') }}
+                  </el-button>
+                </template>
+              </el-input>
+            </el-form-item>
+            <el-form-item :label="$t('devices.detail.name')">
+              <span>{{ device.name }}</span>
+            </el-form-item>
+            <el-form-item :label="$t('devices.detail.model')">
+              <span>{{ device.model }}</span>
+            </el-form-item>
+            <el-form-item :label="$t('devices.detail.udId')">
+              <span>{{ device.udId }}</span>
+            </el-form-item>
+            <el-form-item :label="$t('devices.detail.size')">
+              <span>{{ device.size }}</span>
+            </el-form-item>
+            <el-form-item :label="$t('devices.detail.cpu')">
+              <span>{{ device.cpu }}</span>
+            </el-form-item>
+            <el-form-item :label="$t('devices.form.battery.voltage')">
+              <div
+                :style="{
+                  position: 'relative',
+                  display: 'flex',
+                  'align-items': 'center',
+                  color:
+                    device['voltage'] === 0 ||
+                    (device.status !== 'ONLINE' &&
+                      device.status !== 'DEBUGGING' &&
+                      device.status !== 'TESTING')
+                      ? '#606266'
+                      : '#67C23A',
+                }"
+              >
+                <ColorImg
+                  v-if="
+                    device['voltage'] !== 0 &&
+                    (device.status === 'ONLINE' ||
+                      device.status === 'DEBUGGING' ||
+                      device.status === 'TESTING')
+                  "
+                  style="margin-right: 5px"
+                  :src="img['./../assets/img/voltage.png'].default"
+                  :width="15"
+                  :height="20"
+                  :color="device['voltage'] === 0 ? '#606266' : '#67C23A'"
+                />
+                {{
                   device['voltage'] === 0 ||
                   (device.status !== 'ONLINE' &&
                     device.status !== 'DEBUGGING' &&
                     device.status !== 'TESTING')
-                    ? '#606266'
-                    : '#67C23A',
-              }"
+                    ? $t('form.unknown')
+                    : (device['voltage'] / 1000).toFixed(2) + ' V'
+                }}
+              </div>
+            </el-form-item>
+            <el-form-item
+              v-if="device.platform !== 2"
+              :label="$t('devices.detail.pwd')"
             >
-              <ColorImg
-                v-if="
-                  device['voltage'] !== 0 &&
-                  (device.status === 'ONLINE' ||
-                    device.status === 'DEBUGGING' ||
-                    device.status === 'TESTING')
-                "
-                style="margin-right: 5px"
-                :src="img['./../assets/img/voltage.png'].default"
-                :width="15"
-                :height="20"
-                :color="device['voltage'] === 0 ? '#606266' : '#67C23A'"
-              />
-              {{
-                device['voltage'] === 0 ||
-                (device.status !== 'ONLINE' &&
-                  device.status !== 'DEBUGGING' &&
-                  device.status !== 'TESTING')
-                  ? $t('form.unknown')
-                  : (device['voltage'] / 1000).toFixed(2) + ' V'
-              }}
-            </div>
-          </el-form-item>
-          <el-form-item
-            v-if="device.platform !== 2"
-            :label="$t('devices.detail.pwd')"
-          >
-            <el-input
-              v-model="device.password"
-              show-word-limit
-              type="text"
-              size="mini"
-              :placeholder="$t('devices.detail.pwdPlaceholder')"
-              maxlength="30"
-              style="position: absolute; top: 7px; bottom: 7px"
-            >
-              <template #append>
-                <el-button size="mini" @click="saveDetail(device)"
-                  >{{ $t('form.save') }}
-                </el-button>
-              </template>
-            </el-input>
-          </el-form-item>
-          <el-form-item :label="$t('devices.detail.operation')">
-            <el-popconfirm
-              placement="top"
-              :confirm-button-text="$t('form.confirm')"
-              :cancel-button-text="$t('form.cancel')"
-              icon="el-icon-warning"
-              icon-color="red"
-              :title="$t('devices.detail.rebootTips')"
-              @confirm="reboot(device.id)"
-            >
-              <template #reference>
-                <el-button
-                  type="danger"
-                  size="mini"
-                  :disabled="
-                    device.status !== 'ONLINE' &&
-                    device.status !== 'DEBUGGING' &&
-                    device.status !== 'TESTING' &&
-                    device.status !== 'ERROR'
-                  "
-                  >{{ $t('devices.detail.reboot') }}
-                </el-button>
-              </template>
-            </el-popconfirm>
-            <el-popconfirm
-              placement="top"
-              :confirm-button-text="$t('form.confirm')"
-              :cancel-button-text="$t('form.cancel')"
-              icon="el-icon-warning"
-              icon-color="red"
-              :title="$t('devices.detail.deleteTips')"
-              @confirm="deleteDevice(device.id)"
-            >
-              <template #reference>
-                <el-button
-                  type="danger"
-                  size="mini"
-                  :disabled="
-                    device.status === 'ONLINE' ||
-                    device.status === 'DEBUGGING' ||
-                    device.status === 'TESTING'
-                  "
-                  >{{ $t('common.delete') }}
-                </el-button>
-              </template>
-            </el-popconfirm>
-          </el-form-item>
-        </el-form>
-        <template #reference>
-          <el-button size="mini">{{ $t('devices.moreDetail') }}</el-button>
-        </template>
-      </el-popover>
+              <el-input
+                v-model="device.password"
+                show-word-limit
+                type="text"
+                size="mini"
+                :placeholder="$t('devices.detail.pwdPlaceholder')"
+                maxlength="30"
+                style="position: absolute; top: 7px; bottom: 7px"
+              >
+                <template #append>
+                  <el-button size="mini" @click="saveDetail(device)"
+                    >{{ $t('form.save') }}
+                  </el-button>
+                </template>
+              </el-input>
+            </el-form-item>
+            <el-form-item :label="$t('devices.detail.operation')">
+              <el-popconfirm
+                placement="top"
+                :confirm-button-text="$t('form.confirm')"
+                :cancel-button-text="$t('form.cancel')"
+                icon="el-icon-warning"
+                icon-color="red"
+                :title="$t('devices.detail.rebootTips')"
+                @confirm="reboot(device.id)"
+              >
+                <template #reference>
+                  <el-button
+                    type="danger"
+                    size="mini"
+                    :disabled="
+                      device.status !== 'ONLINE' &&
+                      device.status !== 'DEBUGGING' &&
+                      device.status !== 'TESTING' &&
+                      device.status !== 'ERROR'
+                    "
+                    >{{ $t('devices.detail.reboot') }}
+                  </el-button>
+                </template>
+              </el-popconfirm>
+              <el-popconfirm
+                placement="top"
+                :confirm-button-text="$t('form.confirm')"
+                :cancel-button-text="$t('form.cancel')"
+                icon="el-icon-warning"
+                icon-color="red"
+                :title="$t('devices.detail.deleteTips')"
+                @confirm="deleteDevice(device.id)"
+              >
+                <template #reference>
+                  <el-button
+                    type="danger"
+                    size="mini"
+                    :disabled="
+                      device.status === 'ONLINE' ||
+                      device.status === 'DEBUGGING' ||
+                      device.status === 'TESTING'
+                    "
+                    >{{ $t('common.delete') }}
+                  </el-button>
+                </template>
+              </el-popconfirm>
+            </el-form-item>
+          </el-form>
+          <template #reference>
+            <el-button size="mini">{{ $t('devices.moreDetail') }}</el-button>
+          </template>
+        </el-popover>
+      </div>
+      <el-checkbox
+        v-show="props.controlsMode && device.status === 'ONLINE'"
+        v-model="checked"
+        style="
+          position: absolute;
+          top: 50%;
+          right: 0px;
+          transform: translateY(-50%);
+        "
+        size="large"
+        @click.stop
+        @change="(val) => controlsMachine(val, device.id)"
+      />
     </div>
   </el-card>
   <el-dialog v-model="useTimeDialogVisible" title="使用时长" :width="400">

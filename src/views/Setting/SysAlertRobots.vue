@@ -13,14 +13,11 @@ const pageSize = ref(15);
 const pageCurrNum = ref(1);
 const updateFormModel = ref(false);
 const { robotMap, sceneMap } = AlertRobotUpdate;
-const projectMap = ref({});
+const projectList = ref([]);
 
 const getProjectList = () => {
   axios.get('/controller/projects/list').then((resp) => {
-    projectMap.value = resp.data.reduce((map, val) => {
-      map[val.id] = val;
-      return map;
-    }, {});
+    projectList.value = resp?.data || [];
   });
 };
 const add = () => {
@@ -88,7 +85,7 @@ onMounted(() => {
   <alert-robot-update
     :data-to-edit="updateFormModel"
     :is-admin="true"
-    :project-map="projectMap"
+    :project-list="projectList"
     @save="submit"
     @abort="updateFormModel = false"
   />
@@ -108,7 +105,8 @@ onMounted(() => {
           $t('robot.consts.anyProject')
         }}</el-tag
         ><template v-else>{{
-          projectMap[scope.row.projectId].projectName
+          projectList?.find((project) => project.id === scope.row.projectId)
+            ?.projectName
         }}</template>
       </template>
     </el-table-column>

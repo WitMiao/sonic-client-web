@@ -61,6 +61,7 @@ import IOSPerf from '../../components/IOSPerf.vue';
 import PocoPane from '../../components/PocoPane.vue';
 import RemotePageHeader from '../../components/RemotePageHeader.vue';
 import RenderDeviceName from '../../components/RenderDeviceName.vue';
+import IOSOtherRemote from './IosOtherRemote.vue';
 
 const pocoPaneRef = ref(null);
 const iosPerfRef = ref(null);
@@ -76,8 +77,8 @@ const device = ref({});
 const agent = ref({});
 const uploadUrl = ref('');
 const text = ref({ content: '' });
-let imgWidth = 0;
-let imgHeight = 0;
+const imgWidth = ref(0);
+const imgHeight = ref(0);
 const loading = ref(false);
 const pocoLoading = ref(false);
 const appList = ref([]);
@@ -86,14 +87,15 @@ const filterAppText = ref('');
 const directionStatus = ref({
   value: 0,
 });
-let moveX = 0;
-let moveY = 0;
+const moveX = ref(0);
+const moveY = ref(0);
 const depth = ref(50);
 const isFixTouch = false;
 const isPress = false;
 let loop = null;
 let time = 0;
 let isLongPress = false;
+const screenMode = ref(window.localStorage.getItem('screenMode') || 'Scrcpy'); // Scrcpy,Minicap
 const mouseMoveTime = 0;
 const remoteWDAPort = ref(0);
 const remoteSIBPort = ref(0);
@@ -130,6 +132,8 @@ const isWebView = ref(true);
 const webViewListDetail = ref([]);
 const iframeUrl = ref('');
 const webViewLoading = ref(false);
+const isMultiple = ref(false);
+const controlsMachine = ref([]);
 const element = ref({
   id: null,
   moduleId: 0,
@@ -138,15 +142,18 @@ const element = ref({
   eleValue: '',
   projectId: 0,
 });
+
+const webSocketParams = ref({});
+
 const computedCenter = (x, y, width, height) => {
-  const reX = parseInt(parseInt(x) + parseInt(width) / 2);
-  const reY = parseInt(parseInt(y) + parseInt(height) / 2);
+  const reX = parseInt(parseInt(x, 10) + parseInt(width, 10) / 2, 10);
+  const reY = parseInt(parseInt(y, 10) + parseInt(height, 10) / 2, 10);
   return `${reX},${reY}`;
 };
 const img = import.meta.globEager('../../assets/img/*');
-let websocket = null;
-let terminalWebsocket = null;
-let screenWebsocket = null;
+const websocket = ref();
+const terminalWebsocket = ref();
+const screenWebsocket = ref();
 
 defineProps({
   tabPosition: String,
@@ -171,14 +178,21 @@ const tabWebView = (port, id, transTitle) => {
 const switchIsWebView = () => {
   isWebView.value = true;
 };
-
+const setOtherWebSocketParams = (param) => {
+  webSocketParams.value = param;
+};
 const getWebViewForward = () => {
   webViewLoading.value = true;
-  websocket.send(
+  websocket.value.send(
     JSON.stringify({
       type: 'forwardView',
     })
   );
+  if (isMultiple.value) {
+    setOtherWebSocketParams({
+      type: 'forwardView',
+    });
+  }
 };
 
 /**
@@ -224,52 +238,79 @@ const simLocation = ref({
   lat: 0.0,
 });
 const locationSet = () => {
-  websocket.send(
-    JSON.stringify({
-      type: 'location',
-      detail: 'set',
-      long: `${simLocation.value.long}`,
-      lat: `${simLocation.value.lat}`,
-    })
-  );
+  const params = {
+    type: 'location',
+    detail: 'set',
+    long: `${simLocation.value.long}`,
+    lat: `${simLocation.value.lat}`,
+  };
+  websocket.value.send(JSON.stringify(JSON.stringify(params)));
+  if (isMultiple.value) {
+    setOtherWebSocketParams(params);
+  }
+
   ElMessage.success({
     message: $t('IOSRemote.startSimulating'),
   });
 };
 const locationUnset = () => {
-  websocket.send(
+  websocket.value.send(
     JSON.stringify({
       type: 'location',
       detail: 'unset',
     })
   );
+  if (isMultiple.value) {
+    setOtherWebSocketParams({
+      type: 'location',
+      detail: 'unset',
+    });
+  }
   ElMessage.success({
     message: $t('IOSRemote.positioningRestored'),
   });
 };
 const switchScreen = () => {
-  websocket.send(
+  websocket.value.send(
     JSON.stringify({
       type: 'screen',
       detail: screenFps.value,
     })
   );
+  if (isMultiple.value) {
+    setOtherWebSocketParams({
+      type: 'screen',
+      detail: screenFps.value,
+    });
+  }
 };
 const openApp = (pkg) => {
-  websocket.send(
+  websocket.value.send(
     JSON.stringify({
       type: 'launch',
       pkg,
     })
   );
+  if (isMultiple.value) {
+    setOtherWebSocketParams({
+      type: 'launch',
+      pkg,
+    });
+  }
 };
 const killApp = (pkg) => {
-  websocket.send(
+  websocket.value.send(
     JSON.stringify({
       type: 'kill',
       pkg,
     })
   );
+  if (isMultiple.value) {
+    setOtherWebSocketParams({
+      type: 'kill',
+      pkg,
+    });
+  }
   ElMessage.success({
     message: $t('androidRemoteTS.code.killMsg'),
   });
@@ -279,7 +320,7 @@ const refreshAppList = () => {
   ElMessage.success({
     message: $t('IOSRemote.loadingAppList'),
   });
-  terminalWebsocket.send(
+  terminalWebsocket.value.send(
     JSON.stringify({
       type: 'appList',
     })
@@ -289,26 +330,42 @@ const uninstallApp = (pkg) => {
   ElMessage.success({
     message: $t('androidRemoteTS.startUninstall'),
   });
-  websocket.send(
+  websocket.value.send(
     JSON.stringify({
       type: 'uninstallApp',
       detail: pkg,
     })
   );
+  if (isMultiple.value) {
+    setOtherWebSocketParams({
+      type: 'uninstallApp',
+      detail: pkg,
+    });
+  }
 };
 const startProxy = () => {
-  websocket.send(
+  websocket.value.send(
     JSON.stringify({
       type: 'proxy',
     })
   );
+  if (isMultiple.value) {
+    setOtherWebSocketParams({
+      type: 'proxy',
+    });
+  }
 };
 const installCert = () => {
-  websocket.send(
+  websocket.value.send(
     JSON.stringify({
       type: 'installCert',
     })
   );
+  if (isMultiple.value) {
+    setOtherWebSocketParams({
+      type: 'installCert',
+    });
+  }
 };
 const saveEle = () => {
   updateImgEle.value.validate((valid) => {
@@ -449,17 +506,23 @@ const copy = (value) => {
     });
   }
 };
+
 const getPoco = (engine, port) => {
   pocoLoading.value = true;
-  websocket.send(
-    JSON.stringify({
-      type: 'debug',
-      detail: 'poco',
-      engine,
-      port,
-    })
-  );
+  const params = {
+    type: 'debug',
+    detail: 'poco',
+    engine,
+    port,
+  };
+  websocket.value.send(JSON.stringify(params));
+  // 发送多控操作广播
+  if (isMultiple.value) {
+    setOtherWebSocketParams(params);
+  }
 };
+let oldBlob;
+
 const getImgUrl = () => {
   let imageUrl;
   if (oldBlob) {
@@ -476,68 +539,57 @@ const setImgData = (data) => {
   if (imageUrl === null) {
     imageUrl = data;
   }
-  const img = new Image();
+  const image = new Image();
   imgUrl.value = imageUrl;
-  img.src = imageUrl;
+  image.src = imageUrl;
   const canvas = document.getElementById('debugPicIOS');
-  img.onload = function () {
-    canvas.width = img.width;
-    canvas.height = img.height;
+  image.onload = () => {
+    canvas.width = image.width;
+    canvas.height = image.height;
   };
   isShowImg.value = true;
 };
-const openSocket = (host, port, key, udId) => {
-  if ('WebSocket' in window) {
-    websocket = new WebSocket(
-      `ws://${host}:${port}/websockets/ios/${key}/${udId}/${localStorage.getItem(
-        'SonicToken'
-      )}`
-    );
-    terminalWebsocket = new WebSocket(
-      `ws://${host}:${port}/websockets/ios/terminal/${key}/${udId}/${localStorage.getItem(
-        'SonicToken'
-      )}`
-    );
-    screenWebsocket = new WebSocket(
-      `ws://${host}:${port}/websockets/ios/screen/${key}/${udId}/${localStorage.getItem(
-        'SonicToken'
-      )}`
-    );
-  } else {
-    console.error($t('androidRemoteTS.noWebSocket'));
-  }
-  websocket.onmessage = websocketOnmessage;
-  websocket.onclose = (e) => {};
-  websocket.onopen = () => {
-    websocket.send(
-      JSON.stringify({
-        type: 'useTime',
-        detail: route.query.useTime,
-      })
-    );
-  };
-  terminalWebsocket.onmessage = terminalWebsocketOnmessage;
-  terminalWebsocket.onclose = (e) => {};
-  terminalWebsocket.onopen = () => {
-    terminalWebsocket.send(
-      JSON.stringify({
-        type: 'useTime',
-        detail: route.query.useTime,
-      })
-    );
-  };
-  screenWebsocket.onmessage = screenWebsocketOnmessage;
-  screenWebsocket.onclose = (e) => {};
-  screenWebsocket.onopen = () => {
-    screenWebsocket.send(
-      JSON.stringify({
-        type: 'useTime',
-        detail: route.query.useTime,
-      })
-    );
-  };
-};
+
 const screenUrls = ref([]);
+
+const getVideoScreenshot = () => {
+  const canvas = document.createElement('canvas');
+  const canvasCtx = canvas.getContext('2d');
+  const video = document.getElementById('scrcpy-video');
+  // 默认生成图片大小
+  let w;
+  let h;
+  if (directionStatus.value === 0 || directionStatus.value === 180) {
+    if (screenMode.value === 'Scrcpy') {
+      w = imgWidth.value;
+      h = imgHeight.value;
+    } else {
+      w = 369;
+      h = 800;
+    }
+  } else if (screenMode.value === 'Scrcpy') {
+    w = imgHeight.value;
+    h = imgWidth.value;
+  } else {
+    w = 800;
+    h = 369;
+  }
+  canvas.width = w;
+  canvas.height = h;
+  canvasCtx.drawImage(
+    video,
+    0,
+    0,
+    video.videoWidth,
+    video.videoHeight,
+    0,
+    0,
+    w,
+    h
+  );
+  return canvas.toDataURL('image/png', 1);
+};
+
 const quickCap = () => {
   let imageUrl;
   if (oldBlob) {
@@ -547,9 +599,9 @@ const quickCap = () => {
   } else {
     imageUrl = getVideoScreenshot();
   }
-  const img = new Image();
+  const image = new Image();
   screenUrls.value.push(imageUrl);
-  img.src = imageUrl;
+  image.src = imageUrl;
 };
 const removeScreen = () => {
   screenUrls.value = [];
@@ -562,13 +614,13 @@ const toAddElement = (eleType, eleValue) => {
   }
 };
 const downloadImg = (url) => {
-  const time = new Date().getTime();
+  const currentTime = new Date().getTime();
   const link = document.createElement('a');
   fetch(url)
     .then((res) => res.blob())
     .then((blob) => {
       link.href = URL.createObjectURL(blob);
-      link.download = `${time}.jpg`;
+      link.download = `${currentTime}.jpg`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -578,7 +630,7 @@ const logOutPut = ref([]);
 const logFilter = ref('');
 const terminalScroll = ref(null);
 const getSyslog = () => {
-  terminalWebsocket.send(
+  terminalWebsocket.value.send(
     JSON.stringify({
       type: 'syslog',
       filter: logFilter.value,
@@ -586,7 +638,7 @@ const getSyslog = () => {
   );
 };
 const stopSyslog = () => {
-  terminalWebsocket.send(
+  terminalWebsocket.value.send(
     JSON.stringify({
       type: 'stopSyslog',
     })
@@ -603,6 +655,10 @@ const processListPageData = ref([]);
 const currProcessListPage = ref([]);
 const currProcessListIndex = ref(0);
 const processPageSize = 10;
+const setCurrListPage = () => {
+  currProcessListPage.value =
+    processListPageData.value[currProcessListIndex.value];
+};
 // 转换分页数组
 const formatProcessPageable = (data) => {
   const len = data.length;
@@ -624,10 +680,7 @@ const changeProcessListPage = (pageNum) => {
   currProcessListIndex.value = pageNum - 1;
   setCurrListPage();
 };
-const setCurrListPage = () => {
-  currProcessListPage.value =
-    processListPageData.value[currProcessListIndex.value];
-};
+
 watch(
   processList,
   (newVal) => {
@@ -638,17 +691,18 @@ watch(
     deep: true,
   }
 );
+const clearProcess = () => {
+  processList.value = [];
+};
 const getProcessList = () => {
   clearProcess();
-  terminalWebsocket.send(
+  terminalWebsocket.value.send(
     JSON.stringify({
       type: 'processList',
     })
   );
 };
-const clearProcess = () => {
-  processList.value = [];
-};
+
 const terminalWebsocketOnmessage = (message) => {
   switch (JSON.parse(message.data).msg) {
     case 'processListDetail': {
@@ -682,26 +736,638 @@ const terminalWebsocketOnmessage = (message) => {
           terminalScroll.value.wrap.scrollHeight;
       });
       break;
+    default:
+      break;
   }
 };
-let oldBlob;
+
+const inputValue = ref('');
+const inputBox = ref(null);
+const inputBoxStyle = ref({});
+const paste = ref('');
+const isShowRenewButton = ref(false);
+const changeInputHandle = () => {
+  if (inputValue.value) {
+    websocket.value.send(
+      JSON.stringify({
+        type: 'send',
+        detail: inputValue.value,
+      })
+    );
+    if (isMultiple.value) {
+      setOtherWebSocketParams({
+        type: 'send',
+        detail: inputValue.value,
+      });
+    }
+    inputValue.value = '';
+  }
+};
+const deleteInputHandle = () => {
+  websocket.value.send(
+    JSON.stringify({
+      type: 'send',
+      detail: '\u007F',
+    })
+  );
+  if (isMultiple.value) {
+    setOtherWebSocketParams({
+      type: 'send',
+      detail: '\u007F',
+    });
+  }
+};
+const setPasteboard = (value) => {
+  websocket.value.send(
+    JSON.stringify({
+      type: 'setPasteboard',
+      detail: value,
+    })
+  );
+  if (isMultiple.value) {
+    setOtherWebSocketParams({
+      type: 'setPasteboard',
+      detail: value,
+    });
+  }
+};
+const getPasteboard = () => {
+  websocket.value.send(
+    JSON.stringify({
+      type: 'getPasteboard',
+    })
+  );
+  if (isMultiple.value) {
+    setOtherWebSocketParams({
+      type: 'getPasteboard',
+    });
+  }
+};
+const startPerfmon = (bundleId) => {
+  websocket.value.send(
+    JSON.stringify({
+      type: 'startPerfmon',
+      bundleId,
+    })
+  );
+  if (isMultiple.value) {
+    setOtherWebSocketParams({
+      type: 'startPerfmon',
+      bundleId,
+    });
+  }
+};
+const stopPerfmon = () => {
+  websocket.value.send(
+    JSON.stringify({
+      type: 'stopPerfmon',
+    })
+  );
+  if (isMultiple.value) {
+    setOtherWebSocketParams({
+      type: 'stopPerfmon',
+    });
+  }
+};
+const getCurLocation = ({ event, iosCap, rect, imageWidth, imageHeight }) => {
+  let x;
+  let y;
+  if (location.value) {
+    x = parseInt(
+      (event.clientX - rect.left) * (imageHeight / iosCap.clientWidth),
+      10
+    );
+    y = parseInt(
+      (event.clientY - rect.top) * (imageWidth / iosCap.clientHeight),
+      10
+    );
+  } else {
+    x = parseInt(
+      (event.clientX - rect.left) * (imageWidth / iosCap.clientWidth),
+      10
+    );
+    y = parseInt(
+      (event.clientY - rect.top) * (imageHeight / iosCap.clientHeight),
+      10
+    );
+  }
+  return { x, y };
+};
+const mouseup = (event) => {
+  clearInterval(loop);
+  time = 0;
+  const iosCap = document.getElementById('iosCap');
+  const rect = iosCap.getBoundingClientRect();
+  const { x, y } = getCurLocation({
+    event,
+    iosCap,
+    rect,
+    imageWidth: imgWidth.value,
+    imageHeight: imgHeight.value,
+  });
+
+  inputBoxStyle.value = {
+    left: `${event.clientX - rect.left}px`,
+    top: `${event.clientY - rect.top}px`,
+  };
+  if (moveX.value === x && moveY.value === y) {
+    if (!isLongPress) {
+      const params = {
+        type: 'debug',
+        detail: 'tap',
+        point: { x, y },
+        imageHeight: imgHeight.value,
+      };
+      websocket.value.send(JSON.stringify(params));
+      // 发送多控操作广播
+      if (isMultiple.value) {
+        setOtherWebSocketParams({
+          ...params,
+          adaptFunction: (imageWidth, imageHeight) => {
+            const { x: adaptX, y: adaptY } = getCurLocation({
+              event,
+              iosCap,
+              rect,
+              imageWidth,
+              imageHeight,
+            });
+            return { point: `${adaptX},${adaptY}` };
+          },
+        });
+      }
+      inputBox.value.focus();
+    }
+  } else {
+    const params = {
+      type: 'debug',
+      detail: 'swipe',
+      pointA: `${moveX.value},${moveY.value}`,
+      pointB: `${x},${y}`,
+    };
+    websocket.value.send(JSON.stringify(params));
+    // 发送多控操作广播
+    if (isMultiple.value) {
+      setOtherWebSocketParams(params);
+    }
+    inputBox.value.focus();
+  }
+  isLongPress = false;
+};
+const mouseleave = () => {
+  clearInterval(loop);
+  isLongPress = false;
+};
+const mousedown = (event) => {
+  const iosCap = document.getElementById('iosCap');
+  const rect = iosCap.getBoundingClientRect();
+  const { x, y } = getCurLocation({
+    event,
+    iosCap,
+    rect,
+    imageWidth: imgWidth.value,
+    imageHeight: imgHeight.value,
+  });
+  moveX.value = x;
+  moveY.value = y;
+  clearInterval(loop);
+  loop = setInterval(() => {
+    time += 500;
+    if (time >= 1000 && isLongPress === false) {
+      const params = {
+        type: 'debug',
+        detail: 'longPress',
+        point: `${moveX.value},${moveY.value}`,
+      };
+      websocket.value.send(JSON.stringify(params));
+      // 发送多控操作广播
+      if (isMultiple.value) {
+        setOtherWebSocketParams({
+          ...params,
+          adaptFunction: (imageWidth, imageHeight) => {
+            const { x: adaptX, y: adaptY } = getCurLocation({
+              event,
+              iosCap,
+              rect,
+              imageWidth,
+              imageHeight,
+            });
+            return { point: `${adaptX},${adaptY}` };
+          },
+        });
+      }
+      isLongPress = true;
+    }
+  }, 500);
+};
+
+const findMinSize = (data) => {
+  if (data.length === 0) {
+    return null;
+  }
+  let result = data[0];
+  data.forEach((item) => {
+    if (item.size === result.size) {
+      if (item.ele.detail.name && item.ele.detail.name.length !== 0) {
+        result = item;
+      }
+    }
+    if (item.size < result.size) {
+      result = item;
+    }
+  });
+  currentId.value = [result.ele.id];
+  return result.ele.id;
+};
+const findElementByPoint = (ele, x, y) => {
+  const result = [];
+  ele.forEach((item) => {
+    const eleStartX = parseInt(item.detail.x, 10);
+    const eleStartY = parseInt(item.detail.y, 10);
+    const eleEndX =
+      parseInt(item.detail.x, 10) + parseInt(item.detail.width, 10);
+    const eleEndY =
+      parseInt(item.detail.y, 10) + parseInt(item.detail.height, 10);
+    if (x >= eleStartX && x <= eleEndX && y >= eleStartY && y <= eleEndY) {
+      result.push({
+        ele: item,
+        size:
+          parseInt(item.detail.height, 10) * parseInt(item.detail.width, 10),
+      });
+    }
+    if (item.children) {
+      const childrenResult = findElementByPoint(item.children, x, y);
+      if (childrenResult.length > 0) {
+        result.push(...childrenResult);
+      }
+    }
+  });
+  return result;
+};
+const print = (data) => {
+  const canvas = document.getElementById('debugPicIOS');
+  const g = canvas.getContext('2d');
+  g.clearRect(0, 0, canvas.width, canvas.height);
+  const eleStartX = parseInt(data.detail.x, 10);
+  const eleStartY = parseInt(data.detail.y, 10);
+  const eleEndX = parseInt(data.detail.x, 10) + parseInt(data.detail.width, 10);
+  const eleEndY =
+    parseInt(data.detail.y, 10) + parseInt(data.detail.height, 10);
+  const a = Math.round(Math.random() * 255);
+  const b = Math.round(Math.random() * 255);
+  const c = Math.round(Math.random() * 255);
+  g.fillStyle = `rgba(${a}, ${b}, ${c}, 0.6)`;
+  g.fillRect(
+    eleStartX * (canvas.width / imgWidth.value),
+    eleStartY * (canvas.height / imgHeight.value),
+    (eleEndX - eleStartX) * (canvas.width / imgWidth.value),
+    (eleEndY - eleStartY) * (canvas.height / imgHeight.value)
+  );
+};
+const handleNodeClick = (data) => {
+  if (data !== null) {
+    elementDetail.value = data.detail;
+    print(data);
+  }
+};
+const touchstart = async (event) => {
+  const debugPicIOS = document.getElementById('debugPicIOS');
+  const rect = debugPicIOS.getBoundingClientRect();
+  const x = parseInt(
+    (event.clientX - rect.left) * (imgWidth.value / debugPicIOS.clientWidth),
+    10
+  );
+  const y = parseInt(
+    (event.clientY - rect.top) * (imgHeight.value / debugPicIOS.clientHeight),
+    10
+  );
+  await nextTick(() => {
+    tree.value.setCurrentKey(
+      findMinSize(findElementByPoint(elementData.value, x, y))
+    );
+  });
+  await handleNodeClick(tree.value.getCurrentNode());
+};
+
+const getEleScreen = (xpath) => {
+  elementScreenLoading.value = true;
+  const params = {
+    type: 'debug',
+    detail: 'eleScreen',
+    xpath,
+  };
+  websocket.value.send(JSON.stringify(params));
+  // 发送多控操作广播
+  if (isMultiple.value) {
+    setOtherWebSocketParams(params);
+  }
+};
+const clearLog = () => {
+  stepLog.value = [];
+};
+const setStepLog = (data) => {
+  stepLog.value.push(data);
+};
+const runStep = () => {
+  debugLoading.value = true;
+  activeTab2.value = 'log';
+  const params = {
+    type: 'debug',
+    detail: 'runStep',
+    caseId: testCase.value.id,
+  };
+  websocket.value.send(JSON.stringify(params));
+  // 发送多控操作广播
+  if (isMultiple.value) {
+    setOtherWebSocketParams(params);
+  }
+};
+const checkLocation = (data) => {
+  checkElementLoading.value = true;
+  const params = {
+    type: 'debug',
+    detail: 'checkLocation',
+    element: data.eleValue,
+    eleType: data.eleType,
+    pwd: device.value.password,
+  };
+  websocket.value.send(JSON.stringify(params));
+  // 发送多控操作广播
+  if (isMultiple.value) {
+    setOtherWebSocketParams(params);
+  }
+};
+const stopStep = () => {
+  debugLoading.value = false;
+  const params = {
+    type: 'debug',
+    detail: 'stopStep',
+    udId: device.value.udId,
+    caseId: testCase.value.id,
+    pf: device.value.platform,
+  };
+  websocket.value.send(JSON.stringify(params));
+  // 发送多控操作广播
+  if (isMultiple.value) {
+    setOtherWebSocketParams(params);
+  }
+};
+const pressKey = (key) => {
+  websocket.value.send(
+    JSON.stringify({
+      type: 'debug',
+      detail: 'keyEvent',
+      key,
+    })
+  );
+  // 发送多控操作广播
+  if (isMultiple.value) {
+    setOtherWebSocketParams({
+      type: 'debug',
+      detail: 'keyEvent',
+      key,
+    });
+  }
+};
+const beforeAvatarUpload = (file) => {
+  if (file.name.endsWith('.jpg') || file.name.endsWith('.png')) {
+    return true;
+  }
+  ElMessage.error({
+    message: $t('androidRemoteTS.failErr'),
+  });
+  return false;
+};
+const beforeAvatarUpload2 = (file) => {
+  if (file.name.endsWith('.ipa')) {
+    return true;
+  }
+  ElMessage.error({
+    message: $t('androidRemoteTS.failErr'),
+  });
+  return false;
+};
+const limitOut = () => {
+  ElMessage.error({
+    message: $t('androidRemoteTS.addOne'),
+  });
+};
+
+const scan = (url) => {
+  websocket.value.send(
+    JSON.stringify({
+      type: 'scan',
+      url,
+    })
+  );
+  if (isMultiple.value) {
+    setOtherWebSocketParams({
+      type: 'scan',
+      url,
+    });
+  }
+};
+const install = (ipa) => {
+  if (ipa.length > 0) {
+    websocket.value.send(
+      JSON.stringify({
+        type: 'debug',
+        detail: 'install',
+        ipa,
+      })
+    );
+    // 发送多控操作广播
+    if (isMultiple.value) {
+      setOtherWebSocketParams({
+        type: 'debug',
+        detail: 'install',
+        ipa,
+      });
+    }
+    ElMessage.success({
+      message: $t('androidRemoteTS.startInstall'),
+    });
+  }
+};
+
+const uploadPackage = (content) => {
+  uploadLoading.value = true;
+  const formData = new FormData();
+  formData.append('file', content.file);
+  formData.append('type', 'packageFiles');
+  axios
+    .post('/folder/upload', formData, {
+      headers: { 'Content-type': 'multipart/form-data' },
+    })
+    .then((resp) => {
+      uploadLoading.value = false;
+      if (resp.code === 2000) {
+        install(resp.data);
+      }
+    });
+};
+
+const uploadScan = (content) => {
+  const formData = new FormData();
+  formData.append('file', content.file);
+  formData.append('type', 'imageFiles');
+  axios
+    .post('/folder/upload', formData, {
+      headers: { 'Content-type': 'multipart/form-data' },
+    })
+    .then((resp) => {
+      if (resp.code === 2000) {
+        ElMessage.success({
+          message: resp.message,
+        });
+        scan(resp.data);
+      }
+    });
+};
+const sendCommand = (value) => {
+  websocket.value.send(
+    JSON.stringify({
+      type: 'debug',
+      detail: 'siri',
+      command: value,
+    })
+  );
+  // 发送多控操作广播
+  if (isMultiple.value) {
+    setOtherWebSocketParams({
+      type: 'debug',
+      detail: 'siri',
+      command: value,
+    });
+  }
+};
+const getElement = () => {
+  elementLoading.value = true;
+  setImgData(null);
+  const params = {
+    type: 'debug',
+    detail: 'tree',
+    needImg: oldBlob == null,
+    depth: depth.value,
+  };
+  websocket.value.send(JSON.stringify(params));
+  // 发送多控操作广播
+  if (isMultiple.value) {
+    setOtherWebSocketParams(params);
+  }
+};
+const addTime = (value) => {
+  websocket.value.send(
+    JSON.stringify({
+      type: 'addRemoteTime',
+      detail: value,
+    })
+  );
+  if (isMultiple.value) {
+    setOtherWebSocketParams({
+      type: 'addRemoteTime',
+      detail: value,
+    });
+  }
+  screenWebsocket.value.send(
+    JSON.stringify({
+      type: 'addRemoteTime',
+      detail: value,
+    })
+  );
+  terminalWebsocket.value.send(
+    JSON.stringify({
+      type: 'addRemoteTime',
+      detail: value,
+    })
+  );
+  isShowRenewButton.value = false;
+};
+const close = async () => {
+  setOtherWebSocketParams({
+    type: 'close',
+  });
+  if (websocket.value) {
+    websocket.value.close();
+    websocket.value = undefined;
+  }
+  if (terminalWebsocket.value) {
+    terminalWebsocket.value.close();
+    terminalWebsocket.value = undefined;
+  }
+  if (screenWebsocket.value) {
+    screenWebsocket.value.close();
+    screenWebsocket.value = undefined;
+  }
+  localStorage.removeItem('iosSendRemind');
+  localStorage.removeItem('driverTime');
+
+  router.push('/Index/Devices');
+};
+onBeforeUnmount(() => {
+  close();
+});
+
+const getProjectList = () => {
+  axios.get('/controller/projects/list').then((resp) => {
+    store.commit('saveProjectList', resp.data);
+  });
+};
+const activeTime = ref(0);
+const idleCount = ref(0);
+
+const remoteTimeout = ref(0);
+const ticker = ref(0);
+const getRemoteTimeout = () => {
+  if (!localStorage.getItem('driverTime')) {
+    localStorage.setItem('driverTime', Date.now());
+  }
+  ticker.value = Math.floor(
+    (Date.now() - Number(localStorage.getItem('driverTime'))) / 1000
+  );
+  axios.get('/controller/confList/getRemoteTimeout').then((resp) => {
+    remoteTimeout.value = resp.data;
+    setInterval(() => {
+      ticker.value += 1;
+    }, 1000);
+  });
+};
+const idleTimeout = ref(0);
+const getIdleTimeout = () => {
+  axios.get('/controller/confList/getIdleTimeout').then((resp) => {
+    idleTimeout.value = resp.data;
+  });
+};
+
+const checkAlive = () => {
+  setInterval(() => {
+    idleCount.value += 1;
+    // const nowTime = new Date().getTime();
+    // if (nowTime - activeTime.value > idleTimeout.value * 60 * 1000) {
+    //   close();
+    // }
+  }, 1000);
+};
+const otherRemoteClose = (id) => {
+  controlsMachine.value = controlsMachine.value.filter((item) => item !== id);
+};
+
 const screenWebsocketOnmessage = (message) => {
   oldBlob = message.data;
   const blob = new Blob([message.data], { type: 'image/jpeg' });
   const URL = window.URL || window.webkitURL;
-  const img = new Image();
+  const image = new Image();
   const canvas = document.getElementById('iosCap');
   const g = canvas.getContext('2d');
-  img.onload = function () {
+  image.onload = () => {
     // 不根据按钮组，使用数据源的分辨率点对点
-    const { width } = img;
-    const { height } = img;
+    const { width } = image;
+    const { height } = image;
     canvas.width = width;
     canvas.height = height;
-    g.drawImage(img, 0, 0, width, height);
+    g.drawImage(image, 0, 0, width, height);
   };
   const u = URL.createObjectURL(blob);
-  img.src = u;
+  image.src = u;
 };
 const websocketOnmessage = (message) => {
   switch (JSON.parse(message.data).msg) {
@@ -805,8 +1471,8 @@ const websocketOnmessage = (message) => {
       let msg = $t('IOSRemote.driverStatus.fail');
       if (JSON.parse(message.data).status === 'success') {
         msg = $t('IOSRemote.driverStatus.success');
-        imgWidth = JSON.parse(message.data).width;
-        imgHeight = JSON.parse(message.data).height;
+        imgWidth.value = JSON.parse(message.data).width;
+        imgHeight.value = JSON.parse(message.data).height;
         isDriverFinish.value = true;
         remoteWDAPort.value = JSON.parse(message.data).wda;
         loading.value = false;
@@ -847,15 +1513,23 @@ const websocketOnmessage = (message) => {
       break;
     }
     case 'error': {
-      ElMessage.wa({
+      ElMessage.error({
         message: $t('androidRemoteTS.systemException'),
       });
       close();
       break;
     }
+    case 'stopDebug': {
+      ElMessage.error({
+        message: '主控设备已断开',
+      });
+      close();
+      break;
+    }
+    case 'exitUse':
     case 'timeout': {
       ElMessage.success({
-        message: '设备已达到使用上限，超时退出',
+        message: '设备已达到最大使用时间，正在退出',
       });
       close();
       break;
@@ -874,426 +1548,63 @@ const websocketOnmessage = (message) => {
       }
       break;
     }
+    default:
+      break;
   }
 };
-const inputValue = ref('');
-const inputBox = ref(null);
-const inputBoxStyle = ref({});
-const paste = ref('');
-const isShowRenewButton = ref(false);
-const changeInputHandle = () => {
-  if (inputValue.value) {
-    websocket.send(
+
+const openSocket = (host, port, key, udId) => {
+  if ('WebSocket' in window) {
+    websocket.value = new WebSocket(
+      `ws://${host}:${port}/websockets/ios/${key}/${udId}/${localStorage.getItem(
+        'SonicToken'
+      )}`
+    );
+    terminalWebsocket.value = new WebSocket(
+      `ws://${host}:${port}/websockets/ios/terminal/${key}/${udId}/${localStorage.getItem(
+        'SonicToken'
+      )}`
+    );
+    screenWebsocket.value = new WebSocket(
+      `ws://${host}:${port}/websockets/ios/screen/${key}/${udId}/${localStorage.getItem(
+        'SonicToken'
+      )}`
+    );
+  } else {
+    console.error($t('androidRemoteTS.noWebSocket'));
+  }
+  websocket.value.onmessage = websocketOnmessage;
+  // websocket.value.onclose = () => {};
+  websocket.value.onopen = () => {
+    websocket.value.send(
       JSON.stringify({
-        type: 'send',
-        detail: inputValue.value,
+        type: 'useTime',
+        detail: route.query.useTime,
       })
     );
-    inputValue.value = '';
-  }
-};
-const deleteInputHandle = () => {
-  websocket.send(
-    JSON.stringify({
-      type: 'send',
-      detail: '\u007F',
-    })
-  );
-};
-const setPasteboard = (text) => {
-  websocket.send(
-    JSON.stringify({
-      type: 'setPasteboard',
-      detail: text,
-    })
-  );
-};
-const getPasteboard = () => {
-  websocket.send(
-    JSON.stringify({
-      type: 'getPasteboard',
-    })
-  );
-};
-const startPerfmon = (bundleId) => {
-  websocket.send(
-    JSON.stringify({
-      type: 'startPerfmon',
-      bundleId,
-    })
-  );
-};
-const stopPerfmon = () => {
-  websocket.send(
-    JSON.stringify({
-      type: 'stopPerfmon',
-    })
-  );
-};
-const mouseup = (event) => {
-  clearInterval(loop);
-  time = 0;
-  const iosCap = document.getElementById('iosCap');
-  const rect = iosCap.getBoundingClientRect();
-  let x;
-  let y;
-  if (location.value) {
-    x = parseInt(
-      (event.clientX - rect.left) * (imgHeight / iosCap.clientWidth)
-    );
-    y = parseInt((event.clientY - rect.top) * (imgWidth / iosCap.clientHeight));
-  } else {
-    x = parseInt((event.clientX - rect.left) * (imgWidth / iosCap.clientWidth));
-    y = parseInt(
-      (event.clientY - rect.top) * (imgHeight / iosCap.clientHeight)
-    );
-  }
-  inputBoxStyle.value = {
-    left: `${event.clientX - rect.left}px`,
-    top: `${event.clientY - rect.top}px`,
   };
-  if (moveX === x && moveY === y) {
-    if (!isLongPress) {
-      websocket.send(
-        JSON.stringify({
-          type: 'debug',
-          detail: 'tap',
-          point: `${x},${y}`,
-        })
-      );
-      inputBox.value.focus();
-    }
-  } else {
-    websocket.send(
+  terminalWebsocket.value.onmessage = terminalWebsocketOnmessage;
+  // terminalWebsocket.value.onclose = () => {};
+  terminalWebsocket.value.onopen = () => {
+    terminalWebsocket.value.send(
       JSON.stringify({
-        type: 'debug',
-        detail: 'swipe',
-        pointA: `${moveX},${moveY}`,
-        pointB: `${x},${y}`,
+        type: 'useTime',
+        detail: route.query.useTime,
       })
     );
-    inputBox.value.focus();
-  }
-  isLongPress = false;
-};
-const mouseleave = () => {
-  clearInterval(loop);
-  isLongPress = false;
-};
-const mousedown = (event) => {
-  const iosCap = document.getElementById('iosCap');
-  const rect = iosCap.getBoundingClientRect();
-  if (location.value) {
-    moveX = parseInt(
-      (event.clientX - rect.left) * (imgHeight / iosCap.clientWidth)
-    );
-    moveY = parseInt(
-      (event.clientY - rect.top) * (imgWidth / iosCap.clientHeight)
-    );
-  } else {
-    moveX = parseInt(
-      (event.clientX - rect.left) * (imgWidth / iosCap.clientWidth)
-    );
-    moveY = parseInt(
-      (event.clientY - rect.top) * (imgHeight / iosCap.clientHeight)
-    );
-  }
-  clearInterval(loop);
-  loop = setInterval(() => {
-    time += 500;
-    if (time >= 1000 && isLongPress === false) {
-      websocket.send(
-        JSON.stringify({
-          type: 'debug',
-          detail: 'longPress',
-          point: `${moveX},${moveY}`,
-        })
-      );
-      isLongPress = true;
-    }
-  }, 500);
-};
-const touchstart = async (event) => {
-  const debugPicIOS = document.getElementById('debugPicIOS');
-  const rect = debugPicIOS.getBoundingClientRect();
-  const x = parseInt(
-    (event.clientX - rect.left) * (imgWidth / debugPicIOS.clientWidth)
-  );
-  const y = parseInt(
-    (event.clientY - rect.top) * (imgHeight / debugPicIOS.clientHeight)
-  );
-  await nextTick(() => {
-    tree.value.setCurrentKey(
-      findMinSize(findElementByPoint(elementData.value, x, y))
-    );
-  });
-  await handleNodeClick(tree.value.getCurrentNode());
-};
-const findMinSize = (data) => {
-  if (data.length === 0) {
-    return null;
-  }
-  let result = data[0];
-  for (const i in data) {
-    if (data[i].size === result.size) {
-      if (data[i].ele.detail.name && data[i].ele.detail.name.length !== 0) {
-        result = data[i];
-      }
-    }
-    if (data[i].size < result.size) {
-      result = data[i];
-    }
-  }
-  currentId.value = [result.ele.id];
-  return result.ele.id;
-};
-const findElementByPoint = (ele, x, y) => {
-  const result = [];
-  for (const i in ele) {
-    const eleStartX = parseInt(ele[i].detail.x);
-    const eleStartY = parseInt(ele[i].detail.y);
-    const eleEndX = parseInt(ele[i].detail.x) + parseInt(ele[i].detail.width);
-    const eleEndY = parseInt(ele[i].detail.y) + parseInt(ele[i].detail.height);
-    if (x >= eleStartX && x <= eleEndX && y >= eleStartY && y <= eleEndY) {
-      result.push({
-        ele: ele[i],
-        size: parseInt(ele[i].detail.height) * parseInt(ele[i].detail.width),
-      });
-    }
-    if (ele[i].children) {
-      const childrenResult = findElementByPoint(ele[i].children, x, y);
-      if (childrenResult.length > 0) {
-        result.push.apply(result, childrenResult);
-      }
-    }
-  }
-  return result;
-};
-const handleNodeClick = (data) => {
-  if (data !== null) {
-    elementDetail.value = data.detail;
-    print(data);
-  }
-};
-const print = (data) => {
-  const canvas = document.getElementById('debugPicIOS');
-  const g = canvas.getContext('2d');
-  g.clearRect(0, 0, canvas.width, canvas.height);
-  const eleStartX = parseInt(data.detail.x);
-  const eleStartY = parseInt(data.detail.y);
-  const eleEndX = parseInt(data.detail.x) + parseInt(data.detail.width);
-  const eleEndY = parseInt(data.detail.y) + parseInt(data.detail.height);
-  const a = Math.round(Math.random() * 255);
-  const b = Math.round(Math.random() * 255);
-  const c = Math.round(Math.random() * 255);
-  g.fillStyle = `rgba(${a}, ${b}, ${c}, 0.6)`;
-  g.fillRect(
-    eleStartX * (canvas.width / imgWidth),
-    eleStartY * (canvas.height / imgHeight),
-    (eleEndX - eleStartX) * (canvas.width / imgWidth),
-    (eleEndY - eleStartY) * (canvas.height / imgHeight)
-  );
-};
-const getEleScreen = (xpath) => {
-  elementScreenLoading.value = true;
-  websocket.send(
-    JSON.stringify({
-      type: 'debug',
-      detail: 'eleScreen',
-      xpath,
-    })
-  );
-};
-const clearLog = () => {
-  stepLog.value = [];
-};
-const setStepLog = (data) => {
-  stepLog.value.push(data);
-};
-const runStep = () => {
-  debugLoading.value = true;
-  activeTab2.value = 'log';
-  websocket.send(
-    JSON.stringify({
-      type: 'debug',
-      detail: 'runStep',
-      caseId: testCase.value.id,
-    })
-  );
-};
-const checkLocation = (data) => {
-  checkElementLoading.value = true;
-  websocket.send(
-    JSON.stringify({
-      type: 'debug',
-      detail: 'checkLocation',
-      element: data.eleValue,
-      eleType: data.eleType,
-      pwd: device.value.password,
-    })
-  );
-};
-const stopStep = () => {
-  debugLoading.value = false;
-  websocket.send(
-    JSON.stringify({
-      type: 'debug',
-      detail: 'stopStep',
-      udId: device.value.udId,
-      caseId: testCase.value.id,
-      pf: device.value.platform,
-    })
-  );
-};
-const pressKey = (key) => {
-  websocket.send(
-    JSON.stringify({
-      type: 'debug',
-      detail: 'keyEvent',
-      key,
-    })
-  );
-};
-const beforeAvatarUpload = (file) => {
-  if (file.name.endsWith('.jpg') || file.name.endsWith('.png')) {
-    return true;
-  }
-  ElMessage.error({
-    message: $t('androidRemoteTS.failErr'),
-  });
-  return false;
-};
-const beforeAvatarUpload2 = (file) => {
-  if (file.name.endsWith('.ipa')) {
-    return true;
-  }
-  ElMessage.error({
-    message: $t('androidRemoteTS.failErr'),
-  });
-  return false;
-};
-const limitOut = () => {
-  ElMessage.error({
-    message: $t('androidRemoteTS.addOne'),
-  });
-};
-const uploadPackage = (content) => {
-  uploadLoading.value = true;
-  const formData = new FormData();
-  formData.append('file', content.file);
-  formData.append('type', 'packageFiles');
-  axios
-    .post('/folder/upload', formData, {
-      headers: { 'Content-type': 'multipart/form-data' },
-    })
-    .then((resp) => {
-      uploadLoading.value = false;
-      if (resp.code === 2000) {
-        install(resp.data);
-      }
-    });
-};
-const uploadScan = (content) => {
-  const formData = new FormData();
-  formData.append('file', content.file);
-  formData.append('type', 'imageFiles');
-  axios
-    .post('/folder/upload', formData, {
-      headers: { 'Content-type': 'multipart/form-data' },
-    })
-    .then((resp) => {
-      if (resp.code === 2000) {
-        ElMessage.success({
-          message: resp.message,
-        });
-        scan(resp.data);
-      }
-    });
-};
-const scan = (url) => {
-  websocket.send(
-    JSON.stringify({
-      type: 'scan',
-      url,
-    })
-  );
-};
-const install = (ipa) => {
-  if (ipa.length > 0) {
-    websocket.send(
+  };
+  screenWebsocket.value.onmessage = screenWebsocketOnmessage;
+  // screenWebsocket.value.onclose = () => {};
+  screenWebsocket.value.onopen = () => {
+    screenWebsocket.value.send(
       JSON.stringify({
-        type: 'debug',
-        detail: 'install',
-        ipa,
+        type: 'useTime',
+        detail: route.query.useTime,
       })
     );
-    ElMessage.success({
-      message: $t('androidRemoteTS.startInstall'),
-    });
-  }
+  };
 };
-const sendCommand = (text) => {
-  websocket.send(
-    JSON.stringify({
-      type: 'debug',
-      detail: 'siri',
-      command: text,
-    })
-  );
-};
-const getElement = () => {
-  elementLoading.value = true;
-  setImgData(null);
-  websocket.send(
-    JSON.stringify({
-      type: 'debug',
-      detail: 'tree',
-      needImg: oldBlob == null,
-      depth: depth.value,
-    })
-  );
-};
-const addTime = (time) => {
-  websocket.send(
-    JSON.stringify({
-      type: 'addRemoteTime',
-      detail: time,
-    })
-  );
-  screenWebsocket.send(
-    JSON.stringify({
-      type: 'addRemoteTime',
-      detail: time,
-    })
-  );
-  terminalWebsocket.send(
-    JSON.stringify({
-      type: 'addRemoteTime',
-      detail: time,
-    })
-  );
-  isShowRenewButton.value = false;
-};
-const close = () => {
-  if (websocket !== null) {
-    websocket.close();
-    websocket = null;
-  }
-  if (terminalWebsocket !== null) {
-    terminalWebsocket.close();
-    terminalWebsocket = null;
-  }
-  if (screenWebsocket !== null) {
-    screenWebsocket.close();
-    screenWebsocket = null;
-  }
-  localStorage.removeItem('iosSendRemind');
-  localStorage.removeItem('driverTime');
-  router.push('/Index/Devices');
-};
-onBeforeUnmount(() => {
-  close();
-});
+
 const getDeviceById = (id) => {
   loading.value = true;
   axios.get('/controller/devices', { params: { id } }).then((resp) => {
@@ -1308,9 +1619,9 @@ const getDeviceById = (id) => {
       // }
       axios
         .get('/controller/agents', { params: { id: device.value.agentId } })
-        .then((resp) => {
-          if (resp.code === 2000) {
-            agent.value = resp.data;
+        .then((res) => {
+          if (res.code === 2000) {
+            agent.value = res.data;
             openSocket(
               agent.value.host,
               agent.value.port,
@@ -1322,14 +1633,15 @@ const getDeviceById = (id) => {
     }
   });
 };
-const getProjectList = () => {
-  axios.get('/controller/projects/list').then((resp) => {
-    store.commit('saveProjectList', resp.data);
-  });
-};
-let activeTime = 0;
-const idleCount = ref(0);
-onMounted(() => {
+
+onMounted(async () => {
+  // 保存isMultiple和controlsMachine
+  isMultiple.value = route.query.isMultiple === 'true';
+  activeTab.value = isMultiple.value ? 'otherPhones' : 'main';
+  controlsMachine.value = isMultiple.value
+    ? route.query.controlsMachine.split(',')
+    : [];
+
   if (localStorage.getItem('iosSendRemind') === '1') {
     isShowRenewButton.value = true;
   } else {
@@ -1344,49 +1656,17 @@ onMounted(() => {
   store.commit('autoChangeCollapse');
   getRemoteTimeout();
   getIdleTimeout();
-  activeTime = new Date().getTime();
-  window.document.onmousedown = (event) => {
+  activeTime.value = new Date().getTime();
+  window.document.onmousedown = () => {
     idleCount.value = 0;
-    activeTime = new Date().getTime();
+    activeTime.value = new Date().getTime();
   };
-  window.document.onmousemove = (event) => {
+  window.document.onmousemove = () => {
     idleCount.value = 0;
-    activeTime = new Date().getTime();
+    activeTime.value = new Date().getTime();
   };
   checkAlive();
 });
-const remoteTimeout = ref(0);
-const ticker = ref(0);
-const getRemoteTimeout = () => {
-  if (!localStorage.getItem('driverTime')) {
-    localStorage.setItem('driverTime', Date.now());
-  }
-  ticker.value = Math.floor(
-    (Date.now() - Number(localStorage.getItem('driverTime'))) / 1000
-  );
-  axios.get('/controller/confList/getRemoteTimeout').then((resp) => {
-    remoteTimeout.value = resp.data;
-    setInterval(() => {
-      ticker.value += 1;
-    }, 1000);
-  });
-};
-const idleTimeout = ref(0);
-const getIdleTimeout = () => {
-  axios.get('/controller/confList/getIdleTimeout').then((resp) => {
-    idleTimeout.value = resp.data;
-  });
-};
-
-const checkAlive = () => {
-  setInterval(() => {
-    idleCount.value++;
-    // const nowTime = new Date().getTime();
-    // if (nowTime - activeTime > idleTimeout.value * 60 * 1000) {
-    //   close();
-    // }
-  }, 1000);
-};
 </script>
 
 <template>
@@ -1568,7 +1848,6 @@ const checkAlive = () => {
                   @input="changeInputHandle"
                   @keyup.delete="deleteInputHandle"
                 />
-
                 <canvas
                   id="iosCap"
                   style="
@@ -1857,6 +2136,19 @@ const checkAlive = () => {
           :tab-position="tabPosition"
           @tab-click="switchTabs"
         >
+          <el-tab-pane v-if="isMultiple" label="其他手机" name="otherPhones">
+            <div style="display: flex">
+              <IOSOtherRemote
+                v-for="item in controlsMachine"
+                :id="item"
+                :key="item"
+                :canvas-rect-info="canvasRectInfo"
+                :direction-status="directionStatus"
+                :web-socket-params="webSocketParams"
+                @close="otherRemoteClose"
+              />
+            </div>
+          </el-tab-pane>
           <el-tab-pane
             :label="$t('androidRemoteTS.code.remoteControlPanel')"
             name="main"
@@ -2472,7 +2764,8 @@ const checkAlive = () => {
                     :style="'height:' + terminalHeight + 'px;min-height:450px'"
                   >
                     <div
-                      v-for="l in logOutPut"
+                      v-for="(l, i) in logOutPut"
+                      :key="i"
                       style="white-space: pre-wrap"
                       v-html="l"
                     ></div>
@@ -3316,6 +3609,7 @@ const checkAlive = () => {
                 </el-button>
                 <el-card
                   v-for="web in webViewListDetail"
+                  :key="web.id"
                   style="margin-top: 15px"
                   class="device-card"
                   :body-style="{ padding: '0px 10px 10px 10px' }"
@@ -3337,6 +3631,7 @@ const checkAlive = () => {
                   </template>
                   <el-card
                     v-for="w in web['pages']"
+                    :key="w.id"
                     :body-style="{ padding: '15px' }"
                     style="
                       margin-top: 10px;

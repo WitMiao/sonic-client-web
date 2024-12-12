@@ -19,11 +19,12 @@ import { $tc, i18n } from '@/locales/setupI18n';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
 import qs from 'qs';
-import { router } from '../router/index.js';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 let baseURL = '';
 if (process.env.NODE_ENV === 'development') {
-  baseURL = 'http://10.165.0.37:3000/server/api';
+  baseURL = 'http://10.165.20.37:3000/server/api';
 }
 if (process.env.NODE_ENV === 'production') {
   baseURL = 'http://SONIC_SERVER_HOST:SONIC_SERVER_PORT/server/api';
@@ -60,12 +61,10 @@ $http.interceptors.response.use(
         break;
       case 1001:
         if (router.currentRoute.value.path !== '/Login') {
-          router
-            .replace({
-              path: '/Login',
-              query: { redirect: router.currentRoute.value.path },
-            })
-            .catch((err) => {});
+          router.replace({
+            path: '/Login',
+            query: { redirect: router.currentRoute.value.path },
+          });
         }
         localStorage.removeItem('SonicToken');
         break;

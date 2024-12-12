@@ -6,7 +6,7 @@ import { useI18n } from 'vue-i18n';
 const props = defineProps({
   dataToEdit: Object,
   isAdmin: Boolean,
-  projectMap: Object,
+  projectList: Array,
 });
 
 const updateFormModel = ref(false);
@@ -149,7 +149,7 @@ export default {
           style="width: 100%"
         >
           <el-option
-            v-for="val in projectMap"
+            v-for="val in projectList"
             :key="val.id"
             :value="val.id"
             :label="val.projectName"
