@@ -2176,6 +2176,12 @@ const websocketOnmessage = (message) => {
       }
       break;
     }
+    case 'quitAccount': {
+      ElMessage.error({
+        message: '手机厂商账号不可登出，也不可修改',
+      });
+      break;
+    }
     default:
       break;
   }
