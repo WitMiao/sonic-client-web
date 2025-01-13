@@ -367,7 +367,7 @@ const getImg = (name) => {
 };
 
 // 三种安装包方式tab选中态
-const activeIntallTab = ref('pushInstallPane');
+const activeIntallTab = ref('linkInstallPane');
 watch(filterText, (newValue) => {
   tree.value.filter(newValue);
 });
@@ -1564,10 +1564,28 @@ const install = (apk) => {
 
 // 选中安装包列表中的item后响应事件
 const selectPackage = (val) => {
-  ElMessage.success({
-    message: $t('androidRemoteTS.startInstall'),
-  });
-  install(val);
+  const { url: apk, ...args } = val;
+  if (apk.length > 0) {
+    websocket.value.send(
+      JSON.stringify({
+        ...args,
+        type: 'debug',
+        detail: 'install',
+        apk,
+      })
+    );
+    if (isMultiple.value) {
+      setOtherWebSocketParams({
+        ...args,
+        type: 'debug',
+        detail: 'install',
+        apk,
+      });
+    }
+    ElMessage.success({
+      message: $t('androidRemoteTS.startInstall'),
+    });
+  }
 };
 
 const uploadPackage = (content) => {
@@ -3127,6 +3145,17 @@ onMounted(async () => {
           <div style="flex: 1">
             <div v-if="selectActiveTab === 'apps'">
               <el-tabs v-model="activeIntallTab" type="border-card" stretch>
+                <el-tab-pane name="linkInstallPane">
+                  <template #label>
+                    <strong>{{
+                      $t('androidRemoteTS.code.linkInstall')
+                    }}</strong>
+                  </template>
+                  <package-list
+                    platform-type="Android"
+                    @select-package="selectPackage"
+                  ></package-list>
+                </el-tab-pane>
                 <el-tab-pane name="pushInstallPane">
                   <template #label>
                     <strong>{{
@@ -3175,64 +3204,6 @@ onMounted(async () => {
                       @click="install(uploadUrl)"
                       >{{ $t('androidRemoteTS.code.send') }}
                     </el-button>
-                  </div>
-                </el-tab-pane>
-                <el-tab-pane name="linkInstallPane">
-                  <template #label>
-                    <strong>{{
-                      $t('androidRemoteTS.code.linkInstall')
-                    }}</strong>
-                  </template>
-                  <span style="color: #909399; margin-right: 10px">{{
-                    $t('androidRemoteTS.code.associatedProject')
-                  }}</span>
-                  <el-select
-                    v-model="project"
-                    size="mini"
-                    value-key="id"
-                    :placeholder="$t('androidRemoteTS.code.chooseProject')"
-                  >
-                    <el-option
-                      v-for="item in store.state.projectList"
-                      :key="item.id"
-                      :value="item"
-                      :label="item['projectName']"
-                    >
-                      <div style="display: flex; align-items: center">
-                        <el-avatar
-                          style="margin-right: 10px"
-                          :size="32"
-                          :src="
-                            item['projectImg'].length > 0
-                              ? item['projectImg']
-                              : defaultLogo
-                          "
-                          shape="square"
-                        ></el-avatar>
-                        {{ item['projectName'] }}
-                      </div>
-                    </el-option>
-                  </el-select>
-
-                  <div v-if="project !== null">
-                    <package-list
-                      v-if="project !== null"
-                      :project-id="project['id']"
-                      platform-type="Android"
-                      @select-package="selectPackage"
-                    ></package-list>
-                  </div>
-                  <div v-else>
-                    <el-card style="height: 100%; margin-top: 20px">
-                      <el-result
-                        icon="info"
-                        :title="$t('androidRemoteTS.code.hintText')"
-                        :sub-title="
-                          $t('androidRemoteTS.code.hintAssociatedProject')
-                        "
-                      >
-                      </el-result>
-                    </el-card>
                   </div>
                 </el-tab-pane>
               </el-tabs>
@@ -4932,9 +4903,9 @@ onMounted(async () => {
                       }}</span>
                     </template>
                     <template #content>
-                      {{
-                        $t('androidRemoteTS.code.webView.nowWeb')
-                      }}：<strong>{{ title }}</strong>
+                      {{ $t('androidRemoteTS.code.webView.nowWeb') }}：<strong
+                        >{{ title }}</strong
+                      >
                     </template>
                   </el-page-header>
                 </div>
