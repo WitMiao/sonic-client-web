@@ -1180,11 +1180,13 @@ const killApp = (pkg) => {
     message: $t('androidRemoteTS.code.killMsg'),
   });
 };
-const refreshAppList = () => {
+const refreshAppList = (noMsg = false) => {
   appList.value = [];
-  ElMessage.success({
-    message: $t('androidRemoteTS.loadIng'),
-  });
+  if (!noMsg) {
+    ElMessage.success({
+      message: $t('androidRemoteTS.loadIng'),
+    });
+  }
   terminalWebsocket.value.send(
     JSON.stringify({
       type: 'appList',
@@ -1938,7 +1940,7 @@ const screenWebsocketOnmessage = (message) => {
         imgWidth.value = JSON.parse(message.data).width;
         imgHeight.value = JSON.parse(message.data).height;
         loading.value = false;
-        pocoPaneRef.value.setSize(
+        pocoPaneRef.value?.setSize(
           JSON.parse(message.data).width,
           JSON.parse(message.data).height
         );
@@ -2065,6 +2067,7 @@ const websocketOnmessage = (message) => {
         ElMessage.success({
           message: $t('androidRemoteTS.install.success'),
         });
+        refreshAppList(true);
       } else {
         ElMessage.error({
           message: $t('androidRemoteTS.install.fail'),
@@ -2077,6 +2080,7 @@ const websocketOnmessage = (message) => {
         ElMessage.success({
           message: $t('androidRemoteTS.uninstall.success'),
         });
+        refreshAppList(true);
       } else {
         ElMessage.error({
           message: $t('androidRemoteTS.uninstall.fail'),
@@ -3372,6 +3376,7 @@ onMounted(async () => {
                   :key="item"
                   :canvas-rect-info="canvasRectInfo"
                   :direction-status="directionStatus"
+                  :web-socket-params="webSocketParams"
                   @close="otherRemoteClose"
                 />
               </div>

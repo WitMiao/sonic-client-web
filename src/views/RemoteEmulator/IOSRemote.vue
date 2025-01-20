@@ -316,11 +316,13 @@ const killApp = (pkg) => {
     message: $t('androidRemoteTS.code.killMsg'),
   });
 };
-const refreshAppList = () => {
+const refreshAppList = (noMsg = false) => {
   appList.value = [];
-  ElMessage.success({
-    message: $t('IOSRemote.loadingAppList'),
-  });
+  if (!noMsg) {
+    ElMessage.success({
+      message: $t('IOSRemote.loadingAppList'),
+    });
+  }
   terminalWebsocket.value.send(
     JSON.stringify({
       type: 'appList',
@@ -1483,9 +1485,23 @@ const websocketOnmessage = (message) => {
         ElMessage.success({
           message: $t('androidRemoteTS.install.success'),
         });
+        refreshAppList(true);
       } else {
         ElMessage.error({
           message: $t('androidRemoteTS.install.fail'),
+        });
+      }
+      break;
+    }
+    case 'uninstallFinish': {
+      if (JSON.parse(message.data).detail === 'success') {
+        ElMessage.success({
+          message: $t('androidRemoteTS.uninstall.success'),
+        });
+        refreshAppList(true);
+      } else {
+        ElMessage.error({
+          message: $t('androidRemoteTS.uninstall.fail'),
         });
       }
       break;

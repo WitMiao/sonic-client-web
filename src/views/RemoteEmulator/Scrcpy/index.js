@@ -122,7 +122,9 @@ class Scrcpy {
     const videoDom = document.getElementById(this.props?.node || 'player');
     window.onfocus = () => {
       // 将当前播放进度更新至当前最新缓冲时间
-      videoDom.currentTime = Math.ceil(videoDom.buffered?.end(0));
+      if (videoDom.buffered?.length) {
+        videoDom.currentTime = Math.ceil(videoDom.buffered.end(0));
+      }
     };
   }
 }
