@@ -24,7 +24,10 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 let baseURL = '';
 if (process.env.NODE_ENV === 'development') {
-  baseURL = 'http://10.165.20.37:3000/server/api';
+  // 测试环境
+  baseURL = 'http://10.165.20.52:3000/server/api';
+  // 正式环境
+  // baseURL = 'http://10.165.20.37:3000/server/api';
 }
 if (process.env.NODE_ENV === 'production') {
   baseURL = 'http://SONIC_SERVER_HOST:SONIC_SERVER_PORT/server/api';

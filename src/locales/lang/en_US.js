@@ -854,7 +854,7 @@ const androidRemoteTS = {
     apkFile: 'Drag the APK file here, or',
     onlyAPKFile: 'Only upload apk files',
     URLInstall: 'Install via URL',
-    linkInstall: 'Install via Jenkins Plugin Upload',
+    linkInstall: 'Install from Package Center',
     hintAssociatedProject:
       'This feature requires first associating the project from above',
     hint: 'Please input apk download link or local path',
