@@ -9,16 +9,13 @@ const props = defineProps({
 const emit = defineEmits(['selectPackage']);
 
 const iframeUrl = computed(() => {
-  return `https://forgeon-test.hypergryph.net/test/gamePackage?fs=1&mtl=1&platform=${
+  return `https://forgeon.hypergryph.net/test/gamePackage?fs=1&mtl=1&platform=${
     props.platformType === 'Android' ? '1' : '2'
   }`;
 });
 
 function replaceUrl(url: string) {
-  return url.replace(
-    'forgeon-test.hypergryph.net',
-    't-tech.int.hypergryph.com'
-  );
+  return url.replace('forgeon.hypergryph.net', 'tech.int.hypergryph.com');
 }
 const handleIframeLoaded = () => {
   window.addEventListener('message', (e) => {
