@@ -1668,13 +1668,13 @@ const getDeviceById = async (id) => {
   const deviceResp = await axios.get('/controller/devices', { params: { id } });
   if (deviceResp.code === 2000) {
     device.value = deviceResp.data;
-    // if (device.value.status !== 'ONLINE') {
-    //   ElMessage.error({
-    //     message: $t('androidRemoteTS.deviceFail'),
-    //   });
-    //   router.replace('/Index/Devices');
-    //   return;
-    // }
+    if (device.value.status !== 'ONLINE') {
+      ElMessage.error({
+        message: $t('androidRemoteTS.deviceFail'),
+      });
+      router.replace('/Index/Devices');
+      return;
+    }
     const agentResp = await axios.get('/controller/agents', {
       params: { id: device.value.agentId },
     });
@@ -1687,6 +1687,10 @@ const getDeviceById = async (id) => {
         device.value.udId
       );
     }
+  } else if (deviceResp.code === 1003) {
+    router.replace({
+      path: '/Index/Devices',
+    });
   }
 };
 
@@ -2284,6 +2288,9 @@ const openSocket = (host, port, key, udId) => {
         detail: route.query.useTime,
       })
     );
+    if (activeTab.value === 'apps') {
+      refreshAppList();
+    }
   };
   // terminalWebsocket.value.onclose = () => {};
   driverLoading.value = true;
@@ -2296,6 +2303,7 @@ onBeforeUnmount(() => {
 onMounted(async () => {
   isMultiple.value = route.query.isMultiple === 'true';
   activeTab.value = isMultiple.value ? 'otherPhones' : 'apps';
+
   controlsMachine.value = isMultiple.value
     ? route.query.controlsMachine.split(',')
     : [];
