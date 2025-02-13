@@ -24,6 +24,7 @@ export default createStore({
       lastSearchParam: {},
       masterControl: '',
       controlsMachine: [],
+      forgeonToken: '',
     };
   },
   mutations: {
@@ -87,6 +88,9 @@ export default createStore({
     setMasterControl(state, payload) {
       state.masterControl = payload;
     },
+    setForgeonToken(state, payload) {
+      state.forgeonToken = payload;
+    },
   },
   getters: {
     getLocale(state) {
@@ -100,6 +104,9 @@ export default createStore({
     },
     getControlsMachine(state) {
       return state?.controlsMachine ?? [];
+    },
+    getForgeonToken(state) {
+      return state?.forgeonToken ?? '';
     },
   },
   actions: {
