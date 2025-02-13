@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import store from '@/store';
 import { computed } from 'vue';
 
 const props = defineProps({
@@ -7,6 +8,7 @@ const props = defineProps({
 });
 // 点击事件发送
 const emit = defineEmits(['selectPackage']);
+
 const isProd = window.location.hostname === 'mtl.int.hypergryph.com';
 
 const iframeUrl = computed(() => {
@@ -15,7 +17,7 @@ const iframeUrl = computed(() => {
     : 'https://forgeon-test.hypergryph.net/';
   return `${url}test/gamePackage?fs=1&mtl=1&platform=${
     props.platformType === 'Android' ? '1' : '2'
-  }`;
+  }&token=${store.getters.getForgeonToken}`;
 });
 
 function replaceUrl(url: string) {
@@ -23,6 +25,7 @@ function replaceUrl(url: string) {
     .replace('forgeon.hypergryph.net', 'tech.int.hypergryph.com')
     .replace('forgeon-test.hypergryph.net', 't-tech.int.hypergryph.com');
 }
+
 const handleIframeLoaded = () => {
   window.addEventListener('message', (e) => {
     if (e.data?.type === 'download' && e.data?.data?.url) {

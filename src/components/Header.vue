@@ -113,7 +113,10 @@ const pushIndex = (path) => {
 };
 const logout = () => {
   store.commit('clearAuth');
-  router.replace({ path: '/Login' });
+  const ssoLogoutUrl = `https://info-sso.hypergryph.net/api/logout?redirectUrl=${encodeURIComponent(
+    `${location.origin}/Login?isLogout=1`
+  )}`;
+  window.open(ssoLogoutUrl, '_self');
 };
 const toggleClass = (t) => {
   localStorage.setItem('SonicTheme', t);
@@ -129,8 +132,6 @@ onMounted(() => {
   toggleClass(theme.value);
   getProjectList();
 });
-
-
 </script>
 
 <template>

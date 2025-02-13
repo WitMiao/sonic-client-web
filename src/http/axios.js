@@ -48,7 +48,7 @@ $http.interceptors.request.use(
       'Accept-Language': i18n.global.locale.value,
     };
     if (localStorage.getItem('SonicToken')) {
-      config.headers.SonicToken = localStorage.getItem('SonicToken');
+      config.headers['x-token'] = localStorage.getItem('SonicToken');
     }
     return config;
   },
@@ -75,6 +75,8 @@ $http.interceptors.response.use(
         ElMessage.error({
           message: $tc('dialog.permissionDenied'),
         });
+        break;
+      case 4004:
         break;
       default:
         if (response.data.message) {
