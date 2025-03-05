@@ -4,7 +4,6 @@ import axios from '@/http/axios';
 import store from '@/store';
 import decodeByBase64 from '@/utils/cipher';
 import message from 'element-plus/lib/components/message';
-import messageBox from 'element-plus/lib/components/message-box';
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -20,13 +19,11 @@ const loginParams = loginParamsUrlGet
 
 const retryCount = ref(0);
 
-const goToTechLogin = (needRefresh = false) => {
+const goToTechLogin = () => {
   window.open(
-    `https://forgeon.hypergryph.net/link/other?fs=1${
-      needRefresh ? '&refresh=1' : ''
-    }&redirect=${encodeURIComponent(redirectUrl)}&origin=${encodeURIComponent(
-      `${window.location.origin}/Login`
-    )}`,
+    `https://forgeon.hypergryph.net/link/other?fs=1&refresh=1&redirect=${encodeURIComponent(
+      redirectUrl
+    )}&origin=${encodeURIComponent(`${window.location.origin}/Login`)}`,
     '_self'
   );
 };
@@ -40,7 +37,6 @@ const onLogin = async () => {
   );
   if (res.code === 2000) {
     // 获取后端路由
-
     store.commit('changeLogin', res.data);
     if (route.query.redirect) {
       const { redirect } = route.query;
@@ -50,8 +46,7 @@ const onLogin = async () => {
     }
     message.success('跨平台登录成功');
   } else if (retryCount.value >= 3) {
-    messageBox.alert('跨平台登录失败, 请重新登录', 'error');
-    goToTechLogin(true);
+    goToTechLogin();
   } else {
     setTimeout(() => {
       retryCount.value += 1;
@@ -62,7 +57,7 @@ const onLogin = async () => {
 
 onMounted(() => {
   if (isLogout) {
-    goToTechLogin(true);
+    goToTechLogin();
   } else if (loginParams?.accessToken) {
     if (loginParams?.token) {
       store.commit('setForgeonToken', loginParams.token);
@@ -76,7 +71,13 @@ onMounted(() => {
 
 <template>
   <div
-    class="flex items-center justify-center w-100vw h-100vh bg-#202020 text-white"
+    style="
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100vw;
+      height: 100vh;
+    "
   >
     跨平台登录信息获取中...
   </div>

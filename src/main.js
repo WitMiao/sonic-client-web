@@ -15,14 +15,14 @@
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import { createApp } from 'vue';
 import ElementPlus, { ElMessage } from 'element-plus';
+import 'element-plus/dist/index.css';
+import { createApp } from 'vue';
 import App from './App.vue';
+import axios, { setRouter } from './http/axios';
+import { $tc, setupI18n } from './locales/setupI18n';
 import setupRouter from './router/index';
 import store from './store/index';
-import 'element-plus/dist/index.css';
-import axios from './http/axios';
-import { setupI18n, $tc } from './locales/setupI18n';
 
 let router = null;
 async function initApp() {
@@ -36,6 +36,8 @@ async function initApp() {
 
   // 初始化路由
   router = setupRouter(app);
+  // 设置router实例到axios拦截器中
+  setRouter(router);
 
   // 初始化vuex
   app.use(store);
