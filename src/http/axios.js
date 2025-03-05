@@ -19,9 +19,15 @@ import { $tc, i18n } from '@/locales/setupI18n';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
 import qs from 'qs';
-import { useRouter } from 'vue-router';
 
-const router = useRouter();
+// 创建一个变量来存储router实例
+let router = null;
+
+// 设置router实例的方法
+export function setRouter(instance) {
+  router = instance;
+}
+
 let baseURL = '';
 if (process.env.NODE_ENV === 'development') {
   // 测试环境
@@ -63,10 +69,10 @@ $http.interceptors.response.use(
       case 2000:
         break;
       case 1001:
-        if (router.currentRoute.value.path !== '/Login') {
+        if (router && router.currentRoute.value.path !== '/Login') {
           router.replace({
             path: '/Login',
-            query: { redirect: router.currentRoute.value.path },
+            query: { redirect: router?.currentRoute?.value?.path },
           });
         }
         localStorage.removeItem('SonicToken');
