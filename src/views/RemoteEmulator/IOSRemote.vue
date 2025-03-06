@@ -1650,7 +1650,7 @@ const openSocket = (host, port, key, udId) => {
     );
     if (activeTab.value === 'apps') {
       refreshAppList();
-  }
+    }
   };
   terminalWebsocket.value.onmessage = terminalWebsocketOnmessage;
   // terminalWebsocket.value.onclose = () => {};
@@ -1661,6 +1661,9 @@ const openSocket = (host, port, key, udId) => {
         detail: route.query.useTime,
       })
     );
+    if (activeTab.value === 'apps') {
+      refreshAppList(true);
+    }
   };
   screenWebsocket.value.onmessage = screenWebsocketOnmessage;
   // screenWebsocket.value.onclose = () => {};
@@ -1680,11 +1683,11 @@ const getDeviceById = (id) => {
     if (resp.code === 2000) {
       device.value = resp.data;
       if (device.value.status !== 'ONLINE') {
-      ElMessage.error({
-        message: $t('androidRemoteTS.deviceFail'),
-      });
-      router.replace('/Index/Devices');
-      return;
+        ElMessage.error({
+          message: $t('androidRemoteTS.deviceFail'),
+        });
+        router.replace('/Index/Devices');
+        return;
       }
       axios
         .get('/controller/agents', { params: { id: device.value.agentId } })
@@ -1700,10 +1703,10 @@ const getDeviceById = (id) => {
           }
         });
     } else if (deviceResp.code === 1003) {
-    router.replace({
-      path: '/Index/Devices',
-    });
-  }
+      router.replace({
+        path: '/Index/Devices',
+      });
+    }
   });
 };
 
