@@ -482,9 +482,10 @@ watch(
           v-if="!controlsMode"
           type="primary"
           size="mini"
-          :disabled="device.status === 'DEBUGGING'"
+          :disabled="device.status === 'DEBUGGING' && device.user !== store.state.userInfo.userName"
           @click="openDialogVisible"
-          >{{ $t('devices.useRightNow') }}
+          >
+          {{ device.status === 'DEBUGGING' && device.user === store.state.userInfo.userName? '继续使用' : '马上使用' }}
         </el-button>
         <el-button
           v-show="

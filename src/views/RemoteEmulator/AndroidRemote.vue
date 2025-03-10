@@ -25,6 +25,7 @@ import StepList from '@/components/StepList.vue';
 import StepLog from '@/components/StepLog.vue';
 import TestCaseList from '@/components/TestCaseList.vue';
 import axios from '@/http/axios';
+import { isHttpProtocol } from '@/utils/index';
 import {
   Back,
   Bell,
@@ -92,6 +93,12 @@ defineProps({
   lineMousedown: Function,
   lineMouseleave: Function,
 });
+
+const wsUrl = isHttpProtocol ? 'ws' : 'wss';
+const locationHost =
+  process.env.NODE_ENV === 'development'
+    ? 't-mtl.int.hypergryph.com'
+    : window.location.host;
 
 const pocoPaneRef = ref(null);
 const androidPerfRef = ref(null);
@@ -265,7 +272,7 @@ const stopPerfmon = () => {
 const tabWebView = (port, id, transTitle) => {
   title.value = transTitle;
   isWebView.value = false;
-  iframeUrl.value = `/chrome/devtools/inspector.html?ws=${agent.value.host}:${agent.value.port}/websockets/webView/${agent.value.secretKey}/${port}/${id}`;
+  iframeUrl.value = `/chrome/devtools/inspector.html?${wsUrl}=${locationHost}/websockets/${agent.value.host}/webView/${agent.value.secretKey}/${port}/${id}`;
   nextTick(() => {
     iFrameHeight.value = document.body.clientHeight - 150;
   });
@@ -1181,13 +1188,8 @@ const killApp = (pkg) => {
     message: $t('androidRemoteTS.code.killMsg'),
   });
 };
-const refreshAppList = (noMsg = false) => {
+const refreshAppList = () => {
   appList.value = [];
-  if (!noMsg) {
-    ElMessage.success({
-      message: $t('androidRemoteTS.loadIng'),
-    });
-  }
   terminalWebsocket.value.send(
     JSON.stringify({
       type: 'appList',
@@ -1668,9 +1670,9 @@ const getDeviceById = async (id) => {
   const deviceResp = await axios.get('/controller/devices', { params: { id } });
   if (deviceResp.code === 2000) {
     device.value = deviceResp.data;
-    if (device.value.status !== 'ONLINE') {
+    if (device.value.status === 'DEBUGGING' && device.value.user && device.value.user !== store.state.userInfo.userName) {
       ElMessage.error({
-        message: $t('androidRemoteTS.deviceFail'),
+        message: '未申请当前设备，无法使用',
       });
       router.replace('/Index/Devices');
       return;
@@ -1720,7 +1722,6 @@ const addTime = (value) => {
     })
   );
   isShowRenewButton.value = false;
-  localStorage.setItem('androidSendRemind', '0');
 };
 
 /**
@@ -1738,7 +1739,7 @@ const destroyAudio = () => {
 const initAudioPlayer = () => {
   audioPlayer.value = new AudioProcessor({
     node: 'audio-player',
-    wsUrl: `ws://${agent.value.host}:${agent.value.port}/websockets/audio/${agent.value.secretKey}/${device.value.udId}`,
+    wsUrl: `${wsUrl}://${locationHost}/websockets/${agent.value.host}/audio/${agent.value.secretKey}/${device.value.udId}`,
     onReady() {
       isConnectAudio.value = true;
     },
@@ -2109,7 +2110,7 @@ const websocketOnmessage = (message) => {
         ElMessage.success({
           message: $t('androidRemoteTS.install.success'),
         });
-        refreshAppList(true);
+        refreshAppList();
       } else {
         ElMessage.error({
           message: $t('androidRemoteTS.install.fail'),
@@ -2122,7 +2123,7 @@ const websocketOnmessage = (message) => {
         ElMessage.success({
           message: $t('androidRemoteTS.uninstall.success'),
         });
-        refreshAppList(true);
+        refreshAppList();
       } else {
         ElMessage.error({
           message: $t('androidRemoteTS.uninstall.fail'),
@@ -2201,17 +2202,7 @@ const websocketOnmessage = (message) => {
       break;
     }
     case 'sendRemind': {
-      // 展示续期按钮
-      if (JSON.parse(message.data).count === 2) {
-        isShowRenewButton.value = false;
-        // ElMessage.warning({
-        //   message: '续期已超2次',
-        // });
-        localStorage.setItem('androidSendRemind', '0');
-      } else {
         isShowRenewButton.value = true;
-        localStorage.setItem('androidSendRemind', '1');
-      }
       break;
     }
     case 'addTimeResult': {
@@ -2237,13 +2228,13 @@ const openSocket = (host, port, key, udId) => {
   if ('WebSocket' in window) {
     //
     websocket.value = new WebSocket(
-      `ws://${host}:${port}/websockets/android/${key}/${udId}/${localStorage.getItem(
-        'SonicToken'
-      )}`
+      `${wsUrl}://${locationHost}/websockets/${host}/android/${key}/${udId}/${
+        route.query.useTime
+      }/${localStorage.getItem('SonicToken')}`
     );
     //
     scrcpy.value = new Scrcpy({
-      socketURL: `ws://${host}:${port}/websockets/android/screen/${key}/${udId}/${localStorage.getItem(
+      socketURL: `${wsUrl}://${locationHost}/websockets/${host}/android/screen/${key}/${udId}/${localStorage.getItem(
         'SonicToken'
       )}`,
       node: 'scrcpy-video',
@@ -2262,7 +2253,7 @@ const openSocket = (host, port, key, udId) => {
     changeScreenMode(screenMode.value, 1);
     //
     terminalWebsocket.value = new WebSocket(
-      `ws://${host}:${port}/websockets/android/terminal/${key}/${udId}/${localStorage.getItem(
+      `${wsUrl}://${locationHost}/websockets/${host}/android/terminal/${key}/${udId}/${localStorage.getItem(
         'SonicToken'
       )}`
     );
@@ -2311,18 +2302,15 @@ onMounted(async () => {
   controlsMachine.value = isMultiple.value
     ? route.query.controlsMachine.split(',')
     : [];
-  if (localStorage.getItem('androidSendRemind') === '1') {
-    isShowRenewButton.value = true;
-  } else {
-    isShowRenewButton.value = false;
-  }
+  
+  isShowRenewButton.value = false;
+
   if (store.state.project.id) {
     project.value = store.state.project;
   } else {
     getProjectList();
   }
   await getDeviceById(route.params.deviceId);
-
   store.commit('autoChangeCollapse');
   getRemoteTimeout();
   getIdleTimeout();
@@ -2403,6 +2391,7 @@ onMounted(async () => {
     :remote-timeout="remoteTimeout"
     :idle-timeout="idleTimeout"
     :is-show-renew-button="isShowRenewButton"
+    :ud-id="device.udId"
     @close="close"
     @add-time="addTime"
   />
@@ -4960,9 +4949,9 @@ onMounted(async () => {
                         }}</span>
                       </template>
                       <template #content>
-                        {{
-                          $t('androidRemoteTS.code.webView.nowWeb')
-                        }}：<strong>{{ title }}</strong>
+                        {{ $t('androidRemoteTS.code.webView.nowWeb') }}：<strong
+                          >{{ title }}</strong
+                        >
                       </template>
                     </el-page-header>
                   </div>

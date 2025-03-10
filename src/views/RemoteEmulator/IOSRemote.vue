@@ -24,6 +24,7 @@ import StepList from '@/components/StepList.vue';
 import StepLog from '@/components/StepLog.vue';
 import TestCaseList from '@/components/TestCaseList.vue';
 import axios from '@/http/axios';
+import { isHttpProtocol } from '@/utils/index';
 import {
   Camera,
   Cellphone,
@@ -62,6 +63,12 @@ import PocoPane from '../../components/PocoPane.vue';
 import RemotePageHeader from '../../components/RemotePageHeader.vue';
 import RenderDeviceName from '../../components/RenderDeviceName.vue';
 import IOSOtherRemote from './IosOtherRemote.vue';
+
+const wsUrl = isHttpProtocol ? 'ws' : 'wss';
+const locationHost =
+  process.env.NODE_ENV === 'development'
+    ? 't-mtl.int.hypergryph.com'
+    : window.location.host;
 
 const pocoPaneRef = ref(null);
 const iosPerfRef = ref(null);
@@ -317,13 +324,8 @@ const killApp = (pkg) => {
     message: $t('androidRemoteTS.code.killMsg'),
   });
 };
-const refreshAppList = (noMsg = false) => {
+const refreshAppList = () => {
   appList.value = [];
-  if (!noMsg) {
-    ElMessage.success({
-      message: $t('IOSRemote.loadingAppList'),
-    });
-  }
   terminalWebsocket.value.send(
     JSON.stringify({
       type: 'appList',
@@ -1512,7 +1514,7 @@ const websocketOnmessage = (message) => {
         ElMessage.success({
           message: $t('androidRemoteTS.install.success'),
         });
-        refreshAppList(true);
+        refreshAppList();
       } else {
         ElMessage.error({
           message: $t('androidRemoteTS.install.fail'),
@@ -1525,7 +1527,7 @@ const websocketOnmessage = (message) => {
         ElMessage.success({
           message: $t('androidRemoteTS.uninstall.success'),
         });
-        refreshAppList(true);
+        refreshAppList();
       } else {
         ElMessage.error({
           message: $t('androidRemoteTS.uninstall.fail'),
@@ -1601,17 +1603,7 @@ const websocketOnmessage = (message) => {
       break;
     }
     case 'sendRemind': {
-      // 展示续期按钮
-      if (JSON.parse(message.data).count === 2) {
-        isShowRenewButton.value = false;
-        // ElMessage.warning({
-        //   message: '续期已超2次',
-        // });
-        localStorage.setItem('iosSendRemind', '0');
-      } else {
-        isShowRenewButton.value = true;
-        localStorage.setItem('iosSendRemind', '1');
-      }
+      isShowRenewButton.value = true;
       break;
     }
     default:
@@ -1622,17 +1614,17 @@ const websocketOnmessage = (message) => {
 const openSocket = (host, port, key, udId) => {
   if ('WebSocket' in window) {
     websocket.value = new WebSocket(
-      `ws://${host}:${port}/websockets/ios/${key}/${udId}/${localStorage.getItem(
-        'SonicToken'
-      )}`
+      `${wsUrl}://${locationHost}/websockets/${host}/ios/${key}/${udId}/${
+        route.query.useTime
+      }/${localStorage.getItem('SonicToken')}`
     );
     terminalWebsocket.value = new WebSocket(
-      `ws://${host}:${port}/websockets/ios/terminal/${key}/${udId}/${localStorage.getItem(
+      `${wsUrl}://${locationHost}/websockets/${host}/ios/terminal/${key}/${udId}/${localStorage.getItem(
         'SonicToken'
       )}`
     );
     screenWebsocket.value = new WebSocket(
-      `ws://${host}:${port}/websockets/ios/screen/${key}/${udId}/${localStorage.getItem(
+      `${wsUrl}://${locationHost}/websockets/${host}/ios/screen/${key}/${udId}/${localStorage.getItem(
         'SonicToken'
       )}`
     );
@@ -1662,7 +1654,7 @@ const openSocket = (host, port, key, udId) => {
       })
     );
     if (activeTab.value === 'apps') {
-      refreshAppList(true);
+      refreshAppList();
     }
   };
   screenWebsocket.value.onmessage = screenWebsocketOnmessage;
@@ -1682,9 +1674,9 @@ const getDeviceById = (id) => {
   axios.get('/controller/devices', { params: { id } }).then((resp) => {
     if (resp.code === 2000) {
       device.value = resp.data;
-      if (device.value.status !== 'ONLINE') {
+      if (device.value.status === 'DEBUGGING' && device.value.user && device.value.user !== store.state.userInfo.userName) {
         ElMessage.error({
-          message: $t('androidRemoteTS.deviceFail'),
+          message: '未申请当前设备，无法使用',
         });
         router.replace('/Index/Devices');
         return;
@@ -1718,17 +1710,14 @@ onMounted(async () => {
     ? route.query.controlsMachine.split(',')
     : [];
 
-  if (localStorage.getItem('iosSendRemind') === '1') {
-    isShowRenewButton.value = true;
-  } else {
-    isShowRenewButton.value = false;
-  }
+  isShowRenewButton.value = false;
+  
   if (store.state.project.id) {
     project.value = store.state.project;
   } else {
     getProjectList();
   }
-  getDeviceById(route.params.deviceId);
+  await getDeviceById(route.params.deviceId);
   store.commit('autoChangeCollapse');
   getRemoteTimeout();
   getIdleTimeout();
@@ -1809,6 +1798,7 @@ onMounted(async () => {
     :remote-timeout="remoteTimeout"
     :idle-timeout="idleTimeout"
     :is-show-renew-button="isShowRenewButton"
+    :ud-id="device.udId"
     @close="close"
     @add-time="addTime"
   />
@@ -3805,9 +3795,9 @@ onMounted(async () => {
                         }}</span>
                       </template>
                       <template #content>
-                        {{
-                          $t('androidRemoteTS.code.webView.nowWeb')
-                        }}：<strong>{{ title }}</strong>
+                        {{ $t('androidRemoteTS.code.webView.nowWeb') }}：<strong
+                          >{{ title }}</strong
+                        >
                       </template>
                     </el-page-header>
                   </div>

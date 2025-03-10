@@ -18,10 +18,11 @@
 /**
  * 音频接受处理器
  */
+import { isHttpProtocol } from '@/utils/index';
 import JMuxer from 'jmuxer';
 import Socket from './socket';
 
-const DEFAULT_WS_URL = 'ws://localhost:8080';
+const DEFAULT_WS_URL = `${isHttpProtocol ? 'ws' : 'wss'}://localhost:8080`;
 
 export default class AudioProcessor {
   constructor(options) {
