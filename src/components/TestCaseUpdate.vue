@@ -1,8 +1,8 @@
 <script setup>
-import { onMounted, ref } from 'vue';
 import { ElMessage } from 'element-plus';
-import { useStore } from 'vuex';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useStore } from 'vuex';
 import defaultLogo from '../assets/logo.png';
 
 import axios from '../http/axios';

@@ -31,12 +31,12 @@ export function setRouter(instance) {
 let baseURL = '';
 if (process.env.NODE_ENV === 'development') {
   // 测试环境
-  baseURL = 'http://10.165.20.52:3000/server/api';
+  baseURL = 'https://t-mtl.int.hypergryph.com/server/api';
   // 正式环境
-  // baseURL = 'http://10.165.20.37:3000/server/api';
+  // baseURL = 'https://mtl.int.hypergryph.com/server/api';
 }
 if (process.env.NODE_ENV === 'production') {
-  baseURL = 'http://SONIC_SERVER_HOST:SONIC_SERVER_PORT/server/api';
+  baseURL = 'https://SONIC_SERVER_HOST/server/api';
 }
 const $http = axios.create();
 baseURL = baseURL.replace(':80/', '/');

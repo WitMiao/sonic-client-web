@@ -34,6 +34,7 @@
 
 <script lang="ts" setup>
 import axios from '@/http/axios';
+import { isHttpProtocol } from '@/utils/index';
 import { ElMessage } from 'element-plus';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
@@ -54,7 +55,11 @@ const props = withDefaults(
 );
 
 const emit = defineEmits(['close']);
-
+const wsUrl = isHttpProtocol ? 'ws' : 'wss';
+const locationHost =
+  process.env.NODE_ENV === 'development'
+    ? 't-mtl.int.hypergryph.com'
+    : window.location.host;
 const device = ref();
 const agent = ref();
 const route = useRoute();
@@ -140,12 +145,12 @@ const websocketOnmessage = (message: any) => {
 const openSocket = (host: string, port: string, key: string, udId: string) => {
   if ('WebSocket' in window) {
     websocket.value = new WebSocket(
-      `ws://${host}:${port}/websockets/ios/${key}/${udId}/${localStorage.getItem(
-        'SonicToken'
-      )}`
+      `${wsUrl}://${locationHost}/websockets/${host}/ios/${key}/${udId}/${
+        route.query.useTime
+      }/${localStorage.getItem('SonicToken')}`
     );
     screenWebsocket.value = new WebSocket(
-      `ws://${host}:${port}/websockets/ios/screen/${key}/${udId}/${localStorage.getItem(
+      `${wsUrl}://${locationHost}/websockets/${host}/ios/screen/${key}/${udId}/${localStorage.getItem(
         'SonicToken'
       )}`
     );

@@ -69,9 +69,6 @@ initApp().then(() => {
       axios.get('/controller/users').then((resp) => {
         if (resp.code === 2000) {
           store.commit('setUserInfo', resp.data);
-          ElMessage.success({
-            message: `${$tc('dialog.welcome')}${store.state.userInfo.userName}`,
-          });
           next();
         }
       });

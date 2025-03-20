@@ -56,6 +56,10 @@ const onLogin = async () => {
 };
 
 onMounted(() => {
+  if (localStorage.getItem('SonicToken')) {
+    router.replace({ path: redirectUrl || '/' });
+    return;
+  }
   if (isLogout) {
     goToTechLogin();
   } else if (loginParams?.accessToken) {

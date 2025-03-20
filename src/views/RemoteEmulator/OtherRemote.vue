@@ -36,6 +36,7 @@
 
 <script lang="ts" setup>
 import axios from '@/http/axios';
+import { isHttpProtocol } from '@/utils/index';
 import { ElMessage } from 'element-plus';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
@@ -57,6 +58,13 @@ const props = withDefaults(
 );
 
 const emit = defineEmits(['close']);
+
+const wsUrl = isHttpProtocol ? 'ws' : 'wss';
+const locationHost =
+  process.env.NODE_ENV === 'development'
+    ? 't-mtl.int.hypergryph.com'
+    : window.location.host;
+
 const route = useRoute();
 const scrcpy = ref();
 const screenWebsocket = ref();
@@ -185,13 +193,13 @@ const websocketOnmessage = (message: any) => {
 const openSocket = (host: string, port: number, key: string, udId: string) => {
   if ('WebSocket' in window) {
     websocket.value = new WebSocket(
-      `ws://${host}:${port}/websockets/android/${key}/${udId}/${localStorage.getItem(
-        'SonicToken'
-      )}`
+      `${wsUrl}://${locationHost}/websockets/${host}/android/${key}/${udId}/${
+        route.query.useTime
+      }/${localStorage.getItem('SonicToken')}`
     );
 
     scrcpy.value = new Scrcpy({
-      socketURL: `ws://${host}:${port}/websockets/android/screen/${key}/${udId}/${localStorage.getItem(
+      socketURL: `${wsUrl}://${locationHost}/websockets/${host}/android/screen/${key}/${udId}/${localStorage.getItem(
         'SonicToken'
       )}`,
       node: `scrcpy-video${props.id}`,
