@@ -2183,7 +2183,7 @@ const websocketOnmessage = (message) => {
         message: $t('androidRemoteTS.systemException'),
       });
       close();
-      router.go(-1);
+      router.replace({ path: '/Index/Devices' });
       break;
     }
     case 'stopDebug': {
@@ -2202,7 +2202,7 @@ const websocketOnmessage = (message) => {
       break;
     }
     case 'sendRemind': {
-        isShowRenewButton.value = true;
+      isShowRenewButton.value = true;
       break;
     }
     case 'addTimeResult': {

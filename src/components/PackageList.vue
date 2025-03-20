@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import store from '@/store';
 import { computed } from 'vue';
 
 const props = defineProps({
@@ -17,7 +16,7 @@ const iframeUrl = computed(() => {
     : 'https://forgeon-test.hypergryph.net/';
   return `${url}test/gamePackage?fs=1&mtl=1&platform=${
     props.platformType === 'Android' ? '1' : '2'
-  }&token=${store.getters.getForgeonToken}`;
+  }`;
 });
 
 function replaceUrl(url: string) {
