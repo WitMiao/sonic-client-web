@@ -2,7 +2,7 @@
 import axios from '@/http/axios';
 
 import store from '@/store';
-import decodeByBase64 from '@/utils/cipher';
+import { decodeByBase64, encryptByBase64 } from '@/utils/cipher';
 import message from 'element-plus/lib/components/message';
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -22,7 +22,7 @@ const retryCount = ref(0);
 const goToTechLogin = () => {
   window.open(
     `https://forgeon.hypergryph.net/link/other?fs=1&refresh=1&redirect=${encodeURIComponent(
-      redirectUrl
+      encryptByBase64(redirectUrl)
     )}&origin=${encodeURIComponent(`${window.location.origin}/Login`)}`,
     '_self'
   );
@@ -40,7 +40,7 @@ const onLogin = async () => {
     store.commit('changeLogin', res.data);
     if (route.query.redirect) {
       const { redirect } = route.query;
-      router.replace(redirect as string);
+      router.replace(decodeByBase64(redirect as string));
     } else {
       router.replace({ path: '/' });
     }
@@ -57,7 +57,7 @@ const onLogin = async () => {
 
 onMounted(() => {
   if (localStorage.getItem('SonicToken')) {
-    router.replace({ path: redirectUrl || '/' });
+    router.replace({ path: decodeByBase64(redirectUrl || '/') });
     return;
   }
   if (isLogout) {
