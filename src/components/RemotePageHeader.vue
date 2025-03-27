@@ -18,7 +18,7 @@
  */
 import axios from '@/http/axios';
 import { QuestionFilled } from '@element-plus/icons';
-import { ElMessageBox, ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
@@ -63,28 +63,23 @@ const addTime = () => {
 };
 
 const stopDebug = () => {
-   ElMessageBox.confirm(
-    '',
-    '确认结束使用吗？',
-    {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-    }
-  )
+  ElMessageBox.confirm('', '确认结束使用吗？', {
+    confirmButtonText: '确认',
+    cancelButtonText: '取消',
+  })
     .then(() => {
-     axios
-    .get('/controller/devices/stopDebug', { params: { udId: props.udId } })
-    .then((resp) => {
-      if (resp.code === 2000) {
-        ElMessage.success({
-          message: resp.message,
+      axios
+        .get('/controller/devices/stopUse', { params: { udId: props.udId } })
+        .then((resp) => {
+          if (resp.code === 2000) {
+            emit('close');
+            ElMessage.success({
+              message: resp.message,
+            });
+          }
         });
-      }
-    });
     })
-    .catch(() => {
-    })
-  
+    .catch(() => {});
 };
 </script>
 
@@ -129,16 +124,12 @@ const stopDebug = () => {
             type="primary"
             style="margin-left: 10px"
             @click="openTimeDialogVisible"
-            >
+          >
             续期
-            </el-button>
-          <el-button
-            type="danger"
-            style="margin-left: 10px"
-            @click="stopDebug"
-            >
+          </el-button>
+          <el-button type="danger" style="margin-left: 10px" @click="stopDebug">
             结束使用
-            </el-button>
+          </el-button>
         </div>
       </template>
     </el-page-header>
