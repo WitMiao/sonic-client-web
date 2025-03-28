@@ -16,19 +16,19 @@
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import { VueDraggableNext } from 'vue-draggable-next';
 import {
-  Delete,
-  Rank,
-  Edit,
-  DocumentAdd,
-  Minus,
-  CopyDocument,
+    CopyDocument,
+    Delete,
+    DocumentAdd,
+    Edit,
+    Minus,
+    Rank,
 } from '@element-plus/icons';
 import { ElMessage } from 'element-plus';
+import { VueDraggableNext } from 'vue-draggable-next';
 import { useI18n } from 'vue-i18n';
-import StepShow from './StepShow.vue';
 import axios from '../http/axios';
+import StepShow from './StepShow.vue';
 
 const { t: $t } = useI18n();
 const props = defineProps({
@@ -54,7 +54,7 @@ const emit = defineEmits([
 ]);
 const switchStep = (id, e) => {
   axios
-    .get('/controller/steps/switchStep', {
+    .get('/steps/switchStep', {
       params: {
         id,
         type: e,
@@ -106,7 +106,7 @@ const sortStep = (e) => {
     }
   }
   axios
-    .put('/controller/steps/stepSort', {
+    .put('/steps/stepSort', {
       caseId,
       direction,
       startId,

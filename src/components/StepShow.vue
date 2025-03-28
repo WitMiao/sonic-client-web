@@ -17,14 +17,14 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { ElMessage } from 'element-plus';
-import { useRoute } from 'vue-router';
 import { Edit } from '@element-plus/icons';
-import { useI18n } from 'vue-i18n';
+import { ElMessage } from 'element-plus';
 import { ref } from 'vue';
-import CodeEditor from './CodeEditor.vue';
+import { useI18n } from 'vue-i18n';
+import { useRoute } from 'vue-router';
 import axios from '../http/axios';
 import ChildStepListView from './ChildStepListView.vue';
+import CodeEditor from './CodeEditor.vue';
 
 const { t: $t } = useI18n();
 const route = useRoute();
@@ -35,7 +35,7 @@ const props = defineProps({
 const childStep = ref([]);
 
 const summitStep = () => {
-  axios.put('/controller/steps', props.step).then((resp) => {
+  axios.put('/steps', props.step).then((resp) => {
     if (resp.code === 2000) {
       ElMessage.success({
         message: resp.message,
@@ -45,7 +45,7 @@ const summitStep = () => {
 };
 
 const getPublicStepInfo = (id) => {
-  axios.get('/controller/publicSteps', { params: { id } }).then((resp) => {
+  axios.get('/publicSteps', { params: { id } }).then((resp) => {
     if (resp.code === 2000) {
       if (resp.data.steps) {
         childStep.value = resp.data.steps;

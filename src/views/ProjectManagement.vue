@@ -14,7 +14,7 @@ const router = useRouter();
 const projectData = ref([]);
 const theme = ref('');
 const getProjectList = () => {
-  axios.get('/controller/projects/list').then((resp) => {
+  axios.get('/projects/list').then((resp) => {
     projectData.value = resp.data;
     store.commit('saveProjectList', projectData.value);
   });

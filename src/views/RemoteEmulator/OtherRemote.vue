@@ -232,10 +232,10 @@ const openSocket = (host: string, port: number, key: string, udId: string) => {
 };
 
 const getDeviceById = async (id: string) => {
-  const deviceResp = await axios.get('/controller/devices', { params: { id } });
+  const deviceResp = await axios.get('/devices', { params: { id } });
   if (deviceResp.code === 2000) {
     device.value = deviceResp.data;
-    const agentResp = await axios.get('/controller/agents', {
+    const agentResp = await axios.get('/agents', {
       params: { id: device.value.agentId },
     });
     if (agentResp.code === 2000) {

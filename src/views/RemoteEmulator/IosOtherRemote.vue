@@ -181,11 +181,11 @@ const openSocket = (host: string, port: string, key: string, udId: string) => {
 
 const getDeviceById = (id: string) => {
   loading.value = true;
-  axios.get('/controller/devices', { params: { id } }).then((resp) => {
+  axios.get('/devices', { params: { id } }).then((resp) => {
     if (resp.code === 2000) {
       device.value = resp.data;
       axios
-        .get('/controller/agents', { params: { id: device.value.agentId } })
+        .get('/agents', { params: { id: device.value.agentId } })
         .then((res) => {
           if (res.code === 2000) {
             agent.value = res.data;

@@ -1,6 +1,6 @@
 <script setup>
-import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import axios from '../http/axios';
 
@@ -41,7 +41,7 @@ const upload = (content) => {
   formData.append('file', content.file);
   formData.append('type', 'keepFiles');
   axios
-    .post('/folder/upload', formData, {
+    .post('/upload', formData, {
       headers: { 'Content-type': 'multipart/form-data' },
     })
     .then((resp) => {
@@ -55,7 +55,7 @@ const upload = (content) => {
 };
 const getElementInfo = (id) => {
   axios
-    .get('/controller/elements', {
+    .get('/elements', {
       params: {
         id,
       },
@@ -67,7 +67,7 @@ const getElementInfo = (id) => {
 const saveElement = () => {
   updateEle.value.validate((valid) => {
     if (valid) {
-      axios.put('/controller/elements', element.value).then((resp) => {
+      axios.put('/elements', element.value).then((resp) => {
         if (resp.code === 2000) {
           ElMessage.success({
             message: resp.message,
@@ -84,7 +84,7 @@ const testElement = () => {
 const moduleList = ref([]);
 const getModuleList = () => {
   axios
-    .get('/controller/modules/list', { params: { projectId: props.projectId } })
+    .get('/modules/list', { params: { projectId: props.projectId } })
     .then((resp) => {
       if (resp.code === 2000) {
         moduleList.value = resp.data;

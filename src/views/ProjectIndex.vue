@@ -1,17 +1,17 @@
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue';
-import moment from 'moment';
-import { useRoute } from 'vue-router';
-import * as echarts from 'echarts/core';
-import {
-  TitleComponent,
-  ToolboxComponent,
-  TooltipComponent,
-  GridComponent,
-  LegendComponent,
-} from 'echarts/components';
 import { LineChart, PieChart } from 'echarts/charts';
+import {
+    GridComponent,
+    LegendComponent,
+    TitleComponent,
+    ToolboxComponent,
+    TooltipComponent,
+} from 'echarts/components';
+import * as echarts from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
+import moment from 'moment';
+import { onMounted, onUnmounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 import { useStore } from 'vuex';
 
 import { useI18n } from 'vue-i18n';
@@ -130,7 +130,7 @@ const getCaseIds = (ids) => {
   });
   if (list.length > 0) {
     axios
-      .get('/controller/testCases/findByIdIn', {
+      .get('/testCases/findByIdIn', {
         params: {
           ids: list,
         },
@@ -148,7 +148,7 @@ const getDeviceIds = (ids) => {
   });
   if (list.length > 0) {
     axios
-      .get('/controller/devices/findByIdIn', {
+      .get('/devices/findByIdIn', {
         params: {
           ids: list,
         },
@@ -204,7 +204,7 @@ const getData = () => {
     chart = echarts.init(document.getElementById('projectChart'));
   }
   axios
-    .get('/controller/results/chart', {
+    .get('/results/chart', {
       params: {
         startTime: times.value[0],
         endTime: times.value[1],

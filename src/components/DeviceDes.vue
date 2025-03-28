@@ -36,7 +36,7 @@ const remoteTimeout = ref(0);
 const store = useStore();
 
 const updateImg = (id, imgUrl) => {
-  axios.put('/controller/devices/updateImg', { id, imgUrl }).then((resp) => {
+  axios.put('/devices/updateImg', { id, imgUrl }).then((resp) => {
     if (resp.code === 2000) {
       ElMessage.success({
         message: resp.message,
@@ -50,7 +50,7 @@ const upload = (content) => {
   formData.append('file', content.file);
   formData.append('type', 'keepFiles');
   axios
-    .post('/folder/upload', formData, {
+    .post('/upload', formData, {
       headers: { 'Content-type': 'multipart/form-data' },
     })
     .then((resp) => {
@@ -71,7 +71,7 @@ const beforeAvatarUpload = (file) => {
 
 const saveDetail = (device) => {
   axios
-    .put('/controller/devices/saveDetail', {
+    .put('/devices/saveDetail', {
       id: device.id,
       password: device.password,
       nickName: device.nickName,
@@ -85,7 +85,7 @@ const saveDetail = (device) => {
     });
 };
 const deleteDevice = (id) => {
-  axios.delete('/controller/devices', { params: { id } }).then((resp) => {
+  axios.delete('/devices', { params: { id } }).then((resp) => {
     if (resp.code === 2000) {
       ElMessage.success({
         message: resp.message,
@@ -96,7 +96,7 @@ const deleteDevice = (id) => {
 };
 const openDialogVisible = async () => {
   // 获取系统时间
-  const resp = await axios.get('/controller/confList/getRemoteTimeout');
+  const resp = await axios.get('/confList/getRemoteTimeout');
   remoteTimeout.value = resp.data;
   useTime.value = remoteTimeout.value;
   useTimeDialogVisible.value = true;
@@ -124,7 +124,7 @@ const jump = (id, platform) => {
 };
 const offline = (device) => {
   axios
-    .put('/controller/devices/updateStatus', {
+    .put('/devices/updateStatus', {
       id: device.id,
       status: 'OFFLINE',
     })
@@ -139,7 +139,7 @@ const offline = (device) => {
 };
 const online = (device) => {
   axios
-    .put('/controller/devices/updateStatus', {
+    .put('/devices/updateStatus', {
       id: device.id,
       status: 'ONLINE',
     })
@@ -482,10 +482,18 @@ watch(
           v-if="!controlsMode"
           type="primary"
           size="mini"
-          :disabled="device.status === 'DEBUGGING' && device.user !== store.state.userInfo.userName"
+          :disabled="
+            device.status === 'DEBUGGING' &&
+            device.user !== store.state.userInfo.userName
+          "
           @click="openDialogVisible"
-          >
-          {{ device.status === 'DEBUGGING' && device.user === store.state.userInfo.userName? '继续使用' : '马上使用' }}
+        >
+          {{
+            device.status === 'DEBUGGING' &&
+            device.user === store.state.userInfo.userName
+              ? '继续使用'
+              : '马上使用'
+          }}
         </el-button>
         <el-button
           v-show="

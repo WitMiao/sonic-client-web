@@ -1,7 +1,7 @@
 <script setup>
-import { onMounted, ref } from 'vue';
 import axios from '@/http/axios';
 import { ElMessage } from 'element-plus';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();
@@ -11,7 +11,7 @@ const sysLogs = ref([]);
 const dialogVisible = ref(false);
 
 const findSysJobs = () => {
-  axios.get('/controller/jobs/findSysJobs').then((resp) => {
+  axios.get('/jobs/findSysJobs').then((resp) => {
     sysLogs.value = resp.data;
   });
 };
@@ -27,7 +27,7 @@ const edit = ref({
 });
 
 const updateSysJob = () => {
-  axios.put('/controller/jobs/updateSysJob', edit.value).then((resp) => {
+  axios.put('/jobs/updateSysJob', edit.value).then((resp) => {
     if (resp.code === 2000) {
       dialogVisible.value = false;
       ElMessage.success({
