@@ -283,7 +283,7 @@ const saveEle = () => {
       element.value.eleType = 'image';
       element.value.eleValue = imgElementUrl.value;
       element.value.projectId = project.value.id;
-      axios.put('/controller/elements', element.value).then((resp) => {
+      axios.put('/elements', element.value).then((resp) => {
         if (resp.code === 2000) {
           ElMessage.success({
             message: resp.message,
@@ -1440,7 +1440,7 @@ const uploadFile = (content) => {
   formData.append('file', content.file);
   formData.append('type', 'packageFiles');
   axios
-    .post('/folder/upload', formData, {
+    .post('/upload', formData, {
       headers: { 'Content-type': 'multipart/form-data' },
     })
     .then((resp) => {
@@ -1494,7 +1494,7 @@ const uploadScan = (content) => {
   formData.append('file', content.file);
   formData.append('type', 'imageFiles');
   axios
-    .post('/folder/upload', formData, {
+    .post('/upload', formData, {
       headers: { 'Content-type': 'multipart/form-data' },
     })
     .then((resp) => {
@@ -1599,7 +1599,7 @@ const uploadPackage = (content) => {
   formData.append('file', content.file);
   formData.append('type', 'packageFiles');
   axios
-    .post('/folder/upload', formData, {
+    .post('/upload', formData, {
       headers: { 'Content-type': 'multipart/form-data' },
     })
     .then((resp) => {
@@ -1667,17 +1667,21 @@ const getWebViewForward = () => {
 
 const getDeviceById = async (id) => {
   loading.value = true;
-  const deviceResp = await axios.get('/controller/devices', { params: { id } });
+  const deviceResp = await axios.get('/devices', { params: { id } });
   if (deviceResp.code === 2000) {
     device.value = deviceResp.data;
-    if (device.value.status === 'DEBUGGING' && device.value.user && device.value.user !== store.state.userInfo.userName) {
+    if (
+      device.value.status === 'DEBUGGING' &&
+      device.value.user &&
+      device.value.user !== store.state.userInfo.userName
+    ) {
       ElMessage.error({
         message: '未申请当前设备，无法使用',
       });
       router.replace('/Index/Devices');
       return;
     }
-    const agentResp = await axios.get('/controller/agents', {
+    const agentResp = await axios.get('/agents', {
       params: { id: device.value.agentId },
     });
     if (agentResp.code === 2000) {
@@ -1771,7 +1775,7 @@ const resetAudioPlayer = () => {
   });
 };
 const getProjectList = () => {
-  axios.get('/controller/projects/list').then((resp) => {
+  axios.get('/projects/list').then((resp) => {
     store.commit('saveProjectList', resp.data);
   });
 };
@@ -1787,7 +1791,7 @@ const getRemoteTimeout = () => {
   ticker.value = Math.floor(
     (Date.now() - Number(localStorage.getItem('driverTime'))) / 1000
   );
-  axios.get('/controller/confList/getRemoteTimeout').then((resp) => {
+  axios.get('/confList/getRemoteTimeout').then((resp) => {
     remoteTimeout.value = resp.data;
     setInterval(() => {
       ticker.value += 1;
@@ -1796,7 +1800,7 @@ const getRemoteTimeout = () => {
 };
 const idleTimeout = ref(0);
 const getIdleTimeout = () => {
-  axios.get('/controller/confList/getIdleTimeout').then((resp) => {
+  axios.get('/confList/getIdleTimeout').then((resp) => {
     idleTimeout.value = resp.data;
   });
 };
@@ -2302,7 +2306,7 @@ onMounted(async () => {
   controlsMachine.value = isMultiple.value
     ? route.query.controlsMachine.split(',')
     : [];
-  
+
   isShowRenewButton.value = false;
 
   if (store.state.project.id) {

@@ -54,7 +54,7 @@ initApp().then(() => {
     }
     if (to.params.projectId && store.state.project.id === undefined) {
       axios
-        .get('/controller/projects', {
+        .get('/projects', {
           params: {
             id: to.params.projectId,
           },
@@ -66,7 +66,7 @@ initApp().then(() => {
         });
     }
     if (store.state.token.length !== 0 && !store.state.userInfo.userName) {
-      axios.get('/controller/users').then((resp) => {
+      axios.get('/users').then((resp) => {
         if (resp.code === 2000) {
           store.commit('setUserInfo', resp.data);
           next();

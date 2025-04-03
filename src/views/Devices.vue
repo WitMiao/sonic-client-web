@@ -200,7 +200,7 @@ const editAgent = async (
 };
 
 const getProjectList = () => {
-  axios.get('/controller/projects/list').then((resp) => {
+  axios.get('/projects/list').then((resp) => {
     projectList.value = resp?.data || [];
   });
 };
@@ -228,7 +228,7 @@ const copy = (value) => {
 
 const getAllAgents = () => {
   axios
-    .get('/controller/agents/list')
+    .get('/agents/list')
     .then((resp) => {
       agentList.value = resp.data;
     })
@@ -240,7 +240,7 @@ const getAllAgents = () => {
 const updateAgent = () => {
   updateAgentForm.value.validate((valid) => {
     if (valid) {
-      axios.put('/controller/agents/update', agent.value).then((resp) => {
+      axios.put('/agents/update', agent.value).then((resp) => {
         if (resp.code === 2000) {
           ElMessage.success({
             message: resp.message,
@@ -255,7 +255,7 @@ const updateAgent = () => {
 
 const findAll = (pageNum, pSize) => {
   axios
-    .get('/controller/devices/list', {
+    .get('/devices/list', {
       params: {
         page: pageNum || 1,
         pageSize: pSize || pageSize.value,
@@ -452,7 +452,7 @@ const getImg = (brand) => {
 };
 const getFilterOption = () => {
   axios
-    .get('/controller/devices/getFilterOption')
+    .get('/devices/getFilterOption')
     .then((resp) => {
       if (resp.code === 2000) {
         cpus.value = resp.data.cpu;
@@ -465,7 +465,7 @@ const getFilterOption = () => {
 };
 const findTemper = () => {
   axios
-    .get('/controller/devices/findTemper')
+    .get('/devices/findTemper')
     .then((resp) => {
       if (resp.code === 2000) {
         if (resp.data !== null) {
@@ -480,7 +480,7 @@ const findTemper = () => {
 const robotData = ref([]);
 const getAlertRobots = () => {
   axios
-    .get('/controller/alertRobotsAdmin/listAll', {
+    .get('/alertRobotsAdmin/listAll', {
       params: {
         scene: 'agent',
       },
@@ -567,7 +567,7 @@ const openSelectMaster = async () => {
   const [multiplePlatformValue] = [...new Set(platform)];
   multiplePlatform.value = multiplePlatformValue;
   // 获取系统时间
-  const resp = await axios.get('/controller/confList/getRemoteTimeout');
+  const resp = await axios.get('/confList/getRemoteTimeout');
   if (resp.code !== 7) {
     remoteTimeout.value = resp.data;
     useTime.value = remoteTimeout.value;

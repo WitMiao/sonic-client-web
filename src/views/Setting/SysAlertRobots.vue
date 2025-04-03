@@ -1,9 +1,9 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 // eslint-disable-next-line import/no-cycle
+import Pageable from '@/components/Pageable.vue';
 import axios from '@/http/axios';
 import { ElButton, ElMessage } from 'element-plus';
-import Pageable from '@/components/Pageable.vue';
 import { useI18n } from 'vue-i18n';
 import AlertRobotUpdate from '../../components/AlertRobotUpdate.vue';
 
@@ -16,7 +16,7 @@ const { robotMap, sceneMap } = AlertRobotUpdate;
 const projectList = ref([]);
 
 const getProjectList = () => {
-  axios.get('/controller/projects/list').then((resp) => {
+  axios.get('/projects/list').then((resp) => {
     projectList.value = resp?.data || [];
   });
 };
@@ -37,7 +37,7 @@ const getAlertRobots = (pageNum, pSize) => {
   pageSize.value = pSize || pageSize.value;
   pageCurrNum.value = pageNum || pageCurrNum.value;
   axios
-    .get('/controller/alertRobotsAdmin/list', {
+    .get('/alertRobotsAdmin/list', {
       params: {
         page: pageCurrNum.value,
         pageSize: pageSize.value,
@@ -49,7 +49,7 @@ const getAlertRobots = (pageNum, pSize) => {
 };
 const deleteById = (id) => {
   axios
-    .delete('/controller/alertRobotsAdmin', {
+    .delete('/alertRobotsAdmin', {
       params: {
         id,
       },
@@ -65,7 +65,7 @@ const deleteById = (id) => {
     });
 };
 const submit = (model) => {
-  axios.put('/controller/alertRobotsAdmin', model).then((resp) => {
+  axios.put('/alertRobotsAdmin', model).then((resp) => {
     if (resp.code === 2000) {
       ElMessage.success({
         message: resp.message,

@@ -1,9 +1,9 @@
 <script setup>
-import { useRoute, useRouter } from 'vue-router';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import axios from '../http/axios';
+import { useRoute, useRouter } from 'vue-router';
 import StepList from '../components/StepList.vue';
+import axios from '../http/axios';
 
 const { t: $t } = useI18n();
 
@@ -28,7 +28,7 @@ const getImg = (name) => {
 };
 const getCaseInfo = (id) => {
   axios
-    .get('/controller/testCases', {
+    .get('/testCases', {
       params: {
         id,
       },

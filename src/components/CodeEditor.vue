@@ -17,18 +17,18 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {
-  shallowRef,
-  reactive,
-  computed,
-  defineEmits,
-  ref,
-  onMounted,
-} from 'vue';
-import { Codemirror } from 'vue-codemirror';
-import { oneDark } from '@codemirror/theme-one-dark';
 import { java } from '@codemirror/lang-java';
 import { python } from '@codemirror/lang-python';
+import { oneDark } from '@codemirror/theme-one-dark';
+import {
+    computed,
+    defineEmits,
+    onMounted,
+    reactive,
+    ref,
+    shallowRef,
+} from 'vue';
+import { Codemirror } from 'vue-codemirror';
 import { useI18n } from 'vue-i18n';
 import axios from '../http/axios';
 import Pageable from './Pageable.vue';
@@ -158,7 +158,7 @@ const name = ref('');
 const getScriptList = (pageNum, pSize) => {
   pageCurrNum.value = pageNum || pageCurrNum.value;
   axios
-    .get('/controller/scripts/list', {
+    .get('/scripts/list', {
       params: {
         projectId: props.projectId,
         name: name.value,

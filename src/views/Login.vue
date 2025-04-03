@@ -32,7 +32,7 @@ const onLogin = async () => {
   await store.commit('clearAuth');
 
   const res: { code: number; data: any } = await axios.post(
-    '/controller/users/loginSso',
+    '/users/loginSso',
     loginParams
   );
   if (res.code === 2000) {
@@ -57,7 +57,11 @@ const onLogin = async () => {
 
 onMounted(() => {
   if (localStorage.getItem('SonicToken')) {
-    router.replace({ path: decodeByBase64(redirectUrl || '/') });
+    if (['/', '/Index/Devices'].includes(redirectUrl)) {
+      router.replace({ path: decodeByBase64(redirectUrl) });
+    } else {
+      router.replace({ path: decodeByBase64(redirectUrl || '/') });
+    }
     return;
   }
   if (isLogout) {

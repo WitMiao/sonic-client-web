@@ -1,14 +1,14 @@
 <script setup>
-import { useRoute, useRouter } from 'vue-router';
-import { onMounted, ref, watch } from 'vue';
 import { Delete, Edit, Plus } from '@element-plus/icons';
 import { ElMessage } from 'element-plus';
+import { onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRoute, useRouter } from 'vue-router';
 import axios from '../http/axios';
+import Pageable from './Pageable.vue';
+import StepDraggable from './StepDraggable.vue';
 import StepShow from './StepShow.vue';
 import StepUpdate from './StepUpdate.vue';
-import StepDraggable from './StepDraggable.vue';
-import Pageable from './Pageable.vue';
 
 const { t: $t } = useI18n();
 const router = useRouter();
@@ -59,7 +59,7 @@ const getStepList = (pageNum, pSize) => {
   pageSize.value = pSize || pageSize.value;
   pageCurrNum.value = pageNum || pageCurrNum.value;
   axios
-    .get('/controller/steps/list', {
+    .get('/steps/list', {
       params: {
         projectId: props.projectId,
         platform: publicStep.value.platform,
@@ -80,7 +80,7 @@ const searchListOfSteps = (pageNum, pSize) => {
     pageSize.value = pSize || pageSize.value;
     pageCurrNum.value = pageNum || pageCurrNum.value;
     axios
-      .get('/controller/steps/search/list', {
+      .get('/steps/search/list', {
         params: {
           projectId: props.projectId,
           platform: publicStep.value.platform,
@@ -96,7 +96,7 @@ const searchListOfSteps = (pageNum, pSize) => {
 };
 const deleteStep = (id) => {
   axios
-    .delete('/controller/steps', {
+    .delete('/steps', {
       params: {
         id,
       },
@@ -130,7 +130,7 @@ let isAddOrRemoved = false;
 const flush = async () => {
   if (isAddOrRemoved) {
     await axios
-      .put('/controller/publicSteps', publicStep.value)
+      .put('/publicSteps', publicStep.value)
       .then((resp) => {
         if (resp.code === 2000) {
           ElMessage.success({
@@ -164,7 +164,7 @@ const emit = defineEmits(['flush']);
 const summit = () => {
   updatePub.value.validate((valid) => {
     if (valid) {
-      axios.put('/controller/publicSteps', publicStep.value).then((resp) => {
+      axios.put('/publicSteps', publicStep.value).then((resp) => {
         if (resp.code === 2000) {
           ElMessage.success({
             message: resp.message,
@@ -185,7 +185,7 @@ const summit = () => {
   });
 };
 const getPublicStepInfo = (id) => {
-  axios.get('/controller/publicSteps', { params: { id } }).then((resp) => {
+  axios.get('/publicSteps', { params: { id } }).then((resp) => {
     if (resp.code === 2000) {
       publicStep.value = resp.data;
       getStepList();

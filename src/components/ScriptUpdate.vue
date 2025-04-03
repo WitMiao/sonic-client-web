@@ -16,11 +16,11 @@
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import { onMounted, ref } from 'vue';
 import { ElMessage } from 'element-plus';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import CodeEditor from './CodeEditor.vue';
 import axios from '../http/axios';
+import CodeEditor from './CodeEditor.vue';
 
 const { t: $t } = useI18n();
 const props = defineProps({
@@ -50,7 +50,7 @@ const scriptForm = ref(null);
 const summit = () => {
   scriptForm.value.validate((valid) => {
     if (valid) {
-      axios.put('/controller/scripts', script.value).then((resp) => {
+      axios.put('/scripts', script.value).then((resp) => {
         if (resp.code === 2000) {
           ElMessage.success({
             message: resp.message,
@@ -62,7 +62,7 @@ const summit = () => {
   });
 };
 const getInfo = (id) => {
-  axios.get('/controller/scripts', { params: { id } }).then((resp) => {
+  axios.get('/scripts', { params: { id } }).then((resp) => {
     if (resp.code === 2000) {
       script.value = resp.data;
     }

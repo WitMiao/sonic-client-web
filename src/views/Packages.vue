@@ -1,12 +1,12 @@
 <script setup>
-import { onMounted, ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
+import { onMounted, ref } from 'vue';
 import useClipboard from 'vue-clipboard3';
 import { useI18n } from 'vue-i18n';
+import { useRoute, useRouter } from 'vue-router';
 import jenkins from '../assets/img/jenkins.png';
-import axios from '../http/axios';
 import Pageable from '../components/Pageable.vue';
+import axios from '../http/axios';
 
 const { t: $t } = useI18n();
 
@@ -24,7 +24,7 @@ const getPackageList = (pageNum, pSize) => {
   pageSize.value = pSize || pageSize.value;
   pageCurrNum.value = pageNum || pageCurrNum.value;
   axios
-    .get('/controller/packages/list', {
+    .get('/packages/list', {
       params: {
         projectId: route.params.projectId,
         page: pageCurrNum.value,

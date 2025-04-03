@@ -1,10 +1,10 @@
 <script setup>
-import { onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import Pageable from '@/components/Pageable.vue';
 import axios from '@/http/axios';
 import { ElMessage } from 'element-plus';
-import Pageable from '@/components/Pageable.vue';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRoute } from 'vue-router';
 
 const { t: $t } = useI18n();
 const route = useRoute();
@@ -16,7 +16,7 @@ const path = ref('');
 
 const updateStatus = (id, needAuth) => {
   axios
-    .put('/controller/resources/edit', {
+    .put('/resources/edit', {
       id,
       needAuth,
     })
@@ -31,7 +31,7 @@ const updateStatus = (id, needAuth) => {
 
 const refresh = (id, needAuth) => {
   axios
-    .post('/controller/resources/refresh', {
+    .post('/resources/refresh', {
       id,
       needAuth,
     })
@@ -49,7 +49,7 @@ const getResourceList = (pageNum, pSize) => {
   pageSize.value = pSize || pageSize.value;
   pageCurrNum.value = pageNum || pageCurrNum.value;
   axios
-    .get('/controller/resources/list', {
+    .get('/resources/list', {
       params: {
         page: pageCurrNum.value,
         pageSize: pageSize.value,

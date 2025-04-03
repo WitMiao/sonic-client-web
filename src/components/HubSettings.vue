@@ -16,13 +16,13 @@
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+import ColorImg from '@/components/ColorImg.vue';
 import { ElMessage } from 'element-plus';
 import { onMounted, ref } from 'vue';
-import ColorImg from '@/components/ColorImg.vue';
 import { useI18n } from 'vue-i18n';
 import axios from '../http/axios';
-import RenderStatus from './RenderStatus.vue';
 import RenderDeviceName from './RenderDeviceName.vue';
+import RenderStatus from './RenderStatus.vue';
 
 const { t: $t } = useI18n();
 
@@ -35,7 +35,7 @@ const line = ref([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
 const listByAgentId = () => {
   line.value = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   axios
-    .get('/controller/devices/listByAgentId', {
+    .get('/devices/listByAgentId', {
       params: {
         agentId: props.agentId,
       },
@@ -53,7 +53,7 @@ const listByAgentId = () => {
 };
 const updatePosition = (id, position) => {
   axios
-    .get('/controller/devices/updatePosition', {
+    .get('/devices/updatePosition', {
       params: {
         id,
         position,
@@ -70,7 +70,7 @@ const updatePosition = (id, position) => {
 };
 const hubControl = (position, type) => {
   axios
-    .get('/controller/agents/hubControl', {
+    .get('/agents/hubControl', {
       params: {
         id: props.agentId,
         position,

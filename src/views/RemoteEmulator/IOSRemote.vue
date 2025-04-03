@@ -379,7 +379,7 @@ const saveEle = () => {
       element.value.eleType = 'image';
       element.value.eleValue = imgElementUrl.value;
       element.value.projectId = project.value.id;
-      axios.put('/controller/elements', element.value).then((resp) => {
+      axios.put('/elements', element.value).then((resp) => {
         if (resp.code === 2000) {
           ElMessage.success({
             message: resp.message,
@@ -1249,7 +1249,7 @@ const uploadPackage = (content) => {
   formData.append('file', content.file);
   formData.append('type', 'packageFiles');
   axios
-    .post('/folder/upload', formData, {
+    .post('/upload', formData, {
       headers: { 'Content-type': 'multipart/form-data' },
     })
     .then((resp) => {
@@ -1265,7 +1265,7 @@ const uploadScan = (content) => {
   formData.append('file', content.file);
   formData.append('type', 'imageFiles');
   axios
-    .post('/folder/upload', formData, {
+    .post('/upload', formData, {
       headers: { 'Content-type': 'multipart/form-data' },
     })
     .then((resp) => {
@@ -1362,7 +1362,7 @@ onBeforeUnmount(() => {
 });
 
 const getProjectList = () => {
-  axios.get('/controller/projects/list').then((resp) => {
+  axios.get('/projects/list').then((resp) => {
     store.commit('saveProjectList', resp.data);
   });
 };
@@ -1378,7 +1378,7 @@ const getRemoteTimeout = () => {
   ticker.value = Math.floor(
     (Date.now() - Number(localStorage.getItem('driverTime'))) / 1000
   );
-  axios.get('/controller/confList/getRemoteTimeout').then((resp) => {
+  axios.get('/confList/getRemoteTimeout').then((resp) => {
     remoteTimeout.value = resp.data;
     setInterval(() => {
       ticker.value += 1;
@@ -1387,7 +1387,7 @@ const getRemoteTimeout = () => {
 };
 const idleTimeout = ref(0);
 const getIdleTimeout = () => {
-  axios.get('/controller/confList/getIdleTimeout').then((resp) => {
+  axios.get('/confList/getIdleTimeout').then((resp) => {
     idleTimeout.value = resp.data;
   });
 };
@@ -1671,10 +1671,14 @@ const openSocket = (host, port, key, udId) => {
 
 const getDeviceById = (id) => {
   loading.value = true;
-  axios.get('/controller/devices', { params: { id } }).then((resp) => {
+  axios.get('/devices', { params: { id } }).then((resp) => {
     if (resp.code === 2000) {
       device.value = resp.data;
-      if (device.value.status === 'DEBUGGING' && device.value.user && device.value.user !== store.state.userInfo.userName) {
+      if (
+        device.value.status === 'DEBUGGING' &&
+        device.value.user &&
+        device.value.user !== store.state.userInfo.userName
+      ) {
         ElMessage.error({
           message: '未申请当前设备，无法使用',
         });
@@ -1682,7 +1686,7 @@ const getDeviceById = (id) => {
         return;
       }
       axios
-        .get('/controller/agents', { params: { id: device.value.agentId } })
+        .get('/agents', { params: { id: device.value.agentId } })
         .then((res) => {
           if (res.code === 2000) {
             agent.value = res.data;
@@ -1711,7 +1715,7 @@ onMounted(async () => {
     : [];
 
   isShowRenewButton.value = false;
-  
+
   if (store.state.project.id) {
     project.value = store.state.project;
   } else {

@@ -29,14 +29,13 @@ export function setRouter(instance) {
 }
 
 let baseURL = '';
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === 'development' || import.meta.env.MODE === 'test') {
   // 测试环境
-  baseURL = 'https://t-mtl.int.hypergryph.com/server/api';
+  baseURL = 'https://sonic-controller-test.hypergryph.net/';
   // 正式环境
   // baseURL = 'https://mtl.int.hypergryph.com/server/api';
-}
-if (process.env.NODE_ENV === 'production') {
-  baseURL = 'https://SONIC_SERVER_HOST/server/api';
+} else {
+  baseURL = 'https://sonic-controller.hypergryph.net/';
 }
 const $http = axios.create();
 baseURL = baseURL.replace(':80/', '/');

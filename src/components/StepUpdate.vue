@@ -16,13 +16,13 @@
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import { onMounted, ref } from 'vue';
-import { Tickets, QuestionFilled } from '@element-plus/icons';
+import { QuestionFilled, Tickets } from '@element-plus/icons';
 import { ElMessage } from 'element-plus';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import axios from '../http/axios';
 import ElementSelect from './ElementSelect.vue';
 import GlobalParamsSelect from './GlobalParamsSelect.vue';
-import axios from '../http/axios';
 
 const { t: $t } = useI18n();
 
@@ -284,7 +284,7 @@ const summitStep = () => {
             'test()\n';
         }
       }
-      axios.put('/controller/steps', step.value).then((resp) => {
+      axios.put('/steps', step.value).then((resp) => {
         if (resp.code === 2000) {
           ElMessage.success({
             message: resp.message,
@@ -303,7 +303,7 @@ const shouldShowByActionsTip = (stepType) => {
 };
 const getPublicStepList = () => {
   axios
-    .get('/controller/publicSteps/findNameByProjectId', {
+    .get('/publicSteps/findNameByProjectId', {
       params: {
         projectId: props.projectId,
         platform: props.platform,
@@ -315,7 +315,7 @@ const getPublicStepList = () => {
 };
 const getStepInfo = (id) => {
   axios
-    .get('/controller/steps', {
+    .get('/steps', {
       params: {
         id,
       },

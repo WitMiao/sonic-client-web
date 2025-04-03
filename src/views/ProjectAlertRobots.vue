@@ -1,9 +1,9 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 // eslint-disable-next-line import/no-cycle
+import Pageable from '@/components/Pageable.vue';
 import axios from '@/http/axios';
 import { ElButton, ElMessage } from 'element-plus';
-import Pageable from '@/components/Pageable.vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import AlertRobotUpdate from '../components/AlertRobotUpdate.vue';
@@ -27,7 +27,7 @@ const getAlertRobots = (pageNum, pSize) => {
   pageSize.value = pSize || pageSize.value;
   pageCurrNum.value = pageNum || pageCurrNum.value;
   axios
-    .get('/controller/alertRobots/list', {
+    .get('/alertRobots/list', {
       params: {
         projectId: route.params.projectId,
         page: pageCurrNum.value,
@@ -39,7 +39,7 @@ const getAlertRobots = (pageNum, pSize) => {
     });
 };
 const submit = (model) => {
-  axios.put('/controller/alertRobots', model).then((resp) => {
+  axios.put('/alertRobots', model).then((resp) => {
     if (resp.code === 2000) {
       ElMessage.success({
         message: resp.message,
@@ -51,7 +51,7 @@ const submit = (model) => {
 };
 const deleteById = (id, projectId) => {
   axios
-    .delete('/controller/alertRobots', {
+    .delete('/alertRobots', {
       params: {
         id,
         projectId,

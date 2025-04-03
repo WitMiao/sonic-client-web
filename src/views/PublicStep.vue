@@ -1,12 +1,12 @@
 <script setup>
-import { onMounted, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
 import { ElMessage } from 'element-plus';
+import { onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import PublicStepUpdate from '../components/PublicStepUpdate.vue';
-import Pageable from '../components/Pageable.vue';
-import axios from '../http/axios';
+import { useRoute } from 'vue-router';
 import ChildStepListView from '../components/ChildStepListView.vue';
+import Pageable from '../components/Pageable.vue';
+import PublicStepUpdate from '../components/PublicStepUpdate.vue';
+import axios from '../http/axios';
 
 const { t: $t } = useI18n();
 
@@ -38,7 +38,7 @@ const getPublicStepList = (pageNum, pSize) => {
   pageSize.value = pSize || pageSize.value;
   pageCurrNum.value = pageNum || pageCurrNum.value;
   axios
-    .get('/controller/publicSteps/list', {
+    .get('/publicSteps/list', {
       params: {
         projectId: route.params.projectId,
         page: pageCurrNum.value,
@@ -51,7 +51,7 @@ const getPublicStepList = (pageNum, pSize) => {
 };
 // 复制该公共步骤
 // const copyPublicStepId = (id) => {
-//   axios.get("/controller/publicSteps/copy", {
+//   axios.get("/publicSteps/copy", {
 //     params: {
 //       id
 //     }
@@ -66,7 +66,7 @@ const getPublicStepList = (pageNum, pSize) => {
 // }
 const deletePublicStep = (id) => {
   axios
-    .delete('/controller/publicSteps', {
+    .delete('/publicSteps', {
       params: {
         id,
       },
@@ -93,7 +93,7 @@ const curShowPublicStep = ref({
  */
 const getPublicStepInfo = (id) => {
   curShowPublicStep.value.steps = [];
-  axios.get('/controller/publicSteps', { params: { id } }).then((resp) => {
+  axios.get('/publicSteps', { params: { id } }).then((resp) => {
     if (resp.code === 2000) {
       curShowPublicStep.value = resp.data;
     }

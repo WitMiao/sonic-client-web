@@ -52,7 +52,7 @@ const close = () => {
 // 续期
 const openTimeDialogVisible = async () => {
   // 获取系统时间
-  const resp = await axios.get('/controller/confList/getRemoteTimeout');
+  const resp = await axios.get('/confList/getRemoteTimeout');
   useAddTimeMax.value = resp.data;
   useAddTime.value = resp.data;
   useTimeDialogVisible.value = true;
@@ -69,7 +69,7 @@ const stopDebug = () => {
   })
     .then(() => {
       axios
-        .get('/controller/devices/stopUse', { params: { udId: props.udId } })
+        .get('/devices/stopUse', { params: { udId: props.udId } })
         .then((resp) => {
           if (resp.code === 2000) {
             emit('close');

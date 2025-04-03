@@ -159,7 +159,7 @@ const pageSize = ref(10);
 const total = ref(0);
 const getUseRecord = async ({ udid, userName, time }) => {
   const { data, code } = await axios.get(
-    `/controller/useRecord/list?page=${currentPage.value}&pageSize=${
+    `/useRecord/list?page=${currentPage.value}&pageSize=${
       pageSize.value
     }${udid ? `&udid=${udid}` : ''}${userName ? `&userName=${userName}` : ''}${
       time ? `&startTime=${time[0]}` : ''

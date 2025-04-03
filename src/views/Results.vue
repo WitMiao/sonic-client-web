@@ -1,10 +1,10 @@
 <script setup>
-import { onMounted, ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import axios from '../http/axios';
+import { useRoute, useRouter } from 'vue-router';
 import Pageable from '../components/Pageable.vue';
+import axios from '../http/axios';
 
 const { t: $t } = useI18n();
 
@@ -17,7 +17,7 @@ const getResultList = (pageNum, pSize) => {
   pageSize.value = pSize || pageSize.value;
   pageCurrNum.value = pageNum || pageCurrNum.value;
   axios
-    .get('/controller/results/list', {
+    .get('/results/list', {
       params: {
         projectId: route.params.projectId,
         page: pageCurrNum.value,
@@ -30,7 +30,7 @@ const getResultList = (pageNum, pSize) => {
 };
 const delResult = (id) => {
   axios
-    .delete('/controller/results', {
+    .delete('/results', {
       params: {
         id,
       },
@@ -46,7 +46,7 @@ const delResult = (id) => {
 };
 const forceStopSuite = (id) => {
   axios
-    .get('/controller/testSuites/forceStopSuite', {
+    .get('/testSuites/forceStopSuite', {
       params: {
         resultId: id,
       },

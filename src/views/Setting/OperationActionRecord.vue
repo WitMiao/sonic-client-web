@@ -111,7 +111,7 @@ const actionMapOption = Object.keys(actionMap).map((key) => ({
 
 const getActionRecord = async ({ udid, userName, time, action }) => {
   const { data, code } = await axios.get(
-    `/controller/actionRecord/list?page=${currentPage.value}&pageSize=${
+    `/actionRecord/list?page=${currentPage.value}&pageSize=${
       pageSize.value
     }&recordNum=${route.query.recordNum}${udid ? `&udid=${udid}` : ''}${
       userName ? `&userName=${userName}` : ''
