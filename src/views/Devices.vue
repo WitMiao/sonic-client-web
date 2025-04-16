@@ -954,6 +954,13 @@ onUnmounted(() => {
           show-overflow-tooltip
         ></el-table-column>
         <el-table-column
+          prop="domain"
+          label="Domain"
+          header-align="center"
+          show-overflow-tooltip
+          width="300"
+        ></el-table-column>
+        <el-table-column
           prop="host"
           label="Host"
           align="center"
