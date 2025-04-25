@@ -59,11 +59,10 @@ const props = withDefaults(
 
 const emit = defineEmits(['close']);
 
-const wsUrl = isHttpProtocol ? 'ws' : 'wss';
-const locationHost =
-  process.env.NODE_ENV === 'development'
-    ? 't-mtl.int.hypergryph.com'
-    : window.location.host;
+const wsPrefix = (curAgent: any) =>
+  isHttpProtocol
+    ? `ws://${curAgent?.host}:${curAgent?.port}/websockets`
+    : `wss://${curAgent?.domain}/proxy/websockets`;
 
 const route = useRoute();
 const scrcpy = ref();
@@ -193,15 +192,15 @@ const websocketOnmessage = (message: any) => {
 const openSocket = (host: string, port: number, key: string, udId: string) => {
   if ('WebSocket' in window) {
     websocket.value = new WebSocket(
-      `${wsUrl}://${locationHost}/websockets/${host}/android/${key}/${udId}/${
+      `${wsPrefix(agent.value)}/android/${key}/${udId}/${
         route.query.useTime
       }/${localStorage.getItem('SonicToken')}`
     );
 
     scrcpy.value = new Scrcpy({
-      socketURL: `${wsUrl}://${locationHost}/websockets/${host}/android/screen/${key}/${udId}/${localStorage.getItem(
-        'SonicToken'
-      )}`,
+      socketURL: `${wsPrefix(
+        agent.value
+      )}/android/screen/${key}/${udId}/${localStorage.getItem('SonicToken')}`,
       node: `scrcpy-video${props.id}`,
       onmessage: screenWebsocketOnmessage,
       excuteMode: 'Scrcpy',

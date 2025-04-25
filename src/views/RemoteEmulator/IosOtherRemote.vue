@@ -55,11 +55,10 @@ const props = withDefaults(
 );
 
 const emit = defineEmits(['close']);
-const wsUrl = isHttpProtocol ? 'ws' : 'wss';
-const locationHost =
-  process.env.NODE_ENV === 'development'
-    ? 't-mtl.int.hypergryph.com'
-    : window.location.host;
+const wsPrefix = (curAgent: any) =>
+  isHttpProtocol
+    ? `ws://${curAgent?.host}:${curAgent?.port}/websockets`
+    : `wss://${curAgent?.domain}/proxy/websockets`;
 const device = ref();
 const agent = ref();
 const route = useRoute();
@@ -145,14 +144,14 @@ const websocketOnmessage = (message: any) => {
 const openSocket = (host: string, port: string, key: string, udId: string) => {
   if ('WebSocket' in window) {
     websocket.value = new WebSocket(
-      `${wsUrl}://${locationHost}/websockets/${host}/ios/${key}/${udId}/${
+      `${wsPrefix(agent.value)}/ios/${key}/${udId}/${
         route.query.useTime
       }/${localStorage.getItem('SonicToken')}`
     );
     screenWebsocket.value = new WebSocket(
-      `${wsUrl}://${locationHost}/websockets/${host}/ios/screen/${key}/${udId}/${localStorage.getItem(
-        'SonicToken'
-      )}`
+      `${wsPrefix(
+        agent.value
+      )}/ios/screen/${key}/${udId}/${localStorage.getItem('SonicToken')}`
     );
   } else {
     // console.error($t('androidRemoteTS.noWebSocket'));

@@ -94,12 +94,6 @@ defineProps({
   lineMouseleave: Function,
 });
 
-const wsUrl = isHttpProtocol ? 'ws' : 'wss';
-const locationHost =
-  process.env.NODE_ENV === 'development'
-    ? 't-mtl.int.hypergryph.com'
-    : window.location.host;
-
 const pocoPaneRef = ref(null);
 const androidPerfRef = ref(null);
 const { t: $t } = useI18n();
@@ -228,6 +222,11 @@ const isConnectAudio = ref(false);
 
 const webSocketParams = ref({});
 
+const wsPrefix = (curAgent) =>
+  isHttpProtocol
+    ? `ws://${curAgent?.host}:${curAgent?.port}/websockets`
+    : `wss://${curAgent?.domain}/proxy/websockets`;
+
 const computedCenter = (b1, b2) => {
   const x1 = b1.substring(0, b1.indexOf(','));
   const y1 = b1.substring(b1.indexOf(',') + 1);
@@ -272,7 +271,9 @@ const stopPerfmon = () => {
 const tabWebView = (port, id, transTitle) => {
   title.value = transTitle;
   isWebView.value = false;
-  iframeUrl.value = `/chrome/devtools/inspector.html?${wsUrl}=${locationHost}/websockets/${agent.value.host}/webView/${agent.value.secretKey}/${port}/${id}`;
+  iframeUrl.value = `/chrome/devtools/inspector.html?${wsPrefix(
+    agent.value
+  ).replace('://', '=')}/webView/${agent.value.secretKey}/${port}/${id}`;
   nextTick(() => {
     iFrameHeight.value = document.body.clientHeight - 150;
   });
@@ -1743,7 +1744,9 @@ const destroyAudio = () => {
 const initAudioPlayer = () => {
   audioPlayer.value = new AudioProcessor({
     node: 'audio-player',
-    wsUrl: `${wsUrl}://${locationHost}/websockets/${agent.value.host}/audio/${agent.value.secretKey}/${device.value.udId}`,
+    wsUrl: `${wsPrefix(agent.value)}/audio/${agent.value.secretKey}/${
+      device.value.udId
+    }`,
     onReady() {
       isConnectAudio.value = true;
     },
@@ -2232,15 +2235,15 @@ const openSocket = (host, port, key, udId) => {
   if ('WebSocket' in window) {
     //
     websocket.value = new WebSocket(
-      `${wsUrl}://${locationHost}/websockets/${host}/android/${key}/${udId}/${
+      `${wsPrefix(agent.value)}/android/${key}/${udId}/${
         route.query.useTime
       }/${localStorage.getItem('SonicToken')}`
     );
     //
     scrcpy.value = new Scrcpy({
-      socketURL: `${wsUrl}://${locationHost}/websockets/${host}/android/screen/${key}/${udId}/${localStorage.getItem(
-        'SonicToken'
-      )}`,
+      socketURL: `${wsPrefix(
+        agent.value
+      )}/android/screen/${key}/${udId}/${localStorage.getItem('SonicToken')}`,
       node: 'scrcpy-video',
       onmessage: screenWebsocketOnmessage,
       excuteMode: screenMode.value,
@@ -2257,9 +2260,9 @@ const openSocket = (host, port, key, udId) => {
     changeScreenMode(screenMode.value, 1);
     //
     terminalWebsocket.value = new WebSocket(
-      `${wsUrl}://${locationHost}/websockets/${host}/android/terminal/${key}/${udId}/${localStorage.getItem(
-        'SonicToken'
-      )}`
+      `${wsPrefix(
+        agent.value
+      )}/android/terminal/${key}/${udId}/${localStorage.getItem('SonicToken')}`
     );
   } else {
     console.error($t('androidRemoteTS.noWebSocket'));

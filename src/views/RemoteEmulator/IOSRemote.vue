@@ -64,12 +64,6 @@ import RemotePageHeader from '../../components/RemotePageHeader.vue';
 import RenderDeviceName from '../../components/RenderDeviceName.vue';
 import IOSOtherRemote from './IosOtherRemote.vue';
 
-const wsUrl = isHttpProtocol ? 'ws' : 'wss';
-const locationHost =
-  process.env.NODE_ENV === 'development'
-    ? 't-mtl.int.hypergryph.com'
-    : window.location.host;
-
 const pocoPaneRef = ref(null);
 const iosPerfRef = ref(null);
 const { t: $t } = useI18n();
@@ -153,6 +147,11 @@ const element = ref({
 });
 
 const webSocketParams = ref({});
+
+const wsPrefix = (curAgent) =>
+  isHttpProtocol
+    ? `ws://${curAgent?.host}:${curAgent?.port}/websockets`
+    : `wss://${curAgent?.domain}/proxy/websockets`;
 
 const computedCenter = (x, y, width, height) => {
   const reX = parseInt(parseInt(x, 10) + parseInt(width, 10) / 2, 10);
@@ -1614,17 +1613,17 @@ const websocketOnmessage = (message) => {
 const openSocket = (host, port, key, udId) => {
   if ('WebSocket' in window) {
     websocket.value = new WebSocket(
-      `${wsUrl}://${locationHost}/websockets/${host}/ios/${key}/${udId}/${
+      `${wsPrefix(agent.value)}/ios/${key}/${udId}/${
         route.query.useTime
       }/${localStorage.getItem('SonicToken')}`
     );
     terminalWebsocket.value = new WebSocket(
-      `${wsUrl}://${locationHost}/websockets/${host}/ios/terminal/${key}/${udId}/${localStorage.getItem(
+      `${wsPrefix(agent.value)}/ios/terminal/${key}/${udId}/${localStorage.getItem(
         'SonicToken'
       )}`
     );
     screenWebsocket.value = new WebSocket(
-      `${wsUrl}://${locationHost}/websockets/${host}/ios/screen/${key}/${udId}/${localStorage.getItem(
+      `${wsPrefix(agent.value)}/ios/screen/${key}/${udId}/${localStorage.getItem(
         'SonicToken'
       )}`
     );
