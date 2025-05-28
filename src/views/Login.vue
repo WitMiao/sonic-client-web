@@ -56,6 +56,9 @@ const onLogin = async () => {
 };
 
 onMounted(() => {
+  if (import.meta.env.DEV && import.meta.env.VITE_DEV_TOKEN) {
+    localStorage.setItem('SonicToken', import.meta.env.VITE_DEV_TOKEN);
+  }
   if (localStorage.getItem('SonicToken')) {
     if (['/', '/Index/Devices'].includes(redirectUrl)) {
       router.replace({ path: decodeByBase64(redirectUrl) });
