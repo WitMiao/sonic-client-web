@@ -34,6 +34,9 @@ const useTimeDialogVisible = ref(false);
 const useTime = ref(0);
 const remoteTimeout = ref(0);
 const store = useStore();
+const forgeonCloudUrl = `${
+  import.meta.env.VITE_FORGEON_URL
+}/deptAsset/cloud?deviceId=`;
 
 const updateImg = (id, imgUrl) => {
   axios.put('/devices/updateImg', { id, imgUrl }).then((resp) => {
@@ -95,11 +98,12 @@ const deleteDevice = (id) => {
   });
 };
 const openDialogVisible = async () => {
+  window.open(forgeonCloudUrl + props.device.id, '_self');
   // 获取系统时间
-  const resp = await axios.get('/confList/getRemoteTimeout');
-  remoteTimeout.value = resp.data;
-  useTime.value = remoteTimeout.value;
-  useTimeDialogVisible.value = true;
+  // const resp = await axios.get('/confList/getRemoteTimeout');
+  // remoteTimeout.value = resp.data;
+  // useTime.value = remoteTimeout.value;
+  // useTimeDialogVisible.value = true;
 };
 const jump = (id, platform) => {
   let routeData;
