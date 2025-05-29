@@ -492,12 +492,7 @@ watch(
           "
           @click="openDialogVisible"
         >
-          {{
-            device.status === 'DEBUGGING' &&
-            device.user === store.state.userInfo.userName
-              ? '继续使用'
-              : '马上使用'
-          }}
+          查看设备
         </el-button>
         <el-button
           v-show="
