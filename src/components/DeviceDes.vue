@@ -98,7 +98,7 @@ const deleteDevice = (id) => {
   });
 };
 const openDialogVisible = async () => {
-  window.open(forgeonCloudUrl + props.device.id, '_self');
+  window.open(forgeonCloudUrl + props.device.id, '_blank');
   // 获取系统时间
   // const resp = await axios.get('/confList/getRemoteTimeout');
   // remoteTimeout.value = resp.data;
