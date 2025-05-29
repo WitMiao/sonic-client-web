@@ -29,7 +29,7 @@ export function setRouter(instance) {
 }
 
 let baseURL = '';
-if (process.env.NODE_ENV === 'development' || import.meta.env.MODE === 'test') {
+if (process.env.NODE_ENV === 'development') {
   // 测试环境
   baseURL = 'https://sonic-controller-test.hypergryph.net/';
   // 正式环境
