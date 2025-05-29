@@ -486,10 +486,6 @@ watch(
           v-if="!controlsMode"
           type="primary"
           size="mini"
-          :disabled="
-            device.status === 'DEBUGGING' &&
-            device.user !== store.state.userInfo.userName
-          "
           @click="openDialogVisible"
         >
           查看设备
