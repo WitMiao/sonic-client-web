@@ -627,7 +627,7 @@ onUnmounted(() => {
 
 <template>
   <div style="display: flex; justify-content: flex-end; align-items: center">
-    <div class="controlsMode">
+    <!-- <div class="controlsMode">
       <div class="controlsModeButton" @click="controlsModeButtonClick">
         多控
       </div>
@@ -642,7 +642,7 @@ onUnmounted(() => {
           取消
         </div>
       </div>
-    </div>
+    </div> -->
 
     <el-switch
       v-model="isFlush"
