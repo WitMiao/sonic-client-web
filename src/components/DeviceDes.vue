@@ -98,13 +98,13 @@ const deleteDevice = (id) => {
   });
 };
 const openDialogVisible = async () => {
-  window.open(forgeonCloudUrl + props.device.id, '_blank');
-  // 获取系统时间
-  // const resp = await axios.get('/confList/getRemoteTimeout');
-  // remoteTimeout.value = resp.data;
-  // useTime.value = remoteTimeout.value;
-  // useTimeDialogVisible.value = true;
+  jump(props.device.id, props.device.platform);
 };
+
+const openDevice = () => {
+  window.open(forgeonCloudUrl + props.device.id, '_blank');
+};
+
 const jump = (id, platform) => {
   let routeData;
   if (platform === 1) {
@@ -483,10 +483,25 @@ watch(
           v-show="
             device.status !== 'DISCONNECTED' && device.status !== 'OFFLINE'
           "
+          v-if="
+            !controlsMode &&
+            device.status === 'DEBUGGING' &&
+            device.user === store.state.userInfo.userName
+          "
+          type="warning"
+          size="mini"
+          @click="openDialogVisible"
+        >
+          临时使用
+        </el-button>
+        <el-button
+          v-show="
+            device.status !== 'DISCONNECTED' && device.status !== 'OFFLINE'
+          "
           v-if="!controlsMode"
           type="primary"
           size="mini"
-          @click="openDialogVisible"
+          @click="openDevice"
         >
           查看设备
         </el-button>
@@ -502,7 +517,9 @@ watch(
         </el-button>
         <el-button
           v-show="
-            device.status !== 'ONLINE' && device.status !== 'DISCONNECTED'
+            device.status !== 'ONLINE' &&
+            device.status !== 'DISCONNECTED' &&
+            device.status !== 'DEBUGGING'
           "
           v-if="!controlsMode"
           size="mini"

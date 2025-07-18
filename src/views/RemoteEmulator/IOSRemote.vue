@@ -1613,19 +1613,19 @@ const websocketOnmessage = (message) => {
 const openSocket = (host, port, key, udId) => {
   if ('WebSocket' in window) {
     websocket.value = new WebSocket(
-      `${wsPrefix(agent.value)}/ios/${key}/${udId}/${
-        route.query.useTime
-      }/${localStorage.getItem('SonicToken')}`
+      `${wsPrefix(agent.value)}/ios/${key}/${udId}/${localStorage.getItem(
+        'SonicToken'
+      )}`
     );
     terminalWebsocket.value = new WebSocket(
-      `${wsPrefix(agent.value)}/ios/terminal/${key}/${udId}/${localStorage.getItem(
-        'SonicToken'
-      )}`
+      `${wsPrefix(
+        agent.value
+      )}/ios/terminal/${key}/${udId}/${localStorage.getItem('SonicToken')}`
     );
     screenWebsocket.value = new WebSocket(
-      `${wsPrefix(agent.value)}/ios/screen/${key}/${udId}/${localStorage.getItem(
-        'SonicToken'
-      )}`
+      `${wsPrefix(
+        agent.value
+      )}/ios/screen/${key}/${udId}/${localStorage.getItem('SonicToken')}`
     );
   } else {
     console.error($t('androidRemoteTS.noWebSocket'));

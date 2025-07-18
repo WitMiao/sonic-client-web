@@ -2235,9 +2235,7 @@ const openSocket = (host, port, key, udId) => {
   if ('WebSocket' in window) {
     //
     websocket.value = new WebSocket(
-      `${wsPrefix(agent.value)}/android/${key}/${udId}/${
-        route.query.useTime
-      }/${localStorage.getItem('SonicToken')}`
+      `${wsPrefix(agent.value)}/android/${key}/${udId}/${localStorage.getItem('SonicToken')}`
     );
     //
     scrcpy.value = new Scrcpy({
