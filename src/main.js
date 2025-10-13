@@ -15,7 +15,7 @@
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import ElementPlus, { ElMessage } from 'element-plus';
+import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 import { createApp } from 'vue';
 import App from './App.vue';
@@ -69,17 +69,18 @@ initApp().then(() => {
       axios.get('/users').then((resp) => {
         if (resp.code === 2000) {
           store.commit('setUserInfo', resp.data);
-          next();
         }
+        next();
       });
+      return; // 确保只调用一次 next
     }
-    if (store.state.token.length === 0 && to.path !== '/Login') {
+    if (store.state.token.length === 0 && to.path !== '/login') {
       next({
-        path: '/Login',
+        path: '/login',
         query: { redirect: to.fullPath },
       });
-    } else {
-      next();
+      return;
     }
+    next();
   });
 });

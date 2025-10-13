@@ -114,7 +114,7 @@ const pushIndex = (path) => {
 const logout = () => {
   store.commit('clearAuth');
   const ssoLogoutUrl = `https://info-sso.hypergryph.net/api/logout?redirectUrl=${encodeURIComponent(
-    `${location.origin}/Login?isLogout=1`
+    `${location.origin}/login?isLogout=1`
   )}`;
   window.open(ssoLogoutUrl, '_self');
 };
@@ -173,31 +173,6 @@ onMounted(() => {
             @change="toggleClass"
           ></el-switch>
         </el-tooltip>
-        <!-- <el-menu
-          :ellipsis="false"
-          :background-color="store.state.menuBack"
-          :text-color="store.state.menuText"
-          :active-text-color="store.state.menuActiveText"
-          mode="horizontal"
-          class="el-menu-horizontal-demo font"
-        >
-          <el-sub-menu index="Language">
-            <template #title>{{ $t('layout.languages') }}</template>
-            <el-menu-item
-              v-for="item in localeList"
-              :key="item.event"
-              :index="item.event"
-              @click="changeLocaleHandler"
-              >{{ item.text }}
-              <el-badge
-                v-if="item.building"
-                type="primary"
-                value="building"
-                style="margin: 0 0 5px 5px"
-              ></el-badge>
-            </el-menu-item>
-          </el-sub-menu>
-        </el-menu>-->
       </div>
       <div class="flex-center">
         <el-menu
@@ -250,15 +225,15 @@ onMounted(() => {
                 style="background: #409eff !important; margin-right: 5px"
               >
                 {{
-                  store.state.userInfo.userName &&
-                  store.state.userInfo.userName.length > 1
+                  store.state.userInfo?.userName &&
+                  store.state.userInfo.userName?.length > 1
                     ? store.state.userInfo.userName.substring(
                         store.state.userInfo.userName.length - 2
                       )
-                    : store.state.userInfo.userName
+                    : store.state.userInfo?.userName
                 }}
               </el-avatar>
-              {{ store.state.userInfo.userName }}
+              {{ store.state.userInfo?.userName }}
             </template>
             <el-menu-item index="1-0" @click="pushIndex('/Setting')">
               {{ $t('setting.title') }}
@@ -272,44 +247,6 @@ onMounted(() => {
             <el-menu-item index="1-4" @click="dialogToken = true"
               >Access Token</el-menu-item
             >
-            <!-- <el-sub-menu index="2">
-              <template #title
-                ><span class="flex-center font title"
-                  ><img style="margin-right: 5px" width="20" :src="logo" />{{
-                    $t('layout.aboutSonic')
-                  }}</span
-                >
-              </template>
-              <el-menu-item
-                index="2-1"
-                @click="goToUrl('https://sonic-cloud.cn/home')"
-                >{{ $t('layout.officialWebSite') }}
-              </el-menu-item>
-              <el-menu-item
-                index="2-0"
-                @click="goToUrl('https://sonic-cloud.cn/document')"
-                >{{ $t('layout.document') }}
-              </el-menu-item>
-              <el-menu-item
-                index="2-2"
-                @click="goToUrl('https://sonic-cloud.cn/version')"
-                >{{ $t('layout.versionUpdateRecord') }}
-                <el-badge value="New" style="margin: 0 0 5px 5px"></el-badge>
-              </el-menu-item>
-              <el-menu-item
-                index="2-3"
-                @click="
-                  goToUrl(
-                    axios.defaults.baseURL.substring(
-                      0,
-                      axios.defaults.baseURL.length - 4
-                    ) + '/doc.html'
-                  )
-                "
-              >
-                REST API
-              </el-menu-item>
-            </el-sub-menu> -->
             <el-menu-item index="1-3" @click="logout">{{
               $t('layout.signOut')
             }}</el-menu-item>

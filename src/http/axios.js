@@ -71,9 +71,9 @@ $http.interceptors.response.use(
       case 2000:
         break;
       case 1001:
-        if (router && router.currentRoute.value.path !== '/Login') {
+        if (router && router.currentRoute.value.path !== '/login') {
           router.replace({
-            path: '/Login',
+            path: '/login',
             query: { redirect: router?.currentRoute?.value?.path },
           });
         }
