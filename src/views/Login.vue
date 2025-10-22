@@ -1,52 +1,43 @@
 <script setup lang="ts">
+import { useSSOLogin } from '@/composables/useSSOLogin';
 import axios from '@/http/axios';
 
 import store from '@/store';
-import { decodeByBase64, encryptByBase64 } from '@/utils/cipher';
+import { decodeByBase64 } from '@/utils/cipher';
 import message from 'element-plus/lib/components/message';
 import { onMounted, ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 
 const router = useRouter();
-const route = useRoute();
 const { currentRoute } = router;
 const isLogout = currentRoute.value.query?.isLogout === '1';
 const redirectUrl = (currentRoute.value.query?.redirect as string) || '/';
-const loginParamsUrlGet = currentRoute.value.query?.loginParams as string;
-const loginParams = loginParamsUrlGet
-  ? JSON.parse(decodeByBase64(currentRoute.value.query?.loginParams as string))
-  : {};
-
+// SSOcode
+const ssoCodeGet = currentRoute.value.query?.code as string;
+const ssoStateGet = currentRoute.value.query?.state as string;
+const ssoRedirectURI = `${location.origin}/login?state=${ssoStateGet}`;
 const retryCount = ref(0);
 
-const goToTechLogin = () => {
-  window.open(
-    `https://forgeon.hypergryph.net/link/other?fs=1&refresh=1&redirect=${encodeURIComponent(
-      encryptByBase64(redirectUrl)
-    )}&origin=${encodeURIComponent(`${window.location.origin}/Login`)}`,
-    '_self'
-  );
-};
+const { handleSSOLogin } = useSSOLogin(redirectUrl);
 
 const onLogin = async () => {
   await store.commit('clearAuth');
-
-  const res: { code: number; data: any } = await axios.post(
-    '/users/loginSso',
-    loginParams
-  );
+  const res: { code: number; data: any } = await axios.post('/users/loginSso', {
+    code: ssoCodeGet,
+    redirectURI: ssoRedirectURI,
+  });
   if (res.code === 2000) {
     // 获取后端路由
     store.commit('changeLogin', res.data);
-    if (route.query.redirect) {
-      const { redirect } = route.query;
-      router.replace(decodeByBase64(redirect as string));
+    if (ssoStateGet) {
+      const curRedirectUrl = decodeByBase64(ssoStateGet || '');
+      router.replace({ path: curRedirectUrl });
     } else {
       router.replace({ path: '/' });
     }
-    message.success('跨平台登录成功');
+    message.success('登录成功');
   } else if (retryCount.value >= 3) {
-    goToTechLogin();
+    handleSSOLogin();
   } else {
     setTimeout(() => {
       retryCount.value += 1;
@@ -60,22 +51,16 @@ onMounted(() => {
     localStorage.setItem('SonicToken', import.meta.env.VITE_DEV_TOKEN);
   }
   if (localStorage.getItem('SonicToken')) {
-    if (['/', '/Index/Devices'].includes(redirectUrl)) {
-      router.replace({ path: decodeByBase64(redirectUrl) });
-    } else {
-      router.replace({ path: decodeByBase64(redirectUrl || '/') });
-    }
+    // redirect 参数来自路由守卫，已是直接路径，不应再做 Base64 解码
+    router.replace({ path: redirectUrl || '/' });
     return;
   }
-  if (isLogout) {
-    goToTechLogin();
-  } else if (loginParams?.accessToken) {
-    if (loginParams?.token) {
-      store.commit('setForgeonToken', loginParams.token);
-    }
+  if (ssoCodeGet) {
     onLogin();
+  } else if (isLogout) {
+    handleSSOLogin();
   } else {
-    goToTechLogin();
+    handleSSOLogin();
   }
 });
 </script>
@@ -90,6 +75,6 @@ onMounted(() => {
       height: 100vh;
     "
   >
-    跨平台登录信息获取中...
+    SSO登录信息获取中...
   </div>
 </template>

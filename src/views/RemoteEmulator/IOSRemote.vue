@@ -795,7 +795,7 @@ const terminalWebsocketOnmessage = (message) => {
       break;
     }
     case 'terminal':
-      logOutPut.value.push($t('androidRemoteTS.connection'));
+      logOutPut.value.push('连接成功');
       break;
     case 'logDetail':
       logOutPut.value.push(

@@ -3,7 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 
 const getRoutes = () => [
   {
-    path: '/Login',
+    path: '/login',
     component: () => import('../views/Login.vue'),
     meta: { title: $tc('routes.login') },
   },
